@@ -3,6 +3,7 @@ package net.vampirestudios.arrp.impl;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.serialization.Codec;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.json.JsonBytes;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
@@ -10,14 +11,18 @@ import net.vampirestudios.arrp.json.animation.JAnimation;
 import net.vampirestudios.arrp.json.blockstate.JState;
 import net.vampirestudios.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
 import net.vampirestudios.arrp.json.lang.JLang;
 import net.vampirestudios.arrp.json.loot.JLootTable;
 import net.vampirestudios.arrp.json.models.JModel;
 import net.vampirestudios.arrp.json.models.JTextures;
 import net.vampirestudios.arrp.json.recipe.JRecipe;
+import net.vampirestudios.arrp.json.registry.*;
 import net.vampirestudios.arrp.json.tags.JTag;
 import net.vampirestudios.arrp.json.timeline.JTimeline;
+import net.vampirestudios.arrp.json.worldgen.*;
 import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
@@ -158,7 +163,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addLang(Identifier identifier, JLang lang) {
-		return this.addAsset(fix(identifier, "lang", "json"), serialize(lang.getLang()));
+		return this.addJsonAsset(identifier, "lang", lang.getLang());
 	}
 
 	@Override
@@ -178,59 +183,77 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addLootTable(Identifier identifier, JLootTable table) {
-		return this.addData(fix(identifier, "loot_table", "json"), JsonBytes.encodeToPrettyBytes(JLootTable.CODEC, table));
+		return this.addCodecData(identifier, "loot_table", JLootTable.CODEC, table);
 	}
 
 	@Override
 	public byte[] addWolfVariant(Identifier id, JWolfVariant variant) {
-		return this.addData(fix(id, "wolf_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JWolfVariant.CODEC, variant));
+		return this.addCodecData(id, "wolf_variant", JWolfVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addZombieNautilusVariant(Identifier id, JZombieNautilusVariant variant) {
-		return this.addData(fix(id, "zombie_nautilus_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JZombieNautilusVariant.CODEC, variant));
+		return this.addCodecData(id, "zombie_nautilus_variant", JZombieNautilusVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addChickenVariant(Identifier id, JChickenVariant variant) {
-		return this.addData(fix(id, "chicken_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JChickenVariant.CODEC, variant));
+		return this.addCodecData(id, "chicken_variant", JChickenVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addCowVariant(Identifier id, JCowVariant variant) {
-		return this.addData(fix(id, "cow_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JCowVariant.CODEC, variant));
+		return this.addCodecData(id, "cow_variant", JCowVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addPigVariant(Identifier id, JPigVariant variant) {
-		return this.addData(fix(id, "pig_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JPigVariant.CODEC, variant));
+		return this.addCodecData(id, "pig_variant", JPigVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addWolfSoundVariant(Identifier id, JWolfSoundVariant variant) {
-		return this.addData(fix(id, "wolf_sound_variant", "json"),
-				JsonBytes.encodeToPrettyBytes(JWolfSoundVariant.CODEC, variant));
+		return this.addCodecData(id, "wolf_sound_variant", JWolfSoundVariant.CODEC, variant);
+	}
+
+	@Override
+	public byte[] addCatSoundVariant(Identifier id, JCatSoundVariant variant) {
+		return this.addCodecData(id, "cat_sound_variant", JCatSoundVariant.CODEC, variant);
+	}
+
+	@Override
+	public byte[] addChickenSoundVariant(Identifier id, JChickenSoundVariant variant) {
+		return this.addCodecData(id, "chicken_sound_variant", JChickenSoundVariant.CODEC, variant);
+	}
+
+	@Override
+	public byte[] addCowSoundVariant(Identifier id, JCowSoundVariant variant) {
+		return this.addCodecData(id, "cow_sound_variant", JCowSoundVariant.CODEC, variant);
+	}
+
+	@Override
+	public byte[] addPigSoundVariant(Identifier id, JPigSoundVariant variant) {
+		return this.addCodecData(id, "pig_sound_variant", JPigSoundVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, JSimpleMobVariant variant) {
-		return this.addData(fix(id, variantFolder.getPath(), "json"),
-				JsonBytes.encodeToPrettyBytes(JSimpleMobVariant.CODEC, variant));
+		return this.addCodecData(id, variantFolder.getPath(), JSimpleMobVariant.CODEC, variant);
 	}
 
 	@Override
 	public byte[] addCatVariant(Identifier id, JSimpleMobVariant v) {
-		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft","cat_variant"), id, v);
+		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft", "cat_variant"), id, v);
 	}
 
 	@Override
 	public byte[] addFrogVariant(Identifier id, JSimpleMobVariant v) {
-		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft","frog_variant"), id, v);
+		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft", "frog_variant"), id, v);
+	}
+
+	@Override
+	public byte[] addPaintingVariant(Identifier id, JPaintingVariant variant) {
+		return this.addCodecData(id, "painting_variant", JPaintingVariant.CODEC, variant);
 	}
 
 	@Override
@@ -305,27 +328,107 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addAdvancement(JAdvancement advancement, Identifier path) {
-		return this.addData(fix(path, "advancement", "json"), JsonBytes.encodeToPrettyBytes(JAdvancement.CODEC, advancement));
+		return this.addCodecData(path, "advancement", JAdvancement.CODEC, advancement);
 	}
 
 	@Override
 	public byte[] addModel(JModel model, Identifier path) {
-		return this.addAsset(fix(path, "models", "json"), serialize(model));
+		return this.addJsonAsset(path, "models", model);
 	}
 
 	@Override
 	public byte[] addItemModelInfo(JItemInfo model, Identifier path) {
-		return this.addAsset(fix(path, "items", "json"), JsonBytes.encodeToPrettyBytes(JItemInfo.CODEC, model));
+		return this.addCodecAsset(path, "items", JItemInfo.CODEC, model);
 	}
 
 	@Override
 	public byte[] addEquipmentModel(JEquipmentModel model, Identifier path) {
-		return this.addAsset(fix(path, "equipment", "json"), JsonBytes.encodeToPrettyBytes(JEquipmentModel.CODEC, model));
+		return this.addCodecAsset(path, "equipment", JEquipmentModel.CODEC, model);
+	}
+
+	@Override
+	public byte[] addTrimMaterial(Identifier id, JTrimMaterial material) {
+		return this.addCodecData(id, "trim_material", JTrimMaterial.CODEC, material);
+	}
+
+	@Override
+	public byte[] addTrimPattern(Identifier id, JTrimPattern pattern) {
+		return this.addCodecData(id, "trim_pattern", JTrimPattern.CODEC, pattern);
+	}
+
+	@Override
+	public byte[] addBannerPattern(Identifier id, JBannerPattern pattern) {
+		return this.addCodecData(id, "banner_pattern", JBannerPattern.CODEC, pattern);
+	}
+
+	@Override
+	public byte[] addDecoratedPotPattern(Identifier id, JDecoratedPotPattern pattern) {
+		return this.addCodecData(id, "decorated_pot_pattern", JDecoratedPotPattern.CODEC, pattern);
+	}
+
+	@Override
+	public byte[] addDamageType(Identifier id, JDamageType damageType) {
+		return this.addCodecData(id, "damage_type", JDamageType.CODEC, damageType);
+	}
+
+	@Override
+	public byte[] addInstrument(Identifier id, JInstrument instrument) {
+		return this.addCodecData(id, "instrument", JInstrument.CODEC, instrument);
+	}
+
+	@Override
+	public byte[] addJukeboxSong(Identifier id, JJukeboxSong song) {
+		return this.addCodecData(id, "jukebox_song", JJukeboxSong.CODEC, song);
+	}
+
+	@Override
+	public byte[] addConfiguredCarver(Identifier id, JConfiguredCarver configuredCarver) {
+		return this.addCodecData(id, "worldgen/configured_carver", JConfiguredCarver.CODEC, configuredCarver);
+	}
+
+	@Override
+	public byte[] addProcessorList(Identifier id, JProcessorList processorList) {
+		return this.addCodecData(id, "worldgen/processor_list", JProcessorList.CODEC, processorList);
+	}
+
+	@Override
+	public byte[] addTemplatePool(Identifier id, JTemplatePool templatePool) {
+		return this.addCodecData(id, "worldgen/template_pool", JTemplatePool.CODEC, templatePool);
+	}
+
+	@Override
+	public byte[] addWorldPreset(Identifier id, JWorldPreset worldPreset) {
+		return this.addCodecData(id, "worldgen/world_preset", JWorldPreset.CODEC, worldPreset);
+	}
+
+	@Override
+	public byte[] addFlatLevelGeneratorPreset(Identifier id, JFlatLevelGeneratorPreset preset) {
+		return this.addCodecData(id, "worldgen/flat_level_generator_preset", JFlatLevelGeneratorPreset.CODEC, preset);
+	}
+
+	@Override
+	public byte[] addTradeSet(Identifier id, JTradeSet tradeSet) {
+		return this.addCodecData(id, "trade_set", JTradeSet.CODEC, tradeSet);
+	}
+
+	@Override
+	public byte[] addVillagerTrade(Identifier id, JVillagerTrade trade) {
+		return this.addCodecData(id, "villager_trade", JVillagerTrade.CODEC, trade);
+	}
+
+	@Override
+	public byte[] addDialog(Identifier id, JDialog dialog) {
+		return this.addCodecData(id, "dialog", JDialog.CODEC, dialog);
+	}
+
+	@Override
+	public byte[] addWorldClock(Identifier id, JWorldClock clock) {
+		return this.addCodecData(id, "world_clock", JWorldClock.CODEC, clock);
 	}
 
 	@Override
 	public byte[] addBlockState(JState state, Identifier path) {
-		return this.addAsset(fix(path, "blockstates", "json"), JsonBytes.encodeToPrettyBytes(JState.CODEC, state));
+		return this.addCodecAsset(path, "blockstates", JState.CODEC, state);
 	}
 
 	@Override
@@ -341,62 +444,62 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addAnimation(Identifier id, JAnimation animation) {
-		return this.addAsset(fix(id, "textures", "png.mcmeta"), serialize(animation));
+		return this.addAsset(fix(id, "textures", "png.mcmeta"), toJsonBytes(animation));
 	}
 
 	@Override
 	public byte[] addTag(Identifier id, JTag tag) {
-		return this.addData(fix(id, "tags", "json"), JsonBytes.encodeToPrettyBytes(JTag.CODEC, tag));
+		return this.addCodecData(id, "tags", JTag.CODEC, tag);
 	}
 
 	@Override
 	public byte[] addRecipe(Identifier id, JRecipe recipe) {
-		return this.addData(fix(id, "recipe", "json"), JsonBytes.encodeToPrettyBytes(JRecipe.CODEC, recipe));
+		return this.addCodecData(id, "recipe", JRecipe.CODEC, recipe);
 	}
 
 	@Override
 	public byte[] addTimeline(Identifier id, JTimeline timeline) {
-		return this.addData(fix(id, "timelines", "json"), JsonBytes.encodeToPrettyBytes(JTimeline.CODEC, timeline));
+		return this.addCodecData(id, "timelines", JTimeline.CODEC, timeline);
 	}
 
 	@Override
 	public byte[] addBiome(Identifier id, JBiome biome) {
-		return this.addData(fix(id, "worldgen/biome", "json"), JsonBytes.encodeToPrettyBytes(JBiome.CODEC, biome));
+		return this.addCodecData(id, "worldgen/biome", JBiome.CODEC, biome);
 	}
 
 	@Override
 	public byte[] addDimension(Identifier id, JDimension dimension) {
-		return this.addData(fix(id, "dimension", "json"), JsonBytes.encodeToPrettyBytes(JDimension.CODEC, dimension));
+		return this.addCodecData(id, "dimension", JDimension.CODEC, dimension);
 	}
 
 	@Override
 	public byte[] addDimensionType(Identifier id, JDimensionType dimensionType) {
-		return this.addData(fix(id, "dimension_type", "json"), JsonBytes.encodeToPrettyBytes(JDimensionType.CODEC, dimensionType));
+		return this.addCodecData(id, "dimension_type", JDimensionType.CODEC, dimensionType);
 	}
 
 	@Override
 	public byte[] addConfiguredFeature(Identifier id, JConfiguredFeature configuredFeature) {
-		return this.addData(fix(id, "worldgen/configured_feature", "json"), JsonBytes.encodeToPrettyBytes(JConfiguredFeature.CODEC, configuredFeature));
+		return this.addCodecData(id, "worldgen/configured_feature", JConfiguredFeature.CODEC, configuredFeature);
 	}
 
 	@Override
 	public byte[] addPlacedFeature(Identifier id, JPlacedFeature placedFeature) {
-		return this.addData(fix(id, "worldgen/placed_feature", "json"), JsonBytes.encodeToPrettyBytes(JPlacedFeature.CODEC, placedFeature));
+		return this.addCodecData(id, "worldgen/placed_feature", JPlacedFeature.CODEC, placedFeature);
 	}
 
 	@Override
 	public byte[] addNoiseSettings(Identifier id, JNoiseSettings noiseSettings) {
-		return this.addData(fix(id, "worldgen/noise_settings", "json"), JsonBytes.encodeToPrettyBytes(JNoiseSettings.CODEC, noiseSettings));
+		return this.addCodecData(id, "worldgen/noise_settings", JNoiseSettings.CODEC, noiseSettings);
 	}
 
 	@Override
 	public byte[] addStructure(Identifier id, JStructure structure) {
-		return this.addData(fix(id, "worldgen/structure", "json"), JsonBytes.encodeToPrettyBytes(JStructure.CODEC, structure));
+		return this.addCodecData(id, "worldgen/structure", JStructure.CODEC, structure);
 	}
 
 	@Override
 	public byte[] addStructureSet(Identifier id, JStructureSet structureSet) {
-		return this.addData(fix(id, "worldgen/structure_set", "json"), JsonBytes.encodeToPrettyBytes(JStructureSet.CODEC, structureSet));
+		return this.addCodecData(id, "worldgen/structure_set", JStructureSet.CODEC, structureSet);
 	}
 
 	@Override
@@ -525,55 +628,64 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	@Override
 	public IoSupplier<InputStream> getRootResource(String... segments) {
 		this.lock();
-		Supplier<byte[]> supplier = this.root.get(Arrays.asList(segments));
-		if (supplier == null) {
+		try {
+			Supplier<byte[]> supplier = this.root.get(Arrays.asList(segments));
+			if (supplier == null) {
+				return null;
+			}
+			return () -> new ByteArrayInputStream(supplier.get());
+		} finally {
 			this.waiting.unlock();
-			return null;
 		}
-		this.waiting.unlock();
-		return () -> new ByteArrayInputStream(supplier.get());
 	}
 
 	@Override
 	public IoSupplier<InputStream> getResource(PackType type, Identifier id) {
 		this.lock();
-		Supplier<byte[]> supplier = this.getSys(type).get(id);
-		if (supplier == null) {
-			//LOGGER.warn("No resource found for " + id);
+		try {
+			Supplier<byte[]> supplier = this.getSys(type).get(id);
+			if (supplier == null) {
+				//LOGGER.warn("No resource found for " + id);
+				return null;
+			}
+			return () -> new ByteArrayInputStream(supplier.get());
+		} finally {
 			this.waiting.unlock();
-			return null;
 		}
-		this.waiting.unlock();
-		return () -> new ByteArrayInputStream(supplier.get());
 	}
 
 	@Override
 	public void listResources(PackType type, String namespace, String prefix, ResourceOutput consumer) {
 		this.lock();
-		for (Identifier identifier : this.getSys(type).keySet()) {
-			Supplier<byte[]> supplier = this.getSys(type).get(identifier);
-			if (supplier == null) {
-				//LOGGER.warn("No resource found for " + identifier);
-				this.waiting.unlock();
-				continue;
+		try {
+			for (Identifier identifier : this.getSys(type).keySet()) {
+				Supplier<byte[]> supplier = this.getSys(type).get(identifier);
+				if (supplier == null) {
+					//LOGGER.warn("No resource found for " + identifier);
+					continue;
+				}
+				IoSupplier<InputStream> inputSupplier = () -> new ByteArrayInputStream(supplier.get());
+				if (identifier.getNamespace().equals(namespace) && identifier.getPath().startsWith(prefix)) {
+					consumer.accept(identifier, inputSupplier);
+				}
 			}
-			IoSupplier<InputStream> inputSupplier = () -> new ByteArrayInputStream(supplier.get());
-			if (identifier.getNamespace().equals(namespace) && identifier.getPath().startsWith(prefix)) {
-				consumer.accept(identifier, inputSupplier);
-			}
+		} finally {
+			this.waiting.unlock();
 		}
-		this.waiting.unlock();
 	}
 
 	@Override
 	public Set<String> getNamespaces(PackType type) {
 		this.lock();
-		Set<String> namespaces = new HashSet<>();
-		for (Identifier identifier : this.getSys(type).keySet()) {
-			namespaces.add(identifier.getNamespace());
+		try {
+			Set<String> namespaces = new HashSet<>();
+			for (Identifier identifier : this.getSys(type).keySet()) {
+				namespaces.add(identifier.getNamespace());
+			}
+			return namespaces;
+		} finally {
+			this.waiting.unlock();
 		}
-		this.waiting.unlock();
-		return namespaces;
 	}
 
 	@Override
@@ -592,7 +704,19 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 		}
 	}
 
-	private static byte[] serialize(Object object) {
+	private byte[] addJsonAsset(Identifier id, String prefix, Object value) {
+		return this.addAsset(fix(id, prefix, "json"), toJsonBytes(value));
+	}
+
+	private <T> byte[] addCodecAsset(Identifier id, String prefix, Codec<T> codec, T value) {
+		return this.addAsset(fix(id, prefix, "json"), JsonBytes.encodeToPrettyBytes(codec, value));
+	}
+
+	private <T> byte[] addCodecData(Identifier id, String prefix, Codec<T> codec, T value) {
+		return this.addData(fix(id, prefix, "json"), JsonBytes.encodeToPrettyBytes(codec, value));
+	}
+
+	private static byte[] toJsonBytes(Object object) {
 		UnsafeByteArrayOutputStream ubaos = new UnsafeByteArrayOutputStream();
 		OutputStreamWriter writer = new OutputStreamWriter(ubaos, StandardCharsets.UTF_8);
 		GSON.toJson(object, writer);

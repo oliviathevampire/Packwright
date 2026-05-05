@@ -12,6 +12,8 @@ import net.vampirestudios.arrp.json.blockstate.JVariant;
 import net.vampirestudios.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
 import net.vampirestudios.arrp.json.equipmentinfo.JLayer;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
 import net.vampirestudios.arrp.json.equipmentinfo.LayerType;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
 import net.vampirestudios.arrp.json.iteminfo.model.*;
@@ -23,6 +25,8 @@ import net.vampirestudios.arrp.json.iteminfo.tint.JTintTeam;
 import net.vampirestudios.arrp.json.lang.JLang;
 import net.vampirestudios.arrp.json.models.JModel;
 import net.vampirestudios.arrp.json.models.JTextures;
+import net.vampirestudios.arrp.json.registry.*;
+import net.vampirestudios.arrp.json.worldgen.*;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
 import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.core.Direction;
@@ -33,6 +37,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static net.vampirestudios.arrp.json.blockstate.JState.*;
+import static net.vampirestudios.arrp.json.loot.JLootTable.*;
+import static net.vampirestudios.arrp.json.models.JModel.*;
 
 public class RRPPreTest {
 
@@ -124,6 +132,169 @@ public class RRPPreTest {
 						.hurtSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.hurt"))
 						.pantSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.pant"))
 						.whineSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.whine"))
+		);
+		var catSounds = JCatSoundVariant.sounds()
+				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.ambient"))
+				.strayAmbientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.stray_ambient"))
+				.hissSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.hiss"))
+				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.hurt"))
+				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.death"))
+				.eatSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.eat"))
+				.begForFoodSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.beg_for_food"))
+				.purrSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.purr"))
+				.purreowSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.purreow"));
+		pack.addCatSoundVariant(
+				Identifier.fromNamespaceAndPath("mymod", "bright"),
+				JCatSoundVariant.catSoundVariant()
+						.adultSounds(catSounds)
+						.babySounds(catSounds)
+		);
+		var chickenSounds = JChickenSoundVariant.sounds()
+				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.ambient"))
+				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.hurt"))
+				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.death"))
+				.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.step"));
+		pack.addChickenSoundVariant(
+				Identifier.fromNamespaceAndPath("mymod", "clucky"),
+				JChickenSoundVariant.chickenSoundVariant()
+						.adultSounds(chickenSounds)
+						.babySounds(chickenSounds)
+		);
+		pack.addCowSoundVariant(
+				Identifier.fromNamespaceAndPath("mymod", "soft"),
+				JCowSoundVariant.cowSoundVariant()
+						.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.ambient"))
+						.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.hurt"))
+						.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.death"))
+						.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.step"))
+		);
+		var pigSounds = JPigSoundVariant.sounds()
+				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.ambient"))
+				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.hurt"))
+				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.death"))
+				.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.step"))
+				.eatSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.ambient"));
+		pack.addPigSoundVariant(
+				Identifier.fromNamespaceAndPath("mymod", "snuffly"),
+				JPigSoundVariant.pigSoundVariant()
+						.adultSounds(pigSounds)
+						.babySounds(pigSounds)
+		);
+		pack.addPaintingVariant(
+				Identifier.fromNamespaceAndPath("mymod", "tiny_sky"),
+				JPaintingVariant.paintingVariant()
+						.size(2, 1)
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "tiny_sky"))
+						.title("Tiny Sky")
+						.author("ARRP")
+		);
+		pack.addTrimMaterial(
+				Identifier.fromNamespaceAndPath("mymod", "copper"),
+				JTrimMaterial.trimMaterial()
+						.assets(JTrimMaterial.AssetGroup.assetGroup("copper")
+								.overrideArmorAsset(Identifier.fromNamespaceAndPath("mymod", "test_armor"), "copper_test"))
+						.description("Copper")
+		);
+		pack.addTrimPattern(
+				Identifier.fromNamespaceAndPath("mymod", "sunburst"),
+				JTrimPattern.trimPattern()
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "sunburst"))
+						.description("Sunburst Armor Trim")
+						.decal(false)
+		);
+		pack.addBannerPattern(
+				Identifier.fromNamespaceAndPath("mymod", "spark"),
+				JBannerPattern.bannerPattern()
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "spark"))
+						.translationKey("block.mymod.banner.spark")
+		);
+		pack.addDecoratedPotPattern(
+				Identifier.fromNamespaceAndPath("mymod", "spiral"),
+				JDecoratedPotPattern.decoratedPotPattern()
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "spiral_pottery_pattern"))
+		);
+		pack.addDamageType(
+				Identifier.fromNamespaceAndPath("mymod", "spark"),
+				JDamageType.damageType()
+						.messageId("spark")
+						.scaling(JDamageType.Scaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER)
+						.exhaustion(0.1F)
+						.effects(JDamageType.Effects.HURT)
+		);
+		pack.addInstrument(
+				Identifier.fromNamespaceAndPath("mymod", "small_horn"),
+				JInstrument.instrument()
+						.soundEvent(Identifier.fromNamespaceAndPath("minecraft", "item.goat_horn.sound.0"))
+						.useDuration(7.0F)
+						.range(64.0F)
+						.description("Small Horn")
+		);
+		pack.addJukeboxSong(
+				Identifier.fromNamespaceAndPath("mymod", "test_song"),
+				JJukeboxSong.jukeboxSong()
+						.soundEvent(Identifier.fromNamespaceAndPath("mymod", "music.test_song"))
+						.description("Test Song")
+						.lengthInSeconds(120.0F)
+						.comparatorOutput(7)
+		);
+		pack.addConfiguredCarver(
+				Identifier.fromNamespaceAndPath("mymod", "small_cave"),
+				JConfiguredCarver.carver()
+						.type("minecraft:cave")
+						.probability(0.05F)
+						.replaceable("#minecraft:overworld_carver_replaceables")
+		);
+		pack.addProcessorList(
+				Identifier.fromNamespaceAndPath("mymod", "mossy_replace"),
+				JProcessorList.processorList()
+						.rule(JProcessorList.Rule.replace("minecraft:cobblestone", "minecraft:mossy_cobblestone"))
+		);
+		pack.addTemplatePool(
+				Identifier.fromNamespaceAndPath("mymod", "test_pool"),
+				JTemplatePool.pool()
+						.fallback("minecraft:empty")
+						.single("mymod:test/start", "mymod:mossy_replace", JTemplatePool.Projection.RIGID, 1)
+		);
+		pack.addWorldPreset(
+				Identifier.fromNamespaceAndPath("mymod", "single_biome"),
+				JWorldPreset.preset()
+						.overworld(JWorldPreset.Dimension.dimension()
+								.type("minecraft:overworld")
+								.noiseGenerator("minecraft:overworld", JWorldPreset.Generator.BiomeSource.fixed("minecraft:plains")))
+		);
+		pack.addFlatLevelGeneratorPreset(
+				Identifier.fromNamespaceAndPath("mymod", "copper_flat"),
+				JFlatLevelGeneratorPreset.preset()
+						.display("minecraft:copper_block")
+						.biome("minecraft:plains")
+						.layer("minecraft:bedrock", 1)
+						.layer("minecraft:stone", 3)
+						.layer("minecraft:grass_block", 1)
+		);
+		pack.addVillagerTrade(
+				Identifier.fromNamespaceAndPath("mymod", "copper_for_emeralds"),
+				JVillagerTrade.trade()
+						.wants("minecraft:emerald", 3)
+						.gives("minecraft:copper_ingot", 8)
+						.maxUses(12)
+						.xp(2)
+		);
+		pack.addTradeSet(
+				Identifier.fromNamespaceAndPath("mymod", "toolsmith_copper"),
+				JTradeSet.tradeSet()
+						.trade("mymod:copper_for_emeralds")
+						.amount(JTradeSet.NumberProvider.uniform(1, 2))
+						.allowDuplicates(false)
+		);
+		pack.addDialog(
+				Identifier.fromNamespaceAndPath("mymod", "welcome"),
+				JDialog.notice("Welcome", "Continue")
+						.plainMessage("This dialog was generated by ARRP.")
+						.input(JDialog.Input.text("name", "Name"))
+		);
+		pack.addWorldClock(
+				Identifier.fromNamespaceAndPath("mymod", "example_clock"),
+				JWorldClock.worldClock()
 		);
 		pack.addItemModelInfo(
 				JItemInfo.item().model(JItemModel.model("test:block/model").tint(JTint.dye(0xFFFFFF))),
@@ -411,7 +582,7 @@ public class RRPPreTest {
 			Identifier POST = Identifier.tryParse("block/oak_fence_post");
 			Identifier ARM  = Identifier.tryParse("block/oak_fence_side");
 
-			JState fenceLike = JState.state(Connectables.fenceLike(
+			JState fenceLike = state(Connectables.fenceLike(
 					POST, ARM,
 					"north", "east", "south", "west",
 					true // uvlock
@@ -424,7 +595,7 @@ public class RRPPreTest {
 			// Pane-like: optional center + side per direction
 			Identifier CENTER = Identifier.tryParse("block/glass_pane_noside");
 			Identifier SIDE   = Identifier.tryParse("block/glass_pane_side");
-			JState paneLike = JState.state(Connectables.paneLike(
+			JState paneLike = state(Connectables.paneLike(
 					CENTER, SIDE,
 					"north", "east", "south", "west",
 					true
@@ -440,7 +611,7 @@ public class RRPPreTest {
 			Identifier INNER  = Identifier.tryParse("test:block/counter/inner_corner");
 			Identifier OUTER  = Identifier.tryParse("test:block/counter/outer_corner");
 
-			JState counterLike = JState.state(Connectables.counterLike(
+			JState counterLike = state(Connectables.counterLike(
 					TOP, EDGE, INNER, OUTER,
 					"north", "east", "south", "west",
 					true
@@ -449,6 +620,21 @@ public class RRPPreTest {
 			System.out.println(JsonBytes.encodeToPrettyString(JState.CODEC, counterLike));
 
 			SkyIslandsWorldgen.main(args);
+
+			JEnvironmentAttributes environmentAttributes = new JEnvironmentAttributes()
+					.skyColor("#78a7ff")
+					.fogColor("#c0d8ff")
+					.cloudColor("#ccffffff")
+					.cloudHeight(192.33f)
+					.starBrightness(0.65f)
+					.skyLightFactor(1.0f)
+					.waterEvaporates(false)
+					.respawnAnchorWorks(false)
+					.netherPortalSpawnsPiglins(true)
+					.monstersBurn(true)
+					.villagerActivity("minecraft:work");
+			System.out.println(JsonBytes.encodeToPrettyString(JEnvironmentAttributes.CODEC, environmentAttributes));
+			System.out.println(JsonBytes.encodeToPrettyString(JWorldClock.CODEC, JWorldClock.worldClock()));
 
 			System.out.println(JsonBytes.encodeToPrettyString(JDimensionType.CODEC, JDimensionType.dimensionType()
 					.hasFixedTime(false)
@@ -464,12 +650,7 @@ public class RRPPreTest {
 					.monsterSpawnBlockLightLimit(0)
 					.skybox(JDimensionType.Skybox.OVERWORLD)
 					.cardinalLight(JDimensionType.CardinalLightType.DEFAULT)
-					.attribute("minecraft:visual/sky_color", "#78a7ff")
-					.attribute("minecraft:visual/fog_color", "#c0d8ff")
-					.attribute("minecraft:visual/cloud_color", "#ccffffff")
-					.attribute("minecraft:visual/cloud_height", 192.33f)
-					.attribute("minecraft:gameplay/respawn_anchor_works", false)
-					.attribute("minecraft:gameplay/nether_portal_spawns_piglin", true)
+					.attributes(environmentAttributes)
 //					.attribute("minecraft:gameplay/bed_rule", BedRule.CODEC, BedRule.CAN_SLEEP_WHEN_DARK)
 //					.attribute("minecraft:audio/background_music", BackgroundMusic.CODEC, BackgroundMusic.OVERWORLD)
 //					.attribute("minecraft:audio/ambient_sounds", AmbientSounds.CODEC, AmbientSounds.LEGACY_CAVE_SETTINGS)

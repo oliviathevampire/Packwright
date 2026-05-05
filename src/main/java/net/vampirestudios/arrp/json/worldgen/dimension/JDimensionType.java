@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.json.worldgen.JAttributeValue;
+import net.vampirestudios.arrp.json.worldgen.JEnvironmentAttributes;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
@@ -183,8 +184,50 @@ public class JDimensionType {
 		return this;
 	}
 
+	public JDimensionType attributes(JEnvironmentAttributes attributes) {
+		if (attributes != null) {
+			for (Map.Entry<String, net.vampirestudios.arrp.json.worldgen.EnvironmentAttributeValue> entry : attributes.getValues().entrySet()) {
+				EnvironmentAttributeValueBridge.put(this.attributes, entry.getKey(), entry.getValue());
+			}
+		}
+		return this;
+	}
+
+	public JDimensionType skyColor(String color) { return attribute(JEnvironmentAttributes.SKY_COLOR, color); }
+	public JDimensionType fogColor(String color) { return attribute(JEnvironmentAttributes.FOG_COLOR, color); }
+	public JDimensionType waterFogColor(String color) { return attribute(JEnvironmentAttributes.WATER_FOG_COLOR, color); }
+	public JDimensionType cloudColor(String color) { return attribute(JEnvironmentAttributes.CLOUD_COLOR, color); }
+	public JDimensionType cloudHeight(float value) { return attribute(JEnvironmentAttributes.CLOUD_HEIGHT, value); }
+	public JDimensionType sunAngle(float value) { return attribute(JEnvironmentAttributes.SUN_ANGLE, value); }
+	public JDimensionType moonAngle(float value) { return attribute(JEnvironmentAttributes.MOON_ANGLE, value); }
+	public JDimensionType starAngle(float value) { return attribute(JEnvironmentAttributes.STAR_ANGLE, value); }
+	public JDimensionType starBrightness(float value) { return attribute(JEnvironmentAttributes.STAR_BRIGHTNESS, value); }
+	public JDimensionType skyLightColor(String color) { return attribute(JEnvironmentAttributes.SKY_LIGHT_COLOR, color); }
+	public JDimensionType skyLightFactor(float value) { return attribute(JEnvironmentAttributes.SKY_LIGHT_FACTOR, value); }
+	public JDimensionType skyLightLevel(float value) { return attribute(JEnvironmentAttributes.SKY_LIGHT_LEVEL, value); }
+	public JDimensionType waterEvaporates(boolean value) { return attribute(JEnvironmentAttributes.WATER_EVAPORATES, value); }
+	public JDimensionType bedRule(String value) { return attribute(JEnvironmentAttributes.BED_RULE, value); }
+	public JDimensionType respawnAnchorWorks(boolean value) { return attribute(JEnvironmentAttributes.RESPAWN_ANCHOR_WORKS, value); }
+	public JDimensionType netherPortalSpawnsPiglins(boolean value) { return attribute(JEnvironmentAttributes.NETHER_PORTAL_SPAWNS_PIGLINS, value); }
+	public JDimensionType fastLava(boolean value) { return attribute(JEnvironmentAttributes.FAST_LAVA, value); }
+	public JDimensionType piglinsZombify(boolean value) { return attribute(JEnvironmentAttributes.PIGLINS_ZOMBIFY, value); }
+	public JDimensionType snowGolemMelts(boolean value) { return attribute(JEnvironmentAttributes.SNOW_GOLEM_MELTS, value); }
+	public JDimensionType creakingActive(boolean value) { return attribute(JEnvironmentAttributes.CREAKING_ACTIVE, value); }
+
 	public Map<String, JAttributeValue> attributes() {
 		return Collections.unmodifiableMap(this.attributes);
+	}
+
+	private static final class EnvironmentAttributeValueBridge {
+		private static void put(Map<String, JAttributeValue> attributes, String key, net.vampirestudios.arrp.json.worldgen.EnvironmentAttributeValue value) {
+			if (value instanceof net.vampirestudios.arrp.json.worldgen.EnvironmentAttributeValue.BoolValue boolValue) {
+				attributes.put(key, JAttributeValue.ofBoolean(boolValue.value));
+			} else if (value instanceof net.vampirestudios.arrp.json.worldgen.EnvironmentAttributeValue.NumberValue numberValue) {
+				attributes.put(key, JAttributeValue.ofDouble(numberValue.value));
+			} else if (value instanceof net.vampirestudios.arrp.json.worldgen.EnvironmentAttributeValue.StringValue stringValue) {
+				attributes.put(key, JAttributeValue.ofString(stringValue.value));
+			}
+		}
 	}
 
 	// ---- timelines / skybox / cardinal light ----

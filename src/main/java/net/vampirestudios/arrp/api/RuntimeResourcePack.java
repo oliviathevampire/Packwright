@@ -12,13 +12,17 @@ import net.vampirestudios.arrp.json.animation.JAnimation;
 import net.vampirestudios.arrp.json.blockstate.JState;
 import net.vampirestudios.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
+import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
 import net.vampirestudios.arrp.json.lang.JLang;
 import net.vampirestudios.arrp.json.loot.JLootTable;
 import net.vampirestudios.arrp.json.models.JModel;
 import net.vampirestudios.arrp.json.recipe.JRecipe;
+import net.vampirestudios.arrp.json.registry.*;
 import net.vampirestudios.arrp.json.tags.JTag;
 import net.vampirestudios.arrp.json.timeline.JTimeline;
+import net.vampirestudios.arrp.json.worldgen.*;
 import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
@@ -134,11 +138,21 @@ public interface RuntimeResourcePack extends PackResources {
 	byte[] addPigVariant(Identifier id, JPigVariant variant);
 	byte[] addWolfSoundVariant(Identifier id, JWolfSoundVariant variant);
 
+	byte[] addCatSoundVariant(Identifier id, JCatSoundVariant variant);
+
+	byte[] addChickenSoundVariant(Identifier id, JChickenSoundVariant variant);
+
+	byte[] addCowSoundVariant(Identifier id, JCowSoundVariant variant);
+
+	byte[] addPigSoundVariant(Identifier id, JPigSoundVariant variant);
+
 	byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, JSimpleMobVariant variant);
 
 	byte[] addCatVariant(Identifier id, JSimpleMobVariant variant);
 
 	byte[] addFrogVariant(Identifier id, JSimpleMobVariant variant);
+
+	byte[] addPaintingVariant(Identifier id, JPaintingVariant variant);
 
 	/**
 	 * adds an async resource, this is evaluated off-thread, this does not hold all resource retrieval unlike
@@ -224,6 +238,38 @@ public interface RuntimeResourcePack extends PackResources {
 	 * assets/<namespace>/equipment/<path>.json
 	 */
 	byte[] addEquipmentModel(JEquipmentModel model, Identifier path);
+
+	byte[] addTrimMaterial(Identifier id, JTrimMaterial material);
+
+	byte[] addTrimPattern(Identifier id, JTrimPattern pattern);
+
+	byte[] addBannerPattern(Identifier id, JBannerPattern pattern);
+
+	byte[] addDecoratedPotPattern(Identifier id, JDecoratedPotPattern pattern);
+
+	byte[] addDamageType(Identifier id, JDamageType damageType);
+
+	byte[] addInstrument(Identifier id, JInstrument instrument);
+
+	byte[] addJukeboxSong(Identifier id, JJukeboxSong song);
+
+	byte[] addConfiguredCarver(Identifier id, JConfiguredCarver configuredCarver);
+
+	byte[] addProcessorList(Identifier id, JProcessorList processorList);
+
+	byte[] addTemplatePool(Identifier id, JTemplatePool templatePool);
+
+	byte[] addWorldPreset(Identifier id, JWorldPreset worldPreset);
+
+	byte[] addFlatLevelGeneratorPreset(Identifier id, JFlatLevelGeneratorPreset preset);
+
+	byte[] addTradeSet(Identifier id, JTradeSet tradeSet);
+
+	byte[] addVillagerTrade(Identifier id, JVillagerTrade trade);
+
+	byte[] addDialog(Identifier id, JDialog dialog);
+
+	byte[] addWorldClock(Identifier id, JWorldClock clock);
 
 	/**
 	 * adds a blockstate json
