@@ -10,7 +10,6 @@ import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
 import net.vampirestudios.arrp.json.animation.JAnimation;
 import net.vampirestudios.arrp.json.blockstate.JState;
-import net.devtech.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
@@ -77,7 +76,7 @@ public interface RuntimeResourcePack extends PackResources {
 
 	@Contract("_, _ -> new")
 	static RuntimeResourcePack create(String id, int version) {
-		return new RuntimeResourcePackImpl(Identifier.tryParse(id));
+		return new RuntimeResourcePackImpl(Identifier.tryParse(id), version);
 	}
 
 	@Contract("_ -> new")
@@ -87,7 +86,7 @@ public interface RuntimeResourcePack extends PackResources {
 
 	@Contract("_, _ -> new")
 	static RuntimeResourcePack create(Identifier id, int version) {
-		return new RuntimeResourcePackImpl(id);
+		return new RuntimeResourcePackImpl(id, version);
 	}
 
 	static Identifier id(String string) {return Identifier.tryParse(string);}
@@ -137,6 +136,10 @@ public interface RuntimeResourcePack extends PackResources {
 
 	byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, JSimpleMobVariant variant);
 
+	byte[] addCatVariant(Identifier id, JSimpleMobVariant variant);
+
+	byte[] addFrogVariant(Identifier id, JSimpleMobVariant variant);
+
 	/**
 	 * adds an async resource, this is evaluated off-thread, this does not hold all resource retrieval unlike
 	 *
@@ -178,6 +181,11 @@ public interface RuntimeResourcePack extends PackResources {
 	 * A root resource is something like pack.png, pack.mcmeta, etc. By default, default mcmeta will be generated.
 	 */
 	byte[] addRootResource(String path, byte[] data);
+
+	/**
+	 * add a simple pack.mcmeta using the provided pack format version
+	 */
+	byte[] addPackMcmeta(String description, int packFormat);
 
 	/**
 	 * add a clientside resource

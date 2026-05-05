@@ -8,7 +8,6 @@ import net.vampirestudios.arrp.json.JsonBytes;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
 import net.vampirestudios.arrp.json.animation.JAnimation;
 import net.vampirestudios.arrp.json.blockstate.JState;
-import net.devtech.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.entityVariants.*;
 import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
@@ -61,12 +60,6 @@ import java.util.zip.ZipOutputStream;
 
 import static java.lang.String.valueOf;
 
-
-/**
- * @see RuntimeResourcePack
- * @deprecated internal
- */
-@Deprecated
 @ApiStatus.Internal
 public class RuntimeResourcePackImpl extends AbstractPackResources implements RuntimeResourcePack {
 	public static final ExecutorService EXECUTOR_SERVICE;
@@ -130,6 +123,11 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	public RuntimeResourcePackImpl(Identifier id) {
 		super(new PackLocationInfo(id.getNamespace() + ";" + id.getPath(), Component.nullToEmpty("Runtime Resource Pack " + id), PackSource.DEFAULT, Optional.empty()));
 		this.id = id;
+	}
+
+	public RuntimeResourcePackImpl(Identifier id, int packFormat) {
+		this(id);
+		this.addPackMcmeta("Runtime Resource Pack " + id, packFormat);
 	}
 
 	@Override
@@ -225,10 +223,12 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 				JsonBytes.encodeToPrettyBytes(JSimpleMobVariant.CODEC, variant));
 	}
 
+	@Override
 	public byte[] addCatVariant(Identifier id, JSimpleMobVariant v) {
 		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft","cat_variant"), id, v);
 	}
 
+	@Override
 	public byte[] addFrogVariant(Identifier id, JSimpleMobVariant v) {
 		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft","frog_variant"), id, v);
 	}
@@ -259,8 +259,9 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public Future<byte[]> addAsyncRootResource(String path, CallableFunction<String, byte[]> data) {
+		List<String> key = rootKey(path);
 		Future<byte[]> future = EXECUTOR_SERVICE.submit(() -> data.get(path));
-		this.root.put(Arrays.asList(path.split("/")), () -> {
+		this.root.put(key, () -> {
 			try {
 				return future.get();
 			} catch (InterruptedException | ExecutionException e) {
@@ -272,13 +273,24 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public void addLazyRootResource(String path, BiFunction<RuntimeResourcePack, String, byte[]> data) {
-		this.root.put(Arrays.asList(path.split("/")), new Memoized<>(data, path));
+		this.root.put(rootKey(path), new Memoized<>(data, path));
 	}
 
 	@Override
 	public byte[] addRootResource(String path, byte[] data) {
-		this.root.put(Arrays.asList(path.split("/")), () -> data);
+		this.root.put(rootKey(path), () -> data);
 		return data;
+	}
+
+	@Override
+	public byte[] addPackMcmeta(String description, int packFormat) {
+		String json = "{\n"
+				+ "  \"pack\": {\n"
+				+ "    \"description\": " + GSON.toJson(description) + ",\n"
+				+ "    \"pack_format\": " + packFormat + "\n"
+				+ "  }\n"
+				+ "}";
+		return this.addRootResource("pack.mcmeta", json.getBytes(StandardCharsets.UTF_8));
 	}
 
 	@Override
@@ -293,7 +305,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addAdvancement(JAdvancement advancement, Identifier path) {
-		return this.addData(fix(id, "advancement", "json"), JsonBytes.encodeToPrettyBytes(JAdvancement.CODEC, advancement));
+		return this.addData(fix(path, "advancement", "json"), JsonBytes.encodeToPrettyBytes(JAdvancement.CODEC, advancement));
 	}
 
 	@Override
@@ -390,10 +402,18 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	@Override
 	public Future<?> async(Consumer<RuntimeResourcePack> action) {
 		this.lock();
-		return EXECUTOR_SERVICE.submit(() -> {
-			action.accept(this);
+		try {
+			return EXECUTOR_SERVICE.submit(() -> {
+				try {
+					action.accept(this);
+				} finally {
+					this.waiting.unlock();
+				}
+			});
+		} catch (RuntimeException e) {
 			this.waiting.unlock();
-		});
+			throw e;
+		}
 	}
 
 	@Override
@@ -431,17 +451,17 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	@Override
 	public void load(Path dir) throws IOException {
 		try (Stream<Path> stream = Files.walk(dir)) {
-			for (Path file : (Iterable<Path>) () -> stream.filter(Files::isRegularFile).map(dir::relativize).iterator()) {
-				String s = file.toString();
-				if (s.startsWith("assets")) {
+			for (Path file : (Iterable<Path>) () -> stream.filter(Files::isRegularFile).iterator()) {
+				String s = dir.relativize(file).toString().replace(File.separatorChar, '/');
+				if (s.startsWith("assets/")) {
 					String path = s.substring("assets".length() + 1);
 					this.load(path, this.assets, Files.readAllBytes(file));
-				} else if (s.startsWith("data")) {
+				} else if (s.startsWith("data/")) {
 					String path = s.substring("data".length() + 1);
 					this.load(path, this.data, Files.readAllBytes(file));
 				} else {
 					byte[] data = Files.readAllBytes(file);
-					this.root.put(Arrays.asList(s.split("/")), () -> data);
+					this.root.put(rootKey(s), () -> data);
 				}
 			}
 		}
@@ -450,42 +470,48 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	@Override
 	public void dump(ZipOutputStream zos) throws IOException {
 		this.lock();
-		for (Map.Entry<List<String>, Supplier<byte[]>> entry : this.root.entrySet()) {
-			zos.putNextEntry(new ZipEntry(String.join("/", entry.getKey())));
-			zos.write(entry.getValue().get());
-			zos.closeEntry();
-		}
+		try {
+			for (Map.Entry<List<String>, Supplier<byte[]>> entry : this.root.entrySet()) {
+				zos.putNextEntry(new ZipEntry(String.join("/", entry.getKey())));
+				zos.write(entry.getValue().get());
+				zos.closeEntry();
+			}
 
-		for (Map.Entry<Identifier, Supplier<byte[]>> entry : this.assets.entrySet()) {
-			Identifier id = entry.getKey();
-			zos.putNextEntry(new ZipEntry("assets/" + id.getNamespace() + "/" + id.getPath()));
-			zos.write(entry.getValue().get());
-			zos.closeEntry();
-		}
+			for (Map.Entry<Identifier, Supplier<byte[]>> entry : this.assets.entrySet()) {
+				Identifier id = entry.getKey();
+				zos.putNextEntry(new ZipEntry("assets/" + id.getNamespace() + "/" + id.getPath()));
+				zos.write(entry.getValue().get());
+				zos.closeEntry();
+			}
 
-		for (Map.Entry<Identifier, Supplier<byte[]>> entry : this.data.entrySet()) {
-			Identifier id = entry.getKey();
-			zos.putNextEntry(new ZipEntry("data/" + id.getNamespace() + "/" + id.getPath()));
-			zos.write(entry.getValue().get());
-			zos.closeEntry();
+			for (Map.Entry<Identifier, Supplier<byte[]>> entry : this.data.entrySet()) {
+				Identifier id = entry.getKey();
+				zos.putNextEntry(new ZipEntry("data/" + id.getNamespace() + "/" + id.getPath()));
+				zos.write(entry.getValue().get());
+				zos.closeEntry();
+			}
+		} finally {
+			this.waiting.unlock();
 		}
-		this.waiting.unlock();
 	}
 
 	@Override
 	public void load(ZipInputStream stream) throws IOException {
 		ZipEntry entry;
 		while ((entry = stream.getNextEntry()) != null) {
-			String s = entry.toString();
-			if (s.startsWith("assets")) {
+			if (entry.isDirectory()) {
+				continue;
+			}
+			String s = entry.getName();
+			if (s.startsWith("assets/")) {
 				String path = s.substring("assets".length() + 1);
 				this.load(path, this.assets, this.read(entry, stream));
-			} else if (s.startsWith("data")) {
+			} else if (s.startsWith("data/")) {
 				String path = s.substring("data".length() + 1);
 				this.load(path, this.data, this.read(entry, stream));
 			} else {
 				byte[] data = this.read(entry, stream);
-				this.root.put(Arrays.asList(s.split("/")), () -> data);
+				this.root.put(rootKey(s), () -> data);
 			}
 		}
 	}
@@ -556,12 +582,14 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 		// lock
 		this.lock();
-		if (DUMP) {
-			this.dump();
+		try {
+			if (DUMP) {
+				this.dump();
+			}
+		} finally {
+			// unlock
+			this.waiting.unlock();
 		}
-
-		// unlock
-		this.waiting.unlock();
 	}
 
 	private static byte[] serialize(Object object) {
@@ -581,15 +609,14 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	protected byte[] read(ZipEntry entry, InputStream stream) throws IOException {
-		byte[] data = new byte[Math.toIntExact(entry.getSize())];
-		if (stream.read(data) != data.length) {
-			throw new IOException("Zip stream was cut off! (maybe incorrect zip entry length? maybe u didn't flush your stream?)");
-		}
-		return data;
+		return stream.readAllBytes();
 	}
 
 	protected void load(String fullPath, Map<Identifier, Supplier<byte[]>> map, byte[] data) {
 		int sep = fullPath.indexOf('/');
+		if (sep <= 0 || sep == fullPath.length() - 1) {
+			throw new IllegalArgumentException("Invalid resource path: " + fullPath);
+		}
 		String namespace = fullPath.substring(0, sep);
 		String path = fullPath.substring(sep + 1);
 		map.put(Identifier.fromNamespaceAndPath(namespace, path), () -> data);
@@ -629,6 +656,23 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	private Map<Identifier, Supplier<byte[]>> getSys(PackType side) {
 		return side == PackType.CLIENT_RESOURCES ? this.assets : this.data;
+	}
+
+	private static List<String> rootKey(String path) {
+		String normalized = path.replace('\\', '/');
+		if (normalized.isEmpty()
+				|| normalized.startsWith("/")
+				|| normalized.contains(":")
+				|| normalized.endsWith("/")) {
+			throw new IllegalArgumentException("Invalid root resource path: " + path);
+		}
+		String[] split = normalized.split("/");
+		for (String segment : split) {
+			if (segment.isEmpty() || segment.equals(".") || segment.equals("..")) {
+				throw new IllegalArgumentException("Invalid root resource path: " + path);
+			}
+		}
+		return List.of(split);
 	}
 
 	private class Memoized<T> implements Supplier<byte[]> {
