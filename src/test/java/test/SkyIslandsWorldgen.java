@@ -1,17 +1,17 @@
 package test;
 
 import com.google.gson.JsonPrimitive;
-import net.devtech.arrp.json.JsonBytes;
-import net.devtech.arrp.json.timeline.JTimeline;
-import net.devtech.arrp.json.worldgen.JAttributeValue;
-import net.devtech.arrp.json.worldgen.biome.JBiome;
-import net.devtech.arrp.json.worldgen.dimension.JDimension;
-import net.devtech.arrp.json.worldgen.dimension.JDimensionType;
-import net.devtech.arrp.json.worldgen.feature.JConfiguredFeature;
-import net.devtech.arrp.json.worldgen.feature.JPlacedFeature;
-import net.devtech.arrp.json.worldgen.noise.JNoiseSettings;
-import net.devtech.arrp.json.worldgen.structure.JStructure;
-import net.devtech.arrp.json.worldgen.structure.JStructureSet;
+import net.vampirestudios.arrp.json.JsonBytes;
+import net.vampirestudios.arrp.json.timeline.JTimeline;
+import net.vampirestudios.arrp.json.worldgen.JAttributeValue;
+import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
+import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
+import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
+import net.vampirestudios.arrp.json.worldgen.feature.JConfiguredFeature;
+import net.vampirestudios.arrp.json.worldgen.feature.JPlacedFeature;
+import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
+import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
+import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
 import net.minecraft.tags.BlockTags;
 
 import java.util.HashMap;

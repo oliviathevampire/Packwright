@@ -17,15 +17,15 @@
   "environment": "*",
   "entrypoints": {
     "preLaunch": [
-      "net.devtech.arrp.ARRP"
+		"net.vampirestudios.arrp.ARRP"
     ]
   },
   "mixins": [
     "arrp.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.18.3",
-    "minecraft": ">=26.1-alpha.1"
+    "fabricloader": ">=0.18.4",
+    "minecraft": ">=1.21.11 <26.1"
   },
   "custom": {
     "modmenu": {

@@ -2,27 +2,29 @@ package test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.devtech.arrp.api.RuntimeResourcePack;
-import net.devtech.arrp.impl.RuntimeResourcePackImpl;
-import net.devtech.arrp.json.JsonBytes;
-import net.devtech.arrp.json.ResourceLocationTypeAdapter;
-import net.devtech.arrp.json.blockstate.Connectables;
-import net.devtech.arrp.json.blockstate.JState;
-import net.devtech.arrp.json.blockstate.JVariant;
-import net.devtech.arrp.json.equipmentinfo.JEquipmentModel;
-import net.devtech.arrp.json.equipmentinfo.JLayer;
-import net.devtech.arrp.json.equipmentinfo.LayerType;
-import net.devtech.arrp.json.iteminfo.JItemInfo;
-import net.devtech.arrp.json.iteminfo.model.*;
-import net.devtech.arrp.json.iteminfo.property.*;
-import net.devtech.arrp.json.iteminfo.tint.JTint;
-import net.devtech.arrp.json.iteminfo.tint.JTintConstant;
-import net.devtech.arrp.json.iteminfo.tint.JTintDye;
-import net.devtech.arrp.json.iteminfo.tint.JTintTeam;
-import net.devtech.arrp.json.lang.JLang;
-import net.devtech.arrp.json.models.JModel;
-import net.devtech.arrp.json.models.JTextures;
-import net.devtech.arrp.json.worldgen.dimension.JDimensionType;
+import net.vampirestudios.arrp.api.RuntimeResourcePack;
+import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
+import net.vampirestudios.arrp.json.JsonBytes;
+import net.vampirestudios.arrp.json.ResourceLocationTypeAdapter;
+import net.vampirestudios.arrp.json.blockstate.Connectables;
+import net.vampirestudios.arrp.json.blockstate.JState;
+import net.vampirestudios.arrp.json.blockstate.JVariant;
+import net.vampirestudios.arrp.json.entityVariants.*;
+import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
+import net.vampirestudios.arrp.json.equipmentinfo.JLayer;
+import net.vampirestudios.arrp.json.equipmentinfo.LayerType;
+import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
+import net.vampirestudios.arrp.json.iteminfo.model.*;
+import net.vampirestudios.arrp.json.iteminfo.property.*;
+import net.vampirestudios.arrp.json.iteminfo.tint.JTint;
+import net.vampirestudios.arrp.json.iteminfo.tint.JTintConstant;
+import net.vampirestudios.arrp.json.iteminfo.tint.JTintDye;
+import net.vampirestudios.arrp.json.iteminfo.tint.JTintTeam;
+import net.vampirestudios.arrp.json.lang.JLang;
+import net.vampirestudios.arrp.json.models.JModel;
+import net.vampirestudios.arrp.json.models.JTextures;
+import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
+import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
@@ -31,10 +33,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static net.devtech.arrp.json.blockstate.JState.*;
-import static net.devtech.arrp.json.loot.JLootTable.*;
-import static net.devtech.arrp.json.models.JModel.*;
 
 public class RRPPreTest {
 
@@ -58,11 +56,79 @@ public class RRPPreTest {
 				.addCase(JSelectCase.of("Dirt", JModelBasic.of("minecraft:block/dirt")))
 				.addCase(JSelectCase.of("Coal", JItemModel.rangeDispatch()
 						.property(JPropertyCount.count())
+						.property(JPropertyCount.count())
 						.entry(JRangeEntry.of(10, JModelBasic.of("minecraft:item/charcoal")))
 						.fallback(JModelBasic.of("minecraft:item/coal"))
 				))
 				.fallback(JModelBasic.of("minecraft:block/stone"))), Identifier.fromNamespaceAndPath("test", "test_item"));
-		pack.addEquipmentModel(JEquipmentModel.builder().addLayer(LayerType.HUMANOID, JLayer.builder("test:a/test").build()).build(), Identifier.fromNamespaceAndPath("test", "test_armor"));
+		pack.addEquipmentModel(JEquipmentModel.model()
+				.addLayer(LayerType.HUMANOID, JLayer.layer().texture(Identifier.fromNamespaceAndPath("test", "a/test"))),
+				Identifier.fromNamespaceAndPath("test", "test_armor")
+		);
+		pack.addWolfVariant(
+				Identifier.fromNamespaceAndPath("mymod", "golden"),
+				JWolfVariant.wolfVariant()
+						.assets(
+								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden"),
+								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden_tame"),
+								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden_angry")
+						)
+						.spawnConditions(JSpawnPrioritySelectors.single(JBiomeSpawnCondition.biomeCondition()
+								.biome(Identifier.fromNamespaceAndPath("minecraft", "forest")),
+								1
+						))
+		);
+		pack.addZombieNautilusVariant(
+				Identifier.fromNamespaceAndPath("mymod", "warm_reef"),
+				JZombieNautilusVariant.zombieNautilusVariant()
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/zombie_nautilus/warm_reef"))
+						.model(JZombieNautilusVariant.ModelType.WARM)
+						.spawnConditions(JSpawnPrioritySelectors.single(JBiomeSpawnCondition.biomeCondition()
+								.biomeTag(Identifier.fromNamespaceAndPath("minecraft", "is_ocean")),
+								1
+						))
+		);
+		pack.addSimpleMobVariant(
+				Identifier.fromNamespaceAndPath("minecraft","frog_variant"),
+				Identifier.fromNamespaceAndPath("mymod","toxic"),
+				JSimpleMobVariant.mobVariant()
+						.assetId(Identifier.fromNamespaceAndPath("mymod","entity/frog/toxic"))
+						.spawnConditions(JSpawnPrioritySelectors.single(JBiomeSpawnCondition.biomeCondition()
+								.biome(Identifier.fromNamespaceAndPath("minecraft", "forest")),
+								1
+						))
+		);
+		var spawns = JSpawnPrioritySelectors.selectors()
+				.add(JMoonBrightnessSpawnCondition.moonBrightness().range(MinMaxBounds.Doubles.atMost(0.25f)), 1)
+				.freeze();
+
+		pack.addChickenVariant(
+				Identifier.fromNamespaceAndPath("mymod", "frost_chicken"),
+				JChickenVariant.chickenVariant()
+						.model(JChickenVariant.ModelType.COLD)
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/chicken/frost"))
+						.spawnConditions(spawns)
+		);
+		pack.addCowVariant(
+				Identifier.fromNamespaceAndPath("mymod", "savanna"),
+				JCowVariant.cowVariant()
+						.model(JCowVariant.ModelType.WARM)
+						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/cow/savanna"))
+		);
+		pack.addWolfSoundVariant(
+				Identifier.fromNamespaceAndPath("mymod", "angryish"),
+				JWolfSoundVariant.wolfSoundVariant()
+						.ambientSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.ambient"))
+						.deathSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.death"))
+						.growlSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.growl"))
+						.hurtSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.hurt"))
+						.pantSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.pant"))
+						.whineSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.whine"))
+		);
+		pack.addItemModelInfo(
+				JItemInfo.item().model(JItemModel.model("test:block/model").tint(JTint.dye(0xFFFFFF))),
+				Identifier.fromNamespaceAndPath("mymod", "test_block")
+		);
 		pack.dumpDirect(Path.of("aaaa"));
 
 		JState iron_block = state(variant(JState.model(id("block/iron_block"))));
@@ -247,79 +313,73 @@ public class RRPPreTest {
 				.fallback(JModelBasic.of("minecraft:block/stone").tint(new JTintDye(0xFF00FF)));
 		System.out.println(JsonBytes.encodeToPrettyString(JItemInfo.CODEC, JItemInfo.item().model(selectModel)));
 
-		JEquipmentModel eq = JEquipmentModel.builder()
-				.addLayer("wings", JLayer.builder("minecraft:elytra").usePlayerTexture(true).build())
-				.build();
+		JEquipmentModel eq = JEquipmentModel.model()
+				.addLayer("wings",
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("minecraft", "elytra"))
+								.usePlayerTexture(true)
+				);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, eq));
 
-		JEquipmentModel armorModel = JEquipmentModel.builder()
+		JEquipmentModel armorModel = JEquipmentModel.model()
 				// leather leggings, dyeable with default color
 				.addLayer(LayerType.HUMANOID_LEGGINGS,
-						JLayer.builder("minecraft:leather_leggings")
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather_leggings"))
 								.dyeable(Optional.of(0xA06540))   // default brown if undyed
-								.build()
 				)
 				// main body layer, dyeable
 				.addLayer(LayerType.HUMANOID,
-						JLayer.builder("minecraft:leather")
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather"))
 								.dyeable(Optional.empty())        // no default color
-								.build()
 				)
-				// overlay (non‑dyeable)
+				// overlay (non-dyeable)
 				.addLayer(LayerType.HUMANOID,
-						JLayer.builder("minecraft:leather_overlay")
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather_overlay"))
 								.usePlayerTexture(false)
-								.build()
-				)
-				.build();
+				);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, armorModel));
 
-		JEquipmentModel saddleModel = JEquipmentModel.builder()
+		JEquipmentModel saddleModel = JEquipmentModel.model()
 				.addLayer(LayerType.HORSE_BODY,
-						JLayer.builder("minecraft:saddle")
-								.build()
-				)
-				.build();
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("minecraft", "saddle"))
+				);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, saddleModel));
 
-		JEquipmentModel backpack = JEquipmentModel.builder()
+		JEquipmentModel backpack = JEquipmentModel.model()
 				.addLayerCustom("backpack",
-						JLayer.builder("mymod:backpack")
-								.build()
-				)
-				.build();
+						JLayer.layer()
+								.texture(Identifier.fromNamespaceAndPath("mymod", "backpack"))
+				);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, backpack));
 
-		JLayer wolfLayer = JLayer.builder("mymod:wolf_tag")
-				.usePlayerTexture(false)
-				.build();
+		JLayer wolfLayer = JLayer.layer()
+				.texture(Identifier.fromNamespaceAndPath("mymod", "wolf_tag"))
+				.usePlayerTexture(false);
 
-		JLayer bodyLayer = JLayer.builder("mymod:wolf_body")
-				.dyeable(Optional.of(0xCCCCCC))
-				.build();
+		JLayer bodyLayer = JLayer.layer()
+				.texture(Identifier.fromNamespaceAndPath("mymod", "wolf_body"))
+				.dyeable(Optional.of(0xCCCCCC));
 
-		JEquipmentModel wolfWithTag = JEquipmentModel.builder()
+		JEquipmentModel wolfWithTag = JEquipmentModel.model()
 				.addLayer(LayerType.WOLF_BODY, bodyLayer)
-				.addLayerCustom("wolf_tag", wolfLayer)
-				.build();
+				.addLayerCustom("wolf_tag", wolfLayer);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, wolfWithTag));
 
-		JEquipmentModel model1 = JEquipmentModel.builder()
+		JEquipmentModel model1 = JEquipmentModel.model()
 				.addLayer(LayerType.HORSE_BODY,
-						JLayer.builder("minecraft:diamond")
-								.build()
+						JLayer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
 				)
 				.addLayer(LayerType.HUMANOID,
-						JLayer.builder("minecraft:diamond")
-								.build()
+						JLayer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
 				)
 				.addLayer(LayerType.HUMANOID_LEGGINGS,
-						JLayer.builder("minecraft:diamond")
-								.build()
-				)
-				.build();
+						JLayer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
+				);
 		System.out.println(JsonBytes.encodeToPrettyString(JEquipmentModel.CODEC, model1));
-
 
 		var baseModel = id("test", "furniture/aaaaaaaaa");
 

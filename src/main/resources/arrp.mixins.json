@@ -3,9 +3,9 @@
 	"package": "net.devtech.arrp.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"FileResourcePackProviderMixin",
-		"LifecycledResourceManagerImplMixin",
-		"ResourceAccessor"
+		"net.vampirestudios.arrp.mixin.FileResourcePackProviderMixin",
+		"net.vampirestudios.arrp.mixin.LifecycledResourceManagerImplMixin",
+		"net.vampirestudios.arrp.mixin.ResourceAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

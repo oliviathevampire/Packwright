@@ -3,8 +3,8 @@ package test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.devtech.arrp.json.JsonBytes;
-import net.devtech.arrp.json.timeline.JTimeline;
+import net.vampirestudios.arrp.json.JsonBytes;
+import net.vampirestudios.arrp.json.timeline.JTimeline;
 
 public final class BuiltinTimelines {
 

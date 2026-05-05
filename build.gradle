@@ -1,7 +1,7 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
     id 'maven-publish'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
+    id "me.modmuss50.mod-publish-plugin" version "1.1.0"
 }
 
 version = project.mod_version
@@ -11,6 +11,10 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation fabricApi.module('fabric-api-base', project.fabric_version)
+}
+
+test {
+    failOnNoDiscoveredTests = false
 }
 
 processResources {
@@ -23,11 +27,11 @@ processResources {
 
 java {
     withSourcesJar()
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+    it.options.release = 25
 }
 
 publishing {
@@ -50,27 +54,18 @@ publishing {
     }
 }
 
-unifiedPublishing {
-    project {
-        gameVersions = [minecraft_version]
-        gameLoaders = ["fabric"]
-
-        mainPublication tasks.jar
-
-        var cfToken = project.findProperty("cf_token")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "463113" // Required, must be a string, ID of CurseForge project
-            }
-        }
-
-        var mrToken = project.findProperty("mr_token")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "USLVyT7V" // Required, must be a string, ID of Modrinth project
-            }
+publishMods {
+    file = jar.archiveFile
+    changelog = "* Added Entity Variant Support\n* Updated to 1.21.11\n* Added some more item model properties\n* Cleaned up some code"
+    type = STABLE
+    modLoaders.add("fabric")
+    modrinth {
+        projectId = "USLVyT7V"
+        accessToken = mr_token
+        minecraftVersionRange {
+            start = "1.21.11"
+            end = "latest"
+            includeSnapshots = true
         }
     }
 }
