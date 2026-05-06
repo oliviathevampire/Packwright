@@ -56,16 +56,16 @@ publishing {
 
 publishMods {
     file = jar.archiveFile
-    changelog = "* Added Entity Variant Support\n* Updated to 1.21.11\n* Added some more item model properties\n* Cleaned up some code"
+    changelog = "* Improved & Added a lot of World Gen stuff\n* Updated to 26.1.2\n* Cleaned up a lot of code"
     type = STABLE
     modLoaders.add("fabric")
     modrinth {
         projectId = "USLVyT7V"
         accessToken = mr_token
         minecraftVersionRange {
-            start = "1.21.11"
+            start = "26.1.2"
             end = "latest"
-            includeSnapshots = true
+            includeSnapshots = false
         }
     }
 }

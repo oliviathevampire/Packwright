@@ -1,31 +1,27 @@
 package net.vampirestudios.arrp.json.worldgen.feature;
 
-import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.MapLike;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.vampirestudios.arrp.json.worldgen.HeightProvider;
+import net.vampirestudios.arrp.json.worldgen.IntProvider;
+import net.vampirestudios.arrp.json.worldgen.VerticalAnchor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class JPlacedFeature implements Cloneable {
+	public static final Codec<JPlacedFeature> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Codec.STRING.fieldOf("feature").forGetter(x -> x.feature),
+			PlacementModifier.CODEC.listOf().fieldOf("placement").forGetter(x -> x.placement)
+	).apply(i, (feature, placement) -> new JPlacedFeature().featureId(feature).placement(placement)));
 
-	public static final Codec<JPlacedFeature> CODEC = new Codec<>() {
-		@Override
-		public <T> DataResult<T> encode(JPlacedFeature feature, DynamicOps<T> ops, T prefix) {
-			JsonObject json = feature.toJson();
-			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, json).convert(ops).getValue());
-		}
-
-		@Override
-		public <T> DataResult<Pair<JPlacedFeature, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			if (!el.isJsonObject()) {
-				return DataResult.error(() -> "Placed feature must be an object");
-			}
-			return DataResult.success(Pair.of(fromJson(el.getAsJsonObject()), input));
-		}
-	};
-
-	private JsonElement feature;     // string or object
-	private JsonArray placement;     // array of modifiers
-	private final JsonObject extra = new JsonObject();
+	private String feature;
+	private List<PlacementModifier> placement = new ArrayList<>();
 
 	public static JPlacedFeature placed() {
 		return new JPlacedFeature();
@@ -35,129 +31,345 @@ public class JPlacedFeature implements Cloneable {
 		return new JPlacedFeature().featureId(featureId);
 	}
 
-	public static JPlacedFeature fromJson(JsonObject json) {
-		return new JPlacedFeature().json(json);
-	}
-
-	public JPlacedFeature json(JsonObject json) {
-		this.feature = null;
-		this.placement = null;
-		this.extra.entrySet().clear();
-
-		if (json == null) return this;
-
-		if (json.has("feature")) {
-			JsonElement f = json.get("feature");
-			this.feature = f == null ? null : f.deepCopy();
-		}
-		if (json.has("placement") && json.get("placement").isJsonArray()) {
-			this.placement = json.getAsJsonArray("placement").deepCopy();
-		}
-
-		for (String key : json.keySet()) {
-			if (!isKnown(key)) {
-				JsonElement val = json.get(key);
-				if (val != null) this.extra.add(key, val.deepCopy());
-			}
-		}
-
-		return this;
-	}
-
-	// Core setters
-
-	public JPlacedFeature feature(JsonElement feature) {
-		this.feature = feature == null ? null : feature.deepCopy();
-		return this;
-	}
-
 	public JPlacedFeature featureId(String id) {
-		if (id == null) {
-			this.feature = null;
-		} else {
-			this.feature = new JsonPrimitive(id);
-		}
+		this.feature = id;
 		return this;
 	}
 
-	public JPlacedFeature placement(JsonArray placement) {
-		this.placement = placement == null ? null : placement.deepCopy();
+	public JPlacedFeature placement(List<PlacementModifier> placement) {
+		this.placement = new ArrayList<>(placement);
 		return this;
 	}
 
-	public JPlacedFeature extra(String key, JsonElement value) {
-		if (key != null && value != null && !isKnown(key)) {
-			this.extra.add(key, value.deepCopy());
-		}
+	public JPlacedFeature modifier(PlacementModifier modifier) {
+		if (modifier != null) this.placement.add(modifier);
 		return this;
-	}
-
-	// Convenience helpers (placement modifiers)
-
-	private JsonArray ensurePlacement() {
-		if (this.placement == null) this.placement = new JsonArray();
-		return this.placement;
 	}
 
 	public JPlacedFeature count(int count) {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("type", "minecraft:count");
-		obj.addProperty("count", count);
-		ensurePlacement().add(obj);
-		return this;
+		return modifier(PlacementModifier.count(count));
+	}
+
+	public JPlacedFeature count(IntProvider count) {
+		return modifier(PlacementModifier.count(count));
+	}
+
+	public JPlacedFeature countOnEveryLayer(int count) {
+		return modifier(PlacementModifier.countOnEveryLayer(count));
+	}
+
+	public JPlacedFeature rarityFilter(int chance) {
+		return modifier(PlacementModifier.rarityFilter(chance));
 	}
 
 	public JPlacedFeature inSquare() {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("type", "minecraft:in_square");
-		ensurePlacement().add(obj);
-		return this;
+		return modifier(PlacementModifier.inSquare());
 	}
 
 	public JPlacedFeature heightmap(String heightmap) {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("type", "minecraft:heightmap");
-		obj.addProperty("heightmap", heightmap);
-		ensurePlacement().add(obj);
-		return this;
+		return modifier(PlacementModifier.heightmap(heightmap));
+	}
+
+	public JPlacedFeature heightRange(HeightProvider height) {
+		return modifier(PlacementModifier.heightRange(height));
+	}
+
+	public JPlacedFeature uniformHeight(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+		return heightRange(HeightProvider.uniform(minInclusive, maxInclusive));
+	}
+
+	public JPlacedFeature randomOffset(int xzSpread, int ySpread) {
+		return modifier(PlacementModifier.randomOffset(xzSpread, ySpread));
+	}
+
+	public JPlacedFeature randomOffset(IntProvider xzSpread, IntProvider ySpread) {
+		return modifier(PlacementModifier.randomOffset(xzSpread, ySpread));
+	}
+
+	public JPlacedFeature surfaceWaterDepthFilter(int maxWaterDepth) {
+		return modifier(PlacementModifier.surfaceWaterDepthFilter(maxWaterDepth));
+	}
+
+	public JPlacedFeature blockPredicateFilter(BlockPredicate predicate) {
+		return modifier(PlacementModifier.blockPredicateFilter(predicate));
+	}
+
+	public JPlacedFeature environmentScan(String direction, BlockPredicate targetCondition, int maxSteps) {
+		return modifier(PlacementModifier.environmentScan(direction, targetCondition, maxSteps));
 	}
 
 	public JPlacedFeature biomeFilter() {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("type", "minecraft:biome");
-		ensurePlacement().add(obj);
-		return this;
+		return modifier(PlacementModifier.biome());
 	}
 
-	public JsonObject toJson() {
-		JsonObject out = new JsonObject();
-		if (this.feature != null) out.add("feature", this.feature.deepCopy());
-		if (this.placement != null) out.add("placement", this.placement.deepCopy());
-		for (String key : this.extra.keySet()) {
-			JsonElement val = this.extra.get(key);
-			if (val != null) out.add(key, val.deepCopy());
-		}
-		return out;
+	public String getFeature() {
+		return feature;
+	}
+
+	public List<PlacementModifier> getPlacement() {
+		return List.copyOf(placement);
 	}
 
 	@Override
 	public JPlacedFeature clone() {
 		try {
 			JPlacedFeature clone = (JPlacedFeature) super.clone();
-			clone.feature = this.feature == null ? null : this.feature.deepCopy();
-			clone.placement = this.placement == null ? null : this.placement.deepCopy();
-			clone.extra.entrySet().clear();
-			for (String key : this.extra.keySet()) {
-				JsonElement val = this.extra.get(key);
-				if (val != null) clone.extra.add(key, val.deepCopy());
-			}
+			clone.placement = new ArrayList<>(this.placement);
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new InternalError(e);
 		}
 	}
 
-	private static boolean isKnown(String key) {
-		return "feature".equals(key) || "placement".equals(key);
+	public interface PlacementModifier {
+		Codec<PlacementModifier> CODEC = new Codec<>() {
+			@Override
+			public <T> DataResult<Pair<PlacementModifier, T>> decode(DynamicOps<T> ops, T input) {
+				return ops.getMap(input).flatMap(map -> {
+					String type = string(map, ops, "type", "");
+					return switch (normalizeType(type)) {
+						case "count" -> CountPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "count_on_every_layer" -> CountOnEveryLayerPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "rarity_filter" -> RarityFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "in_square" -> InSquarePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "heightmap" -> HeightmapPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "height_range" -> HeightRangePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "random_offset" -> RandomOffsetPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "surface_water_depth_filter" -> SurfaceWaterDepthFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "block_predicate_filter" -> BlockPredicateFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "environment_scan" -> EnvironmentScanPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "biome" -> BiomeFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						default -> DataResult.error(() -> "Unsupported placement modifier type: " + type);
+					};
+				});
+			}
+
+			@Override
+			public <T> DataResult<T> encode(PlacementModifier input, DynamicOps<T> ops, T prefix) {
+				if (input instanceof CountPlacement count) return CountPlacement.CODEC.codec().encode(count, ops, prefix);
+				if (input instanceof CountOnEveryLayerPlacement countOnEveryLayer) return CountOnEveryLayerPlacement.CODEC.codec().encode(countOnEveryLayer, ops, prefix);
+				if (input instanceof RarityFilterPlacement rarityFilter) return RarityFilterPlacement.CODEC.codec().encode(rarityFilter, ops, prefix);
+				if (input instanceof InSquarePlacement inSquare) return InSquarePlacement.CODEC.codec().encode(inSquare, ops, prefix);
+				if (input instanceof HeightmapPlacement heightmap) return HeightmapPlacement.CODEC.codec().encode(heightmap, ops, prefix);
+				if (input instanceof HeightRangePlacement heightRange) return HeightRangePlacement.CODEC.codec().encode(heightRange, ops, prefix);
+				if (input instanceof RandomOffsetPlacement randomOffset) return RandomOffsetPlacement.CODEC.codec().encode(randomOffset, ops, prefix);
+				if (input instanceof SurfaceWaterDepthFilterPlacement waterDepth) return SurfaceWaterDepthFilterPlacement.CODEC.codec().encode(waterDepth, ops, prefix);
+				if (input instanceof BlockPredicateFilterPlacement predicateFilter) return BlockPredicateFilterPlacement.CODEC.codec().encode(predicateFilter, ops, prefix);
+				if (input instanceof EnvironmentScanPlacement environmentScan) return EnvironmentScanPlacement.CODEC.codec().encode(environmentScan, ops, prefix);
+				if (input instanceof BiomeFilterPlacement biome) return BiomeFilterPlacement.CODEC.codec().encode(biome, ops, prefix);
+				return DataResult.error(() -> "Unsupported placement modifier: " + input.getClass().getSimpleName());
+			}
+		};
+
+		static PlacementModifier count(int count) { return count(IntProvider.constant(count)); }
+		static PlacementModifier count(IntProvider count) { return new CountPlacement(count); }
+		static PlacementModifier countOnEveryLayer(int count) { return new CountOnEveryLayerPlacement(count); }
+		static PlacementModifier rarityFilter(int chance) { return new RarityFilterPlacement(chance); }
+		static PlacementModifier inSquare() { return new InSquarePlacement(); }
+		static PlacementModifier heightmap(String heightmap) { return new HeightmapPlacement(heightmap); }
+		static PlacementModifier heightRange(HeightProvider height) { return new HeightRangePlacement(height); }
+		static PlacementModifier randomOffset(int xzSpread, int ySpread) { return randomOffset(IntProvider.constant(xzSpread), IntProvider.constant(ySpread)); }
+		static PlacementModifier randomOffset(IntProvider xzSpread, IntProvider ySpread) { return new RandomOffsetPlacement(xzSpread, ySpread); }
+		static PlacementModifier surfaceWaterDepthFilter(int maxWaterDepth) { return new SurfaceWaterDepthFilterPlacement(maxWaterDepth); }
+		static PlacementModifier blockPredicateFilter(BlockPredicate predicate) { return new BlockPredicateFilterPlacement(predicate); }
+		static PlacementModifier environmentScan(String direction, BlockPredicate targetCondition, int maxSteps) {
+			return new EnvironmentScanPlacement(direction, targetCondition, null, maxSteps);
+		}
+		static PlacementModifier biome() { return new BiomeFilterPlacement(); }
+	}
+
+	public record CountPlacement(IntProvider count) implements PlacementModifier {
+		public static final MapCodec<CountPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:count"),
+				IntProvider.CODEC.fieldOf("count").forGetter(CountPlacement::count)
+		).apply(i, (type, count) -> new CountPlacement(count)));
+	}
+
+	public record CountOnEveryLayerPlacement(int count) implements PlacementModifier {
+		public static final MapCodec<CountOnEveryLayerPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:count_on_every_layer"),
+				Codec.INT.fieldOf("count").forGetter(CountOnEveryLayerPlacement::count)
+		).apply(i, (type, count) -> new CountOnEveryLayerPlacement(count)));
+	}
+
+	public record RarityFilterPlacement(int chance) implements PlacementModifier {
+		public static final MapCodec<RarityFilterPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:rarity_filter"),
+				Codec.INT.fieldOf("chance").forGetter(RarityFilterPlacement::chance)
+		).apply(i, (type, chance) -> new RarityFilterPlacement(chance)));
+	}
+
+	public record InSquarePlacement() implements PlacementModifier {
+		public static final MapCodec<InSquarePlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:in_square")
+		).apply(i, type -> new InSquarePlacement()));
+	}
+
+	public record HeightmapPlacement(String heightmap) implements PlacementModifier {
+		public static final MapCodec<HeightmapPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:heightmap"),
+				Codec.STRING.fieldOf("heightmap").forGetter(HeightmapPlacement::heightmap)
+		).apply(i, (type, heightmap) -> new HeightmapPlacement(heightmap)));
+	}
+
+	public record HeightRangePlacement(HeightProvider height) implements PlacementModifier {
+		public static final MapCodec<HeightRangePlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:height_range"),
+				HeightProvider.CODEC.fieldOf("height").forGetter(HeightRangePlacement::height)
+		).apply(i, (type, height) -> new HeightRangePlacement(height)));
+	}
+
+	public record RandomOffsetPlacement(IntProvider xzSpread, IntProvider ySpread) implements PlacementModifier {
+		public static final MapCodec<RandomOffsetPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:random_offset"),
+				IntProvider.CODEC.fieldOf("xz_spread").forGetter(RandomOffsetPlacement::xzSpread),
+				IntProvider.CODEC.fieldOf("y_spread").forGetter(RandomOffsetPlacement::ySpread)
+		).apply(i, (type, xzSpread, ySpread) -> new RandomOffsetPlacement(xzSpread, ySpread)));
+	}
+
+	public record SurfaceWaterDepthFilterPlacement(int maxWaterDepth) implements PlacementModifier {
+		public static final MapCodec<SurfaceWaterDepthFilterPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:surface_water_depth_filter"),
+				Codec.INT.fieldOf("max_water_depth").forGetter(SurfaceWaterDepthFilterPlacement::maxWaterDepth)
+		).apply(i, (type, maxWaterDepth) -> new SurfaceWaterDepthFilterPlacement(maxWaterDepth)));
+	}
+
+	public record BlockPredicateFilterPlacement(BlockPredicate predicate) implements PlacementModifier {
+		public static final MapCodec<BlockPredicateFilterPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:block_predicate_filter"),
+				BlockPredicate.CODEC.fieldOf("predicate").forGetter(BlockPredicateFilterPlacement::predicate)
+		).apply(i, (type, predicate) -> new BlockPredicateFilterPlacement(predicate)));
+	}
+
+	public record EnvironmentScanPlacement(String direction, BlockPredicate targetCondition, BlockPredicate allowedSearchCondition, int maxSteps) implements PlacementModifier {
+		public static final MapCodec<EnvironmentScanPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:environment_scan"),
+				Codec.STRING.fieldOf("direction_of_search").forGetter(EnvironmentScanPlacement::direction),
+				BlockPredicate.CODEC.fieldOf("target_condition").forGetter(EnvironmentScanPlacement::targetCondition),
+				BlockPredicate.CODEC.optionalFieldOf("allowed_search_condition").forGetter(x -> java.util.Optional.ofNullable(x.allowedSearchCondition)),
+				Codec.INT.fieldOf("max_steps").forGetter(EnvironmentScanPlacement::maxSteps)
+		).apply(i, (type, direction, targetCondition, allowedSearchCondition, maxSteps) ->
+				new EnvironmentScanPlacement(direction, targetCondition, allowedSearchCondition.orElse(null), maxSteps)));
+	}
+
+	public record BiomeFilterPlacement() implements PlacementModifier {
+		public static final MapCodec<BiomeFilterPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:biome")
+		).apply(i, type -> new BiomeFilterPlacement()));
+	}
+
+	public interface BlockPredicate {
+		Codec<BlockPredicate> CODEC = new Codec<>() {
+			@Override
+			public <T> DataResult<Pair<BlockPredicate, T>> decode(DynamicOps<T> ops, T input) {
+				return ops.getMap(input).flatMap(map -> {
+					String type = string(map, ops, "type", "");
+					return switch (normalizeType(type)) {
+						case "matching_blocks" -> MatchingBlocksPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "matching_block_tag" -> MatchingBlockTagPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "would_survive" -> WouldSurvivePredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "replaceable" -> ReplaceablePredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "not" -> NotPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "all_of" -> AllOfPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "any_of" -> AnyOfPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						default -> DataResult.error(() -> "Unsupported block predicate type: " + type);
+					};
+				});
+			}
+
+			@Override
+			public <T> DataResult<T> encode(BlockPredicate input, DynamicOps<T> ops, T prefix) {
+				if (input instanceof MatchingBlocksPredicate matchingBlocks) return MatchingBlocksPredicate.CODEC.codec().encode(matchingBlocks, ops, prefix);
+				if (input instanceof MatchingBlockTagPredicate matchingTag) return MatchingBlockTagPredicate.CODEC.codec().encode(matchingTag, ops, prefix);
+				if (input instanceof WouldSurvivePredicate wouldSurvive) return WouldSurvivePredicate.CODEC.codec().encode(wouldSurvive, ops, prefix);
+				if (input instanceof ReplaceablePredicate replaceable) return ReplaceablePredicate.CODEC.codec().encode(replaceable, ops, prefix);
+				if (input instanceof NotPredicate not) return NotPredicate.CODEC.codec().encode(not, ops, prefix);
+				if (input instanceof AllOfPredicate allOf) return AllOfPredicate.CODEC.codec().encode(allOf, ops, prefix);
+				if (input instanceof AnyOfPredicate anyOf) return AnyOfPredicate.CODEC.codec().encode(anyOf, ops, prefix);
+				return DataResult.error(() -> "Unsupported block predicate: " + input.getClass().getSimpleName());
+			}
+		};
+
+		static BlockPredicate matchingBlocks(String... blocks) { return new MatchingBlocksPredicate(List.of(blocks), Offset.ZERO); }
+		static BlockPredicate matchingBlockTag(String tag) { return new MatchingBlockTagPredicate(stripTagPrefix(tag), Offset.ZERO); }
+		static BlockPredicate wouldSurvive(String state) { return new WouldSurvivePredicate(state, Offset.ZERO); }
+		static BlockPredicate replaceable() { return new ReplaceablePredicate(Offset.ZERO); }
+		static BlockPredicate not(BlockPredicate predicate) { return new NotPredicate(predicate); }
+		static BlockPredicate allOf(BlockPredicate... predicates) { return new AllOfPredicate(List.of(predicates)); }
+		static BlockPredicate anyOf(BlockPredicate... predicates) { return new AnyOfPredicate(List.of(predicates)); }
+	}
+
+	public record Offset(int x, int y, int z) {
+		public static final Offset ZERO = new Offset(0, 0, 0);
+		public static final Codec<Offset> CODEC = Codec.INT.listOf().xmap(list -> {
+			if (list.size() != 3) return ZERO;
+			return new Offset(list.get(0), list.get(1), list.get(2));
+		}, offset -> List.of(offset.x, offset.y, offset.z));
+	}
+
+	public record MatchingBlocksPredicate(List<String> blocks, Offset offset) implements BlockPredicate {
+		public static final MapCodec<MatchingBlocksPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:matching_blocks"),
+				Codec.STRING.listOf().fieldOf("blocks").forGetter(MatchingBlocksPredicate::blocks),
+				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(MatchingBlocksPredicate::offset)
+		).apply(i, (type, blocks, offset) -> new MatchingBlocksPredicate(blocks, offset)));
+	}
+
+	public record MatchingBlockTagPredicate(String tag, Offset offset) implements BlockPredicate {
+		public static final MapCodec<MatchingBlockTagPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:matching_block_tag"),
+				Codec.STRING.fieldOf("tag").forGetter(MatchingBlockTagPredicate::tag),
+				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(MatchingBlockTagPredicate::offset)
+		).apply(i, (type, tag, offset) -> new MatchingBlockTagPredicate(tag, offset)));
+	}
+
+	public record WouldSurvivePredicate(String state, Offset offset) implements BlockPredicate {
+		public static final MapCodec<WouldSurvivePredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:would_survive"),
+				Codec.STRING.fieldOf("state").forGetter(WouldSurvivePredicate::state),
+				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(WouldSurvivePredicate::offset)
+		).apply(i, (type, state, offset) -> new WouldSurvivePredicate(state, offset)));
+	}
+
+	public record ReplaceablePredicate(Offset offset) implements BlockPredicate {
+		public static final MapCodec<ReplaceablePredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:replaceable"),
+				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(ReplaceablePredicate::offset)
+		).apply(i, (type, offset) -> new ReplaceablePredicate(offset)));
+	}
+
+	public record NotPredicate(BlockPredicate predicate) implements BlockPredicate {
+		public static final MapCodec<NotPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:not"),
+				BlockPredicate.CODEC.fieldOf("predicate").forGetter(NotPredicate::predicate)
+		).apply(i, (type, predicate) -> new NotPredicate(predicate)));
+	}
+
+	public record AllOfPredicate(List<BlockPredicate> predicates) implements BlockPredicate {
+		public static final MapCodec<AllOfPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:all_of"),
+				BlockPredicate.CODEC.listOf().fieldOf("predicates").forGetter(AllOfPredicate::predicates)
+		).apply(i, (type, predicates) -> new AllOfPredicate(predicates)));
+	}
+
+	public record AnyOfPredicate(List<BlockPredicate> predicates) implements BlockPredicate {
+		public static final MapCodec<AnyOfPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:any_of"),
+				BlockPredicate.CODEC.listOf().fieldOf("predicates").forGetter(AnyOfPredicate::predicates)
+		).apply(i, (type, predicates) -> new AnyOfPredicate(predicates)));
+	}
+
+	private static String normalizeType(String type) {
+		int separator = type.indexOf(':');
+		return separator >= 0 ? type.substring(separator + 1) : type;
+	}
+
+	private static <T> String string(MapLike<T> map, DynamicOps<T> ops, String key, String fallback) {
+		T value = map.get(key);
+		return value == null ? fallback : ops.getStringValue(value).result().orElse(fallback);
+	}
+
+	private static String stripTagPrefix(String tag) {
+		return tag != null && tag.startsWith("#") ? tag.substring(1) : tag;
 	}
 }

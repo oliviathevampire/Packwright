@@ -2,8 +2,6 @@ package net.vampirestudios.arrp.json.registry;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.StringRepresentable;
 
@@ -14,8 +12,8 @@ import java.util.Optional;
 public class JDialog {
 	public static final Codec<JDialog> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Identifier.CODEC.fieldOf("type").forGetter(x -> x.type),
-			ComponentSerialization.CODEC.fieldOf("title").forGetter(x -> x.title),
-			ComponentSerialization.CODEC.optionalFieldOf("external_title").forGetter(x -> x.externalTitle),
+			Codec.STRING.fieldOf("title").forGetter(x -> x.title),
+			Codec.STRING.optionalFieldOf("external_title").forGetter(x -> x.externalTitle),
 			Codec.BOOL.optionalFieldOf("can_close_with_escape", true).forGetter(x -> x.canCloseWithEscape),
 			Codec.BOOL.optionalFieldOf("pause", false).forGetter(x -> x.pause),
 			AfterAction.CODEC.optionalFieldOf("after_action", AfterAction.CLOSE).forGetter(x -> x.afterAction),
@@ -32,8 +30,8 @@ public class JDialog {
 			.body(body).inputs(inputs).action(action).yes(yes).no(no).actions(actions).columns(columns).buttonWidth(buttonWidth)));
 
 	private Identifier type = Identifier.withDefaultNamespace("notice");
-	private Component title = Component.empty();
-	private Optional<Component> externalTitle = Optional.empty();
+	private String title = "";
+	private Optional<String> externalTitle = Optional.empty();
 	private boolean canCloseWithEscape = true;
 	private boolean pause;
 	private AfterAction afterAction = AfterAction.CLOSE;
@@ -51,10 +49,9 @@ public class JDialog {
 	public static JDialog confirmation(String title, String yes, String no) { return dialog().type("minecraft:confirmation").title(title).yes(Button.button(yes)).no(Button.button(no)); }
 	public JDialog type(String type) { return type(Identifier.tryParse(type)); }
 	public JDialog type(Identifier type) { this.type = type; return this; }
-	public JDialog title(String title) { return title(Component.literal(title)); }
-	public JDialog title(Component title) { this.title = title; return this; }
-	public JDialog externalTitle(Optional<Component> externalTitle) { this.externalTitle = externalTitle; return this; }
-	public JDialog externalTitle(String externalTitle) { this.externalTitle = Optional.of(Component.literal(externalTitle)); return this; }
+	public JDialog title(String title) { this.title = title; return this; }
+	public JDialog externalTitle(Optional<String> externalTitle) { this.externalTitle = externalTitle; return this; }
+	public JDialog externalTitle(String externalTitle) { this.externalTitle = Optional.of(externalTitle); return this; }
 	public JDialog canCloseWithEscape(boolean canCloseWithEscape) { this.canCloseWithEscape = canCloseWithEscape; return this; }
 	public JDialog pause(boolean pause) { this.pause = pause; return this; }
 	public JDialog afterAction(AfterAction afterAction) { this.afterAction = afterAction; return this; }
@@ -86,40 +83,38 @@ public class JDialog {
 	public static class Body {
 		public static final Codec<Body> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("type").forGetter(x -> x.type),
-				ComponentSerialization.CODEC.fieldOf("contents").forGetter(x -> x.contents),
+				Codec.STRING.fieldOf("contents").forGetter(x -> x.contents),
 				Codec.INT.optionalFieldOf("width", 200).forGetter(x -> x.width)
 		).apply(i, (type, contents, width) -> new Body().type(type).contents(contents).width(width)));
 
 		private Identifier type = Identifier.withDefaultNamespace("plain_message");
-		private Component contents = Component.empty();
+		private String contents = "";
 		private int width = 200;
 
 		public static Body plainMessage(String contents) { return new Body().type("minecraft:plain_message").contents(contents); }
 		public Body type(String type) { return type(Identifier.tryParse(type)); }
 		public Body type(Identifier type) { this.type = type; return this; }
-		public Body contents(String contents) { return contents(Component.literal(contents)); }
-		public Body contents(Component contents) { this.contents = contents; return this; }
+		public Body contents(String contents) { this.contents = contents; return this; }
 		public Body width(int width) { this.width = width; return this; }
 	}
 
 	public static class Button {
 		public static final Codec<Button> CODEC = RecordCodecBuilder.create(i -> i.group(
-				ComponentSerialization.CODEC.fieldOf("label").forGetter(x -> x.label),
-				ComponentSerialization.CODEC.optionalFieldOf("tooltip").forGetter(x -> x.tooltip),
+				Codec.STRING.fieldOf("label").forGetter(x -> x.label),
+				Codec.STRING.optionalFieldOf("tooltip").forGetter(x -> x.tooltip),
 				Codec.INT.optionalFieldOf("width", 150).forGetter(x -> x.width),
 				Action.CODEC.optionalFieldOf("action").forGetter(x -> x.action)
 		).apply(i, (label, tooltip, width, action) -> new Button().label(label).tooltip(tooltip).width(width).action(action)));
 
-		private Component label = Component.empty();
-		private Optional<Component> tooltip = Optional.empty();
+		private String label = "";
+		private Optional<String> tooltip = Optional.empty();
 		private int width = 150;
 		private Optional<Action> action = Optional.empty();
 
 		public static Button button(String label) { return new Button().label(label); }
-		public Button label(String label) { return label(Component.literal(label)); }
-		public Button label(Component label) { this.label = label; return this; }
-		public Button tooltip(Optional<Component> tooltip) { this.tooltip = tooltip; return this; }
-		public Button tooltip(String tooltip) { this.tooltip = Optional.of(Component.literal(tooltip)); return this; }
+		public Button label(String label) { this.label = label; return this; }
+		public Button tooltip(Optional<String> tooltip) { this.tooltip = tooltip; return this; }
+		public Button tooltip(String tooltip) { this.tooltip = Optional.of(tooltip); return this; }
 		public Button width(int width) { this.width = width; return this; }
 		public Button action(Optional<Action> action) { this.action = action; return this; }
 		public Button action(Action action) { this.action = Optional.of(action); return this; }
@@ -133,12 +128,12 @@ public class JDialog {
 		public static Action custom(String value) { return new Action(Identifier.withDefaultNamespace("custom"), Optional.of(value)); }
 	}
 
-	public record Input(Identifier type, String key, Component label) {
+	public record Input(Identifier type, String key, String label) {
 		public static final Codec<Input> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("type").forGetter(Input::type),
 				Codec.STRING.fieldOf("key").forGetter(Input::key),
-				ComponentSerialization.CODEC.fieldOf("label").forGetter(Input::label)
+				Codec.STRING.fieldOf("label").forGetter(Input::label)
 		).apply(i, Input::new));
-		public static Input text(String key, String label) { return new Input(Identifier.withDefaultNamespace("text"), key, Component.literal(label)); }
+		public static Input text(String key, String label) { return new Input(Identifier.withDefaultNamespace("text"), key, label); }
 	}
 }

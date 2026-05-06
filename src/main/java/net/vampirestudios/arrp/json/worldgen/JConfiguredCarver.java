@@ -4,8 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 public class JConfiguredCarver {
 	public static final Codec<JConfiguredCarver> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -20,6 +19,10 @@ public class JConfiguredCarver {
 		return new JConfiguredCarver();
 	}
 
+	public static JConfiguredCarver canyon() {
+		return carver().type("minecraft:canyon");
+	}
+
 	public JConfiguredCarver type(Identifier type) { this.type = type; return this; }
 	public JConfiguredCarver type(String type) { return type(Identifier.tryParse(type)); }
 	public JConfiguredCarver config(Config config) { this.config = config; return this; }
@@ -31,48 +34,53 @@ public class JConfiguredCarver {
 
 	public static class Config {
 		public static final Codec<Config> CODEC = RecordCodecBuilder.create(i -> i.group(
+				DebugSettings.CODEC.optionalFieldOf("debug_settings").forGetter(x -> Optional.ofNullable(x.debugSettings)),
 				Codec.FLOAT.fieldOf("probability").forGetter(x -> x.probability),
 				HeightProvider.CODEC.fieldOf("y").forGetter(x -> x.y),
 				FloatProvider.CODEC.fieldOf("yScale").forGetter(x -> x.yScale),
 				VerticalAnchor.CODEC.fieldOf("lava_level").forGetter(x -> x.lavaLevel),
-				Codec.STRING.listOf().fieldOf("replaceable").forGetter(x -> x.replaceable),
-				FloatProvider.CODEC.optionalFieldOf("horizontal_radius_multiplier", FloatProvider.constant(1.0F)).forGetter(x -> x.horizontalRadiusMultiplier),
-				FloatProvider.CODEC.optionalFieldOf("vertical_radius_multiplier", FloatProvider.constant(1.0F)).forGetter(x -> x.verticalRadiusMultiplier),
-				FloatProvider.CODEC.optionalFieldOf("floor_level", FloatProvider.constant(-1.0F)).forGetter(x -> x.floorLevel),
-				FloatProvider.CODEC.optionalFieldOf("vertical_rotation", FloatProvider.constant(0.0F)).forGetter(x -> x.verticalRotation),
-				CanyonShape.CODEC.optionalFieldOf("shape", new CanyonShape()).forGetter(x -> x.shape)
-		).apply(i, (probability, y, yScale, lavaLevel, replaceable, horizontal, vertical, floor, rotation, shape) -> {
+				Codec.STRING.fieldOf("replaceable").forGetter(x -> x.replaceable),
+				FloatProvider.CODEC.optionalFieldOf("horizontal_radius_multiplier").forGetter(x -> Optional.ofNullable(x.horizontalRadiusMultiplier)),
+				FloatProvider.CODEC.optionalFieldOf("vertical_radius_multiplier").forGetter(x -> Optional.ofNullable(x.verticalRadiusMultiplier)),
+				FloatProvider.CODEC.optionalFieldOf("floor_level").forGetter(x -> Optional.ofNullable(x.floorLevel)),
+				FloatProvider.CODEC.optionalFieldOf("vertical_rotation").forGetter(x -> Optional.ofNullable(x.verticalRotation)),
+				CanyonShape.CODEC.optionalFieldOf("shape").forGetter(x -> Optional.ofNullable(x.shape))
+		).apply(i, (debugSettings, probability, y, yScale, lavaLevel, replaceable, horizontal, vertical, floor, rotation, shape) -> {
 			Config out = new Config();
+			out.debugSettings = debugSettings.orElse(null);
 			out.probability = probability;
 			out.y = y;
 			out.yScale = yScale;
 			out.lavaLevel = lavaLevel;
-			out.replaceable = new ArrayList<>(replaceable);
-			out.horizontalRadiusMultiplier = horizontal;
-			out.verticalRadiusMultiplier = vertical;
-			out.floorLevel = floor;
-			out.verticalRotation = rotation;
-			out.shape = shape;
+			out.replaceable = replaceable;
+			out.horizontalRadiusMultiplier = horizontal.orElse(null);
+			out.verticalRadiusMultiplier = vertical.orElse(null);
+			out.floorLevel = floor.orElse(null);
+			out.verticalRotation = rotation.orElse(null);
+			out.shape = shape.orElse(null);
 			return out;
 		}));
 
+		private DebugSettings debugSettings;
 		private float probability = 0.1F;
 		private HeightProvider y = HeightProvider.uniform(VerticalAnchor.absolute(8), VerticalAnchor.absolute(180));
 		private FloatProvider yScale = FloatProvider.constant(1.0F);
 		private VerticalAnchor lavaLevel = VerticalAnchor.aboveBottom(8);
-		private List<String> replaceable = new ArrayList<>();
-		private FloatProvider horizontalRadiusMultiplier = FloatProvider.constant(1.0F);
-		private FloatProvider verticalRadiusMultiplier = FloatProvider.constant(1.0F);
-		private FloatProvider floorLevel = FloatProvider.constant(-1.0F);
-		private FloatProvider verticalRotation = FloatProvider.constant(0.0F);
-		private CanyonShape shape = new CanyonShape();
+		private String replaceable = "#minecraft:overworld_carver_replaceables";
+		private FloatProvider horizontalRadiusMultiplier;
+		private FloatProvider verticalRadiusMultiplier;
+		private FloatProvider floorLevel;
+		private FloatProvider verticalRotation;
+		private CanyonShape shape;
 
 		public static Config config() { return new Config(); }
+		public Config debugSettings(DebugSettings debugSettings) { this.debugSettings = debugSettings; return this; }
 		public Config probability(float probability) { this.probability = probability; return this; }
 		public Config y(HeightProvider y) { this.y = y; return this; }
+		public Config yScale(float yScale) { this.yScale = FloatProvider.constant(yScale); return this; }
 		public Config yScale(FloatProvider yScale) { this.yScale = yScale; return this; }
 		public Config lavaLevel(VerticalAnchor lavaLevel) { this.lavaLevel = lavaLevel; return this; }
-		public Config replaceable(String blockOrTag) { this.replaceable.add(blockOrTag); return this; }
+		public Config replaceable(String blockOrTag) { this.replaceable = blockOrTag; return this; }
 		public Config horizontalRadiusMultiplier(FloatProvider value) { this.horizontalRadiusMultiplier = value; return this; }
 		public Config verticalRadiusMultiplier(FloatProvider value) { this.verticalRadiusMultiplier = value; return this; }
 		public Config floorLevel(FloatProvider value) { this.floorLevel = value; return this; }
@@ -80,48 +88,64 @@ public class JConfiguredCarver {
 		public Config shape(CanyonShape shape) { this.shape = shape; return this; }
 	}
 
-	public record VerticalAnchor(String type, int value) {
-		public static final Codec<VerticalAnchor> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Codec.STRING.fieldOf("type").forGetter(VerticalAnchor::type),
-				Codec.INT.fieldOf("value").forGetter(VerticalAnchor::value)
-		).apply(i, VerticalAnchor::new));
-		public static VerticalAnchor absolute(int value) { return new VerticalAnchor("absolute", value); }
-		public static VerticalAnchor aboveBottom(int value) { return new VerticalAnchor("above_bottom", value); }
-		public static VerticalAnchor belowTop(int value) { return new VerticalAnchor("below_top", value); }
-	}
+	public static class DebugSettings {
+		public static final Codec<DebugSettings> CODEC = RecordCodecBuilder.create(i -> i.group(
+				Codec.BOOL.optionalFieldOf("debug_mode").forGetter(x -> Optional.ofNullable(x.debugMode)),
+				BlockState.CODEC.optionalFieldOf("air_state").forGetter(x -> Optional.ofNullable(x.airState)),
+				BlockState.CODEC.optionalFieldOf("water_state").forGetter(x -> Optional.ofNullable(x.waterState)),
+				BlockState.CODEC.optionalFieldOf("lava_state").forGetter(x -> Optional.ofNullable(x.lavaState)),
+				BlockState.CODEC.optionalFieldOf("barrier_state").forGetter(x -> Optional.ofNullable(x.barrierState))
+		).apply(i, (debugMode, air, water, lava, barrier) -> new DebugSettings()
+				.debugMode(debugMode.orElse(null))
+				.airState(air.orElse(null))
+				.waterState(water.orElse(null))
+				.lavaState(lava.orElse(null))
+				.barrierState(barrier.orElse(null))));
 
-	public record HeightProvider(String type, VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
-		public static final Codec<HeightProvider> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Codec.STRING.fieldOf("type").forGetter(HeightProvider::type),
-				VerticalAnchor.CODEC.fieldOf("min_inclusive").forGetter(HeightProvider::minInclusive),
-				VerticalAnchor.CODEC.fieldOf("max_inclusive").forGetter(HeightProvider::maxInclusive)
-		).apply(i, HeightProvider::new));
-		public static HeightProvider uniform(VerticalAnchor min, VerticalAnchor max) { return new HeightProvider("minecraft:uniform", min, max); }
-	}
+		private Boolean debugMode;
+		private BlockState airState;
+		private BlockState waterState;
+		private BlockState lavaState;
+		private BlockState barrierState;
 
-	public record FloatProvider(String type, float value, float minInclusive, float maxInclusive) {
-		public static final Codec<FloatProvider> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Codec.STRING.fieldOf("type").forGetter(FloatProvider::type),
-				Codec.FLOAT.optionalFieldOf("value", 0.0F).forGetter(FloatProvider::value),
-				Codec.FLOAT.optionalFieldOf("min_inclusive", 0.0F).forGetter(FloatProvider::minInclusive),
-				Codec.FLOAT.optionalFieldOf("max_inclusive", 0.0F).forGetter(FloatProvider::maxInclusive)
-		).apply(i, FloatProvider::new));
-		public static FloatProvider constant(float value) { return new FloatProvider("minecraft:constant", value, value, value); }
-		public static FloatProvider uniform(float min, float max) { return new FloatProvider("minecraft:uniform", 0.0F, min, max); }
+		public static DebugSettings debugSettings() { return new DebugSettings(); }
+		public DebugSettings debugMode(Boolean debugMode) { this.debugMode = debugMode; return this; }
+		public DebugSettings airState(BlockState state) { this.airState = state; return this; }
+		public DebugSettings waterState(BlockState state) { this.waterState = state; return this; }
+		public DebugSettings lavaState(BlockState state) { this.lavaState = state; return this; }
+		public DebugSettings barrierState(BlockState state) { this.barrierState = state; return this; }
 	}
 
 	public static class CanyonShape {
 		public static final Codec<CanyonShape> CODEC = RecordCodecBuilder.create(i -> i.group(
-				FloatProvider.CODEC.optionalFieldOf("distance_factor", FloatProvider.constant(1.0F)).forGetter(x -> x.distanceFactor),
-				FloatProvider.CODEC.optionalFieldOf("thickness", FloatProvider.constant(1.0F)).forGetter(x -> x.thickness),
-				Codec.INT.optionalFieldOf("width_smoothness", 3).forGetter(x -> x.widthSmoothness)
-		).apply(i, (distanceFactor, thickness, widthSmoothness) -> new CanyonShape().distanceFactor(distanceFactor).thickness(thickness).widthSmoothness(widthSmoothness)));
+				FloatProvider.CODEC.fieldOf("distance_factor").forGetter(x -> x.distanceFactor),
+				FloatProvider.CODEC.fieldOf("horizontal_radius_factor").forGetter(x -> x.horizontalRadiusFactor),
+				FloatProvider.CODEC.fieldOf("thickness").forGetter(x -> x.thickness),
+				Codec.FLOAT.fieldOf("vertical_radius_center_factor").forGetter(x -> x.verticalRadiusCenterFactor),
+				Codec.FLOAT.fieldOf("vertical_radius_default_factor").forGetter(x -> x.verticalRadiusDefaultFactor),
+				Codec.INT.fieldOf("width_smoothness").forGetter(x -> x.widthSmoothness)
+		).apply(i, (distanceFactor, horizontalRadiusFactor, thickness, verticalRadiusCenterFactor, verticalRadiusDefaultFactor, widthSmoothness) ->
+				new CanyonShape()
+						.distanceFactor(distanceFactor)
+						.horizontalRadiusFactor(horizontalRadiusFactor)
+						.thickness(thickness)
+						.verticalRadiusCenterFactor(verticalRadiusCenterFactor)
+						.verticalRadiusDefaultFactor(verticalRadiusDefaultFactor)
+						.widthSmoothness(widthSmoothness)));
 
-		private FloatProvider distanceFactor = FloatProvider.constant(1.0F);
-		private FloatProvider thickness = FloatProvider.constant(1.0F);
+		private FloatProvider distanceFactor = FloatProvider.uniform(0.75F, 1.0F);
+		private FloatProvider horizontalRadiusFactor = FloatProvider.uniform(0.75F, 1.0F);
+		private FloatProvider thickness = FloatProvider.trapezoid(0.0F, 6.0F, 2.0F);
+		private float verticalRadiusCenterFactor = 0.0F;
+		private float verticalRadiusDefaultFactor = 1.0F;
 		private int widthSmoothness = 3;
+
+		public static CanyonShape canyonShape() { return new CanyonShape(); }
 		public CanyonShape distanceFactor(FloatProvider distanceFactor) { this.distanceFactor = distanceFactor; return this; }
+		public CanyonShape horizontalRadiusFactor(FloatProvider horizontalRadiusFactor) { this.horizontalRadiusFactor = horizontalRadiusFactor; return this; }
 		public CanyonShape thickness(FloatProvider thickness) { this.thickness = thickness; return this; }
+		public CanyonShape verticalRadiusCenterFactor(float verticalRadiusCenterFactor) { this.verticalRadiusCenterFactor = verticalRadiusCenterFactor; return this; }
+		public CanyonShape verticalRadiusDefaultFactor(float verticalRadiusDefaultFactor) { this.verticalRadiusDefaultFactor = verticalRadiusDefaultFactor; return this; }
 		public CanyonShape widthSmoothness(int widthSmoothness) { this.widthSmoothness = widthSmoothness; return this; }
 	}
 }

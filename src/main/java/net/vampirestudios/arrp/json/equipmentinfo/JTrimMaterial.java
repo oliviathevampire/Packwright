@@ -3,8 +3,6 @@ package net.vampirestudios.arrp.json.equipmentinfo;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 
 import java.util.LinkedHashMap;
@@ -13,7 +11,7 @@ import java.util.Map;
 public class JTrimMaterial {
 	public static final Codec<JTrimMaterial> CODEC = RecordCodecBuilder.create(i -> i.group(
 			AssetGroup.MAP_CODEC.forGetter(x -> x.assets),
-			ComponentSerialization.CODEC.fieldOf("description").forGetter(x -> x.description)
+			Codec.STRING.fieldOf("description").forGetter(x -> x.description)
 	).apply(i, (assets, description) -> {
 		JTrimMaterial out = new JTrimMaterial();
 		out.assets = assets;
@@ -22,7 +20,7 @@ public class JTrimMaterial {
 	}));
 
 	private AssetGroup assets;
-	private Component description;
+	private String description;
 
 	public static JTrimMaterial trimMaterial() {
 		return new JTrimMaterial();
@@ -30,11 +28,10 @@ public class JTrimMaterial {
 
 	public JTrimMaterial assets(AssetGroup assets) { this.assets = assets; return this; }
 	public JTrimMaterial assetName(String assetName) { this.assets = AssetGroup.assetGroup(assetName); return this; }
-	public JTrimMaterial description(Component description) { this.description = description; return this; }
-	public JTrimMaterial description(String description) { return this.description(Component.literal(description)); }
+	public JTrimMaterial description(String description) { this.description = description; return this; }
 
 	public AssetGroup getAssets() { return assets; }
-	public Component getDescription() { return description; }
+	public String getDescription() { return description; }
 
 	public static class AssetGroup {
 		public static final MapCodec<AssetGroup> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(

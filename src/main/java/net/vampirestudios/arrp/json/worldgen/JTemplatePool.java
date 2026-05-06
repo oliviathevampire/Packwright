@@ -18,12 +18,44 @@ public class JTemplatePool {
 	private String fallback = "minecraft:empty";
 	private List<Element> elements = new ArrayList<>();
 
-	public static JTemplatePool pool() { return new JTemplatePool(); }
-	public JTemplatePool fallback(String fallback) { this.fallback = fallback; return this; }
-	public JTemplatePool elements(List<Element> elements) { this.elements = new ArrayList<>(elements); return this; }
-	public JTemplatePool element(Element element) { this.elements.add(element); return this; }
+	public static JTemplatePool pool() {
+		return new JTemplatePool();
+	}
+
+	public JTemplatePool fallback(String fallback) {
+		this.fallback = fallback;
+		return this;
+	}
+
+	public JTemplatePool elements(List<Element> elements) {
+		this.elements = new ArrayList<>(elements);
+		return this;
+	}
+
+	public JTemplatePool element(Element element) {
+		this.elements.add(element);
+		return this;
+	}
+
 	public JTemplatePool single(String location, String processors, Projection projection, int weight) {
 		return element(Element.single(location, processors, projection, weight));
+	}
+
+	public enum Projection implements StringRepresentable {
+		RIGID("rigid"),
+		TERRAIN_MATCHING("terrain_matching");
+
+		public static final Codec<Projection> CODEC = StringRepresentable.fromEnum(Projection::values);
+		private final String name;
+
+		Projection(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String getSerializedName() {
+			return name;
+		}
 	}
 
 	public static class Element {
@@ -45,21 +77,38 @@ public class JTemplatePool {
 			return new Element().elementType("minecraft:single_pool_element").location(location).processors(processors).projection(projection).weight(weight);
 		}
 
-		public Element elementType(String elementType) { return elementType(Identifier.tryParse(elementType)); }
-		public Element elementType(Identifier elementType) { this.elementType = elementType; return this; }
-		public Element location(Optional<String> location) { this.location = location; return this; }
-		public Element location(String location) { this.location = Optional.of(location); return this; }
-		public Element processors(String processors) { this.processors = processors; return this; }
-		public Element projection(Projection projection) { this.projection = projection; return this; }
-		public Element weight(int weight) { this.weight = weight; return this; }
-	}
+		public Element elementType(String elementType) {
+			return elementType(Identifier.tryParse(elementType));
+		}
 
-	public enum Projection implements StringRepresentable {
-		RIGID("rigid"),
-		TERRAIN_MATCHING("terrain_matching");
-		public static final Codec<Projection> CODEC = StringRepresentable.fromEnum(Projection::values);
-		private final String name;
-		Projection(String name) { this.name = name; }
-		@Override public String getSerializedName() { return name; }
+		public Element elementType(Identifier elementType) {
+			this.elementType = elementType;
+			return this;
+		}
+
+		public Element location(Optional<String> location) {
+			this.location = location;
+			return this;
+		}
+
+		public Element location(String location) {
+			this.location = Optional.of(location);
+			return this;
+		}
+
+		public Element processors(String processors) {
+			this.processors = processors;
+			return this;
+		}
+
+		public Element projection(Projection projection) {
+			this.projection = projection;
+			return this;
+		}
+
+		public Element weight(int weight) {
+			this.weight = weight;
+			return this;
+		}
 	}
 }

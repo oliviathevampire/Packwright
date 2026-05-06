@@ -244,6 +244,35 @@ public class RRPPreTest {
 						.probability(0.05F)
 						.replaceable("#minecraft:overworld_carver_replaceables")
 		);
+		pack.addConfiguredCarver(
+				Identifier.fromNamespaceAndPath("mymod", "canyon"),
+				JConfiguredCarver.canyon()
+						.config(JConfiguredCarver.Config.config()
+								.debugSettings(JConfiguredCarver.DebugSettings.debugSettings()
+										.airState(BlockState.blockState("minecraft:warped_button")
+												.property("face", "wall")
+												.property("facing", "north")
+												.property("powered", false))
+										.barrierState(BlockState.blockState("minecraft:glass"))
+										.lavaState(BlockState.blockState("minecraft:orange_stained_glass"))
+										.waterState(BlockState.blockState("minecraft:candle")
+												.property("candles", 1)
+												.property("lit", false)
+												.property("waterlogged", false)))
+								.lavaLevel(VerticalAnchor.aboveBottom(8))
+								.probability(0.01F)
+								.replaceable("#minecraft:overworld_carver_replaceables")
+								.shape(JConfiguredCarver.CanyonShape.canyonShape()
+										.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
+										.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
+										.thickness(FloatProvider.trapezoid(0.0F, 6.0F, 2.0F))
+										.verticalRadiusCenterFactor(0.0F)
+										.verticalRadiusDefaultFactor(1.0F)
+										.widthSmoothness(3))
+								.verticalRotation(FloatProvider.uniform(-0.125F, 0.125F))
+								.y(HeightProvider.uniform(VerticalAnchor.absolute(10), VerticalAnchor.absolute(67)))
+								.yScale(3.0F))
+		);
 		pack.addProcessorList(
 				Identifier.fromNamespaceAndPath("mymod", "mossy_replace"),
 				JProcessorList.processorList()
@@ -272,7 +301,7 @@ public class RRPPreTest {
 						.layer("minecraft:grass_block", 1)
 		);
 		pack.addVillagerTrade(
-				Identifier.fromNamespaceAndPath("mymod", "copper_for_emeralds"),
+				Identifier.fromNamespaceAndPath("mymod", "toolsmith/1/copper_for_emeralds"),
 				JVillagerTrade.trade()
 						.wants("minecraft:emerald", 3)
 						.gives("minecraft:copper_ingot", 8)
@@ -282,7 +311,7 @@ public class RRPPreTest {
 		pack.addTradeSet(
 				Identifier.fromNamespaceAndPath("mymod", "toolsmith_copper"),
 				JTradeSet.tradeSet()
-						.trade("mymod:copper_for_emeralds")
+						.trade("mymod:toolsmith/1/copper_for_emeralds")
 						.amount(JTradeSet.NumberProvider.uniform(1, 2))
 						.allowDuplicates(false)
 		);
