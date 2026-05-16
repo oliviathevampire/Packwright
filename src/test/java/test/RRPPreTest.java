@@ -2,6 +2,10 @@ package test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.minecraft.advancements.predicates.MinMaxBounds;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.json.JsonBytes;
@@ -10,11 +14,7 @@ import net.vampirestudios.arrp.json.blockstate.Connectables;
 import net.vampirestudios.arrp.json.blockstate.JState;
 import net.vampirestudios.arrp.json.blockstate.JVariant;
 import net.vampirestudios.arrp.json.entityVariants.*;
-import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
-import net.vampirestudios.arrp.json.equipmentinfo.JLayer;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
-import net.vampirestudios.arrp.json.equipmentinfo.LayerType;
+import net.vampirestudios.arrp.json.equipmentinfo.*;
 import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
 import net.vampirestudios.arrp.json.iteminfo.model.*;
 import net.vampirestudios.arrp.json.iteminfo.property.*;
@@ -25,13 +25,10 @@ import net.vampirestudios.arrp.json.iteminfo.tint.JTintTeam;
 import net.vampirestudios.arrp.json.lang.JLang;
 import net.vampirestudios.arrp.json.models.JModel;
 import net.vampirestudios.arrp.json.models.JTextures;
+import net.vampirestudios.arrp.json.recipe.*;
 import net.vampirestudios.arrp.json.registry.*;
 import net.vampirestudios.arrp.json.worldgen.*;
 import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
-import net.minecraft.advancements.criterion.MinMaxBounds;
-import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.BlockTags;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -55,8 +52,12 @@ public class RRPPreTest {
 	public static void main(String[] args) {
 		RuntimeResourcePack pack = RuntimeResourcePack.create("test:test");
 		pack.addLang(Identifier.tryParse("aaaa:aaaa"), new JLang().entry("aaaa", "bbbbb"));
-		pack.addLang(Identifier.tryParse("modid:lang/en_us"), new JLang().entry("item.custom", "Custom Item"));
-		pack.addLang(Identifier.tryParse("modid:lang/es_es"), new JLang().entry("item.custom", "Artículo Personalizado"));
+		pack.addLang(Identifier.tryParse("modid:en_us"), new JLang().entry("item.custom", "Custom Item"));
+		pack.addLang(Identifier.tryParse("modid:es_es"), new JLang().entry("item.custom", "Artículo Personalizado"));
+		pack.addLang(Identifier.tryParse("minecraft:en_us"), new JLang()
+				.effect(Identifier.withDefaultNamespace("fire_walking"), "Fire Walking")
+				.allPotionOf(Identifier.withDefaultNamespace("fire_walking"), "Fire Walking")
+		);
 		pack.addItemModelInfo(JItemInfo.item().model(JItemModel.select()
 				.property(JPropertyComponent.component("minecraft:item_name"))
 				.addCase(JSelectCase.of("Diamond", JModelBasic.of("minecraft:item/diamond")))
@@ -328,6 +329,39 @@ public class RRPPreTest {
 		pack.addItemModelInfo(
 				JItemInfo.item().model(JItemModel.model("test:block/model").tint(JTint.dye(0xFFFFFF))),
 				Identifier.fromNamespaceAndPath("mymod", "test_block")
+		);
+
+		pack.addRecipe(
+				Identifier.fromNamespaceAndPath("example", "diamond_pickaxe_to_block"),
+				JRecipe.shapeless(
+						JIngredients.ingredients().addFabricCustom(
+								Identifier.withDefaultNamespace("diamond_pickaxe"),
+								components -> components.addProperty("minecraft:damage", 0)
+						),
+						JResult.result(Identifier.withDefaultNamespace("diamond_block"))
+				).group("test").category("misc")
+		);
+		pack.addRecipe(Identifier.fromNamespaceAndPath("example", "pumpkin"),
+				JRecipe.shaped(
+						JPattern.pattern("PPP", "P P", "PPP"),
+						JKeys.keys().item("P", Identifier.withDefaultNamespace("pumpkin_pie")),
+						JResult.stackedResult(Identifier.withDefaultNamespace("pumpkin"), 3)
+				)
+		);
+		pack.addRecipe(
+				Identifier.fromNamespaceAndPath("example", "golden_sword"),
+				JRecipe.shapeless(
+						JIngredients.ingredients()
+								.addItem(Identifier.withDefaultNamespace("stick"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot")),
+						JResult.result(Identifier.withDefaultNamespace("golden_sword"))
+								.components(builder -> {
+									builder.addProperty("minecraft:damage", 3);
+									builder.addProperty("minecraft:rarity", "RARE");
+								})
+				)
 		);
 		pack.dumpDirect(Path.of("aaaa"));
 

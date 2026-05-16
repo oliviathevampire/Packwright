@@ -5,7 +5,8 @@
 	"mixins": [
 		"FileResourcePackProviderMixin",
 		"LifecycledResourceManagerImplMixin",
-		"ResourceAccessor"
+		"ResourceAccessor",
+		"ShapedRecipeBuilderAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

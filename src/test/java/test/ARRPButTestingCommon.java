@@ -1,5 +1,10 @@
 package test;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.component.ItemLore;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.json.advancement.*;
 import net.vampirestudios.arrp.json.blockstate.JBlockModel;
@@ -12,12 +17,6 @@ import net.vampirestudios.arrp.json.models.JFaces;
 import net.vampirestudios.arrp.json.models.JModel;
 import net.vampirestudios.arrp.json.recipe.*;
 import net.vampirestudios.arrp.json.tags.JTag;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.component.ItemLore;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -40,7 +39,7 @@ public class ARRPButTestingCommon {
 		pack.addRecipe(Identifier.fromNamespaceAndPath(MOD_ID, "pumpkin"),
 				JRecipe.shaped(
 						JPattern.pattern("PPP", "P P", "PPP"),
-						JKeys.keys().key("P", JIngredient.ingredient().item(Identifier.withDefaultNamespace("pumpkin_pie"))),
+						JKeys.keys().item("P", Identifier.withDefaultNamespace("pumpkin_pie")),
 						JResult.stackedResult(Identifier.withDefaultNamespace("pumpkin"), 3)
 				)
 		);
@@ -48,14 +47,15 @@ public class ARRPButTestingCommon {
 				Identifier.fromNamespaceAndPath(MOD_ID, "golden_sword"),
 				JRecipe.shapeless(
 						JIngredients.ingredients()
-								.add(JIngredient.ingredient().item(Identifier.withDefaultNamespace("stick")))
-								.add(JIngredient.ingredient().item(Identifier.withDefaultNamespace("gold_ingot")))
-								.add(JIngredient.ingredient().item(Identifier.withDefaultNamespace("gold_ingot")))
-								.add(JIngredient.ingredient().item(Identifier.withDefaultNamespace("gold_ingot"))),
-						JResult.result(Identifier.withDefaultNamespace("golden_sword")).components(builder -> builder
-								.set(DataComponents.DAMAGE, 3)
-								.set(DataComponents.RARITY, Rarity.RARE)
-						)
+								.addItem(Identifier.withDefaultNamespace("stick"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
+								.addItem(Identifier.withDefaultNamespace("gold_ingot")),
+						JResult.result(Identifier.withDefaultNamespace("golden_sword"))
+								.components(builder -> {
+									builder.addProperty("minecraft:damage", 3);
+									builder.addProperty("minecraft:rarity", "RARE");
+								})
 				)
 		);
 		Component burntBreadName = Component.literal("Burnt Bread").setStyle(Style.EMPTY.withBold(true));
@@ -63,10 +63,10 @@ public class ARRPButTestingCommon {
 		pack.addRecipe(Identifier.fromNamespaceAndPath(MOD_ID, "burnt_bread"),
 				JRecipe.blasting(JIngredient.ingredient().item(Identifier.withDefaultNamespace("bread")),
 						JResult.result(Identifier.withDefaultNamespace("coal"))
-								.components(builder -> builder
-										.set(DataComponents.ITEM_NAME, burntBreadName)
-										.set(DataComponents.LORE, new ItemLore(burntBreadLore))
-								)
+//								.components(builder -> builder
+//										.set(DataComponents.ITEM_NAME, burntBreadName)
+//										.set(DataComponents.LORE, new ItemLore(burntBreadLore))
+//								)
 				).cookingTime(30)
 		);
 		pack.addAdvancement(

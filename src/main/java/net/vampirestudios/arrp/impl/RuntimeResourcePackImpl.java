@@ -4,6 +4,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.serialization.Codec;
+import net.minecraft.data.recipes.RecipeBuilder;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.json.JsonBytes;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
@@ -31,6 +35,7 @@ import net.vampirestudios.arrp.json.worldgen.feature.JPlacedFeature;
 import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
 import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
 import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
+import net.vampirestudios.arrp.mixin.ShapedRecipeBuilderAccessor;
 import net.vampirestudios.arrp.util.CallableFunction;
 import net.vampirestudios.arrp.util.CountingInputStream;
 import net.vampirestudios.arrp.util.UnsafeByteArrayOutputStream;
@@ -176,7 +181,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 					return pack.addLang(identifier, finalLang);
 				});
 			}
-			lang1.getLang().putAll(lang.getLang());
+			lang1.merge(lang);
 			return lang1;
 		});
 	}
@@ -455,6 +460,20 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	@Override
 	public byte[] addRecipe(Identifier id, JRecipe recipe) {
 		return this.addCodecData(id, "recipe", JRecipe.CODEC, recipe);
+	}
+
+	@Override
+	public byte[] addRecipe(Identifier id, RecipeBuilder recipe) {
+		if (recipe instanceof ShapedRecipeBuilder shapedRecipeBuilder) {
+			var accessor = ((ShapedRecipeBuilderAccessor) shapedRecipeBuilder);
+			ShapedRecipePattern pattern = ShapedRecipePattern.of(accessor.getKey(), accessor.getRows());
+			ShapedRecipe recipe1 = new ShapedRecipe(
+					RecipeBuilder.createCraftingCommonInfo(accessor.isShowNotification()),
+					RecipeBuilder.createCraftingBookInfo(accessor.getCategory(), accessor.getGroup()), pattern, accessor.getResult()
+			);
+			return this.addCodecData(id, "recipe", ShapedRecipe.CODEC, recipe1);
+		}
+		return new byte[0];
 	}
 
 	@Override

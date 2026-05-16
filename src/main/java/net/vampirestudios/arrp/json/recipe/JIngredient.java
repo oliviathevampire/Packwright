@@ -1,158 +1,213 @@
 package net.vampirestudios.arrp.json.recipe;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.vampirestudios.arrp.json.codec.Codecs;
 
-public class JIngredient implements Cloneable {
-	public static final Codec<JIngredient> CODEC = new Codec<>() {
-		@Override
-		public <T> DataResult<T> encode(JIngredient v, DynamicOps<T> ops, T prefix) {
-			if (v.fabricCustom != null) {
-				// write the custom object verbatim
-				return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, v.fabricCustom).convert(ops).getValue());
-			}
-			if (v.item != null) {
-				return ops.mapBuilder()
-						.add(ops.createString("item"), Identifier.CODEC.encodeStart(ops, v.item).getOrThrow())
-						.build(prefix);
-			}
-			if (v.tag != null) {
-				return ops.mapBuilder()
-						.add(ops.createString("tag"), Identifier.CODEC.encodeStart(ops, v.tag).getOrThrow())
-						.build(prefix);
-			}
-			return DataResult.error(() -> "JIngredient: empty; set item(), tag(), or fabricCustom()");
-		}
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
-		@Override
-		public <T> DataResult<Pair<JIngredient, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			if (!el.isJsonObject()) return DataResult.error(() -> "Ingredient must be an object");
-			JsonObject obj = el.getAsJsonObject();
+public class JIngredient {
+	public static final Codec<JIngredient> CODEC = Codec.either(
+			Codec.either(Codec.STRING, Codec.STRING.listOf()),
+			Codecs.JSON_OBJECT
+	).comapFlatMap(
+			e -> e.map(
+					l -> l.map(JIngredient::fromString, JIngredient::fromList),
+					JIngredient::fromFabricCustom
+			),
+			i -> {
+				if (i.isAlternative()) {
+					return Either.left(
+							Either.right(i.serializedValues())
+					);
+				}
 
-			// Fabric custom branch
-			var ft = obj.get("fabric:type");
-			if (ft != null && ft.isJsonPrimitive() && ft.getAsJsonPrimitive().isString()) {
-				JIngredient ing = new JIngredient();
-				ing.fabricCustom = obj.deepCopy(); // store entire custom object
-				return DataResult.success(Pair.of(ing, input));
-			}
+				if (i.fabricCustom != null) {
+					return Either.right(i.getFabricCustom());
+				}
 
-			// Vanilla branches
-			var itemEl = obj.get("item");
-			var tagEl = obj.get("tag");
-			if (itemEl != null) {
-				var id = Identifier.CODEC.parse(JsonOps.INSTANCE, itemEl).result();
-				return id.<DataResult<Pair<JIngredient, T>>>map(identifier -> DataResult.success(Pair.of(JIngredient.ingredient().item(identifier), input))).orElseGet(() -> DataResult.error(() -> "Ingredient: bad 'item'"));
+				return Either.left(Either.left(i.asString()));
 			}
-			if (tagEl != null) {
-				var id = Identifier.CODEC.parse(JsonOps.INSTANCE, tagEl).result();
-				return id.map(identifier -> DataResult.success(Pair.of(JIngredient.ingredient().tag(identifier), input))).orElseGet(() -> DataResult.error(() -> "Ingredient: bad 'tag'"));
-			}
-			return DataResult.error(() -> "Ingredient: expected 'item', 'tag', or 'fabric:type'");
-		}
-	};
-	protected Identifier item;
-	protected Identifier tag;
-	protected List<JIngredient> ingredients;
-	private JsonObject fabricCustom;      // entire object for fabric custom ingredients
+	);
+
+	private static final Identifier FABRIC_COMPONENTS = Identifier.fromNamespaceAndPath("fabric", "components");
+
+	private Identifier item;
+	private Identifier tag;
+	private final List<JIngredient> alternatives = new ArrayList<>();
+	private JsonObject fabricCustom;
 
 	JIngredient() {
-	}
-
-	public JIngredient(Identifier item, Identifier tag, List<JIngredient> ingredients) {
-		this.item = item;
-		this.tag = tag;
-		this.ingredients = ingredients;
 	}
 
 	public static JIngredient ingredient() {
 		return new JIngredient();
 	}
 
-	public boolean isFabricCustom() {
-		return fabricCustom != null;
-	}
-
-	public JIngredient fabricCustom(Identifier type, java.util.function.Consumer<JsonObject> data) {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("fabric:type", type.toString());
-		if (data != null) data.accept(obj);
-		this.fabricCustom = obj;
-		this.item = null;
-		this.tag = null;
-		return this;
+	public static JIngredient alternative(JIngredient... ingredients) {
+		return ingredient().addAll(ingredients);
 	}
 
 	public JIngredient item(Item item) {
 		return this.item(BuiltInRegistries.ITEM.getKey(item));
 	}
 
-	public JIngredient item(Identifier id) {
-		if (this.isDefined()) {
-			return this.add(JIngredient.ingredient().item(id));
-		}
-
-		this.item = id;
-
+	public JIngredient item(Identifier item) {
+		this.clear();
+		this.item = item;
 		return this;
 	}
 
 	public JIngredient tag(Identifier tag) {
-		if (this.isDefined()) {
-			return this.add(JIngredient.ingredient().tag(tag));
-		}
-
+		this.clear();
 		this.tag = tag;
+		return this;
+	}
+
+	public JIngredient add(JIngredient ingredient) {
+		if (ingredient != null && ingredient.isDefined()) {
+			this.alternatives.add(ingredient);
+		}
 
 		return this;
 	}
 
-	public JIngredient add(final JIngredient ingredient) {
-		if (this.ingredients == null) {
-			final List<JIngredient> ingredients = new ArrayList<>();
-
-			if (this.isDefined()) {
-				ingredients.add(this.clone());
+	public JIngredient addAll(JIngredient... ingredients) {
+		if (ingredients != null) {
+			for (JIngredient ingredient : ingredients) {
+				this.add(ingredient);
 			}
-
-			this.ingredients = ingredients;
 		}
-
-		this.ingredients.add(ingredient);
 
 		return this;
 	}
 
-	private boolean isDefined() {
-		return this.item != null || this.tag != null;
+	public static JIngredient fabricComponents(Item base, Consumer<JsonObject> components) {
+		return fabricComponents(BuiltInRegistries.ITEM.getKey(base), components, false);
 	}
 
-	@Override
-	public JIngredient clone() {
-		try {
-			return (JIngredient) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
+	public static JIngredient fabricComponents(Identifier base, Consumer<JsonObject> components) {
+		return fabricComponents(base, components, false);
+	}
+
+	public static JIngredient fabricComponents(Item base, Consumer<JsonObject> components, boolean strict) {
+		return fabricComponents(BuiltInRegistries.ITEM.getKey(base), components, strict);
+	}
+
+	public static JIngredient fabricComponents(Identifier base, Consumer<JsonObject> components, boolean strict) {
+		return ingredient().fabricCustom(FABRIC_COMPONENTS, json -> {
+			json.addProperty("base", base.toString());
+			json.addProperty("strict", strict);
+			json.add("components", jsonObject(components));
+		});
+	}
+
+	public JIngredient fabricCustom(Identifier type, Consumer<JsonObject> data) {
+		this.clear();
+		this.fabricCustom = jsonObject(json -> {
+			json.addProperty("fabric:type", type.toString());
+			if (data != null) {
+				data.accept(json);
+			}
+		});
+		return this;
+	}
+
+	public boolean isAlternative() {
+		return !this.alternatives.isEmpty();
+	}
+
+	public boolean isDefined() {
+		return this.item != null || this.tag != null || this.fabricCustom != null || this.isAlternative();
 	}
 
 	public Identifier getItem() {
-		return item;
+		return this.item;
 	}
 
 	public Identifier getTag() {
-		return tag;
+		return this.tag;
 	}
 
 	public List<JIngredient> getIngredients() {
-		return ingredients;
+		return List.copyOf(this.alternatives);
+	}
+
+	public JsonObject getFabricCustom() {
+		return this.fabricCustom == null ? null : this.fabricCustom.deepCopy();
+	}
+
+	private void clear() {
+		this.item = null;
+		this.tag = null;
+		this.fabricCustom = null;
+		this.alternatives.clear();
+	}
+
+	private String asString() {
+		if (this.item != null) return this.item.toString();
+		if (this.tag != null) return "#" + this.tag;
+		throw new IllegalStateException("JIngredient is empty");
+	}
+
+	private List<String> serializedValues() {
+		return this.alternatives.stream().map(JIngredient::asString).toList();
+	}
+
+	private static DataResult<JIngredient> fromString(String value) {
+		if (value == null || value.isBlank()) {
+			return DataResult.error(() -> "JIngredient cannot be empty");
+		}
+
+		try {
+			return value.startsWith("#")
+					? value.length() == 1
+					  ? DataResult.error(() -> "JIngredient tag cannot be empty")
+					  : DataResult.success(ingredient().tag(Identifier.parse(value.substring(1))))
+					: DataResult.success(ingredient().item(Identifier.parse(value)));
+		} catch (Exception e) {
+			return DataResult.error(() -> "JIngredient has invalid id: " + value);
+		}
+	}
+
+	private static DataResult<JIngredient> fromList(List<String> values) {
+		if (values == null || values.isEmpty()) {
+			return DataResult.error(() -> "JIngredient alternatives cannot be empty");
+		}
+
+		var ingredient = ingredient();
+
+		for (String value : values) {
+			var decoded = fromString(value);
+			if (decoded.isError()) return decoded;
+			ingredient.add(decoded.getOrThrow());
+		}
+
+		return DataResult.success(ingredient);
+	}
+
+	private static DataResult<JIngredient> fromFabricCustom(JsonObject object) {
+		if (!object.has("fabric:type")) {
+			return DataResult.error(() -> "JIngredient object must have 'fabric:type'");
+		}
+
+		var ingredient = ingredient();
+		ingredient.fabricCustom = object.deepCopy();
+		return DataResult.success(ingredient);
+	}
+
+	private static JsonObject jsonObject(Consumer<JsonObject> consumer) {
+		var json = new JsonObject();
+		if (consumer != null) {
+			consumer.accept(json);
+		}
+		return json;
 	}
 }

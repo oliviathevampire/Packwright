@@ -5,6 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.mojang.datafixers.util.Either;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
+import net.minecraft.data.recipes.RecipeBuilder;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.util.StringRepresentable;
 import net.vampirestudios.arrp.JsonSerializers;
 import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
@@ -32,10 +37,6 @@ import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
 import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
 import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
 import net.vampirestudios.arrp.util.CallableFunction;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Contract;
 import org.joml.Vector3f;
 
@@ -309,6 +310,8 @@ public interface RuntimeResourcePack extends PackResources {
 	 * @return the new resource
 	 */
 	byte[] addRecipe(Identifier id, JRecipe recipe);
+
+	byte[] addRecipe(Identifier id, RecipeBuilder recipe);
 
 	byte[] addTimeline(Identifier id, JTimeline timeline);
 

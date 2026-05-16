@@ -13,7 +13,6 @@ public final class JSmithingTransformRecipe extends JResultRecipe {
 	).apply(i, JSmithingTransformRecipe::new));
 
 	static {
-		// Register with your base dispatch: Identifier.CODEC.dispatch("type", …)
 		JRecipe.register(Identifier.withDefaultNamespace("smithing_transform"), CODEC);
 	}
 
@@ -38,10 +37,5 @@ public final class JSmithingTransformRecipe extends JResultRecipe {
 
 	public JIngredient getTemplate() {
 		return template;
-	}
-
-	@Override
-	protected JSmithingTransformRecipe clone() {
-		return (JSmithingTransformRecipe) super.clone();
 	}
 }

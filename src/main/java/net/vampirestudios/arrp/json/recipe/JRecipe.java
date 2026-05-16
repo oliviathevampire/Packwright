@@ -6,12 +6,13 @@ import net.minecraft.resources.Identifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class JRecipe implements Cloneable {
+public abstract class JRecipe {
 	private static final Map<Identifier, Codec<? extends JRecipe>> REGISTRY = new ConcurrentHashMap<>();
 	public static final Codec<JRecipe> CODEC = Codecs.tagged("type", JRecipe::getType, REGISTRY::get, Identifier.CODEC);
 
 	protected final Identifier type;
 	protected String group;
+	protected String category;
 
 	JRecipe(final Identifier type) {
 		this.type = type;
@@ -21,7 +22,6 @@ public abstract class JRecipe implements Cloneable {
 		REGISTRY.put(type, codec);
 	}
 
-	/** Back-compat alias: old `smithing(...)` now means smithing_transform. */
 	@Deprecated
 	public static JSmithingTransformRecipe smithing(final JIngredient base, final JIngredient addition, final JIngredient template, final JResult result) {
 		return smithingTransform(base, addition, template, result);
@@ -77,9 +77,17 @@ public abstract class JRecipe implements Cloneable {
 		return new JSmokingRecipe(ingredient, result);
 	}
 
+	public static JTransmuteRecipe transmute(final JIngredient ingredient, final JIngredient ingredient2, final JResult result) {
+		return new JTransmuteRecipe(result, ingredient, ingredient2);
+	}
+
 	public JRecipe group(final String group) {
 		this.group = group;
+		return this;
+	}
 
+	public JRecipe category(String category) {
+		this.category = category;
 		return this;
 	}
 
@@ -91,12 +99,7 @@ public abstract class JRecipe implements Cloneable {
 		return group;
 	}
 
-	@Override
-	protected JRecipe clone() {
-		try {
-			return (JRecipe) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
+	public String getCategory() {
+		return category;
 	}
 }

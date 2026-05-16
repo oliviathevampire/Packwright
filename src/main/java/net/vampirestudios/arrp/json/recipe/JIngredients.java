@@ -1,56 +1,102 @@
 package net.vampirestudios.arrp.json.recipe;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.json.codec.Codecs;
+import com.mojang.serialization.DataResult;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class JIngredients {
-	public static final Codec<JIngredients> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Codecs.oneOrList(JIngredient.CODEC).fieldOf("ingredients").forGetter(JIngredients::getIngredients)
-	).apply(i, JIngredients::new));
+	public static final Codec<JIngredients> CODEC = JIngredient.CODEC.listOf()
+			.xmap(JIngredients::new, JIngredients::getIngredients)
+			.validate(ingredients -> ingredients.isEmpty()
+					? DataResult.error(() -> "JIngredients cannot be empty")
+					: DataResult.success(ingredients));
 
-	protected final List<JIngredient> ingredients;
+	private final List<JIngredient> ingredients = new ArrayList<>();
 
-	JIngredients() {
-		this.ingredients = new ArrayList<>();
+	public JIngredients() {
 	}
 
 	public JIngredients(List<JIngredient> ingredients) {
-		this.ingredients = ingredients;
+		this.addAll(ingredients);
 	}
 
 	public static JIngredients ingredients() {
 		return new JIngredients();
 	}
 
-	public JIngredients add(final JIngredient ingredient) {
-		this.ingredients.add(ingredient);
+	public static JIngredients ingredients(JIngredient... ingredients) {
+		return new JIngredients().addAll(ingredients);
+	}
+
+	public JIngredients add(JIngredient ingredient) {
+		if (ingredient != null) {
+			this.ingredients.add(ingredient);
+		}
 
 		return this;
 	}
 
-	public JIngredients addAll(final List<JIngredient> ingredients) {
-		ingredients.forEach(this::add);
+	public JIngredients addAll(JIngredient... ingredients) {
+		for (JIngredient ingredient : ingredients) {
+			this.add(ingredient);
+		}
+
 		return this;
+	}
+
+	public JIngredients addAll(List<JIngredient> ingredients) {
+		if (ingredients != null) {
+			ingredients.forEach(this::add);
+		}
+
+		return this;
+	}
+
+	public boolean isEmpty() {
+		return this.ingredients.isEmpty();
+	}
+
+	public int size() {
+		return this.ingredients.size();
 	}
 
 	public List<JIngredient> getIngredients() {
-		return ingredients;
+		return List.copyOf(this.ingredients);
 	}
 
-	public static class Serializer implements JsonSerializer<JIngredients> {
-		@Override
-		public JsonElement serialize(final JIngredients src,
-				final Type typeOfSrc,
-				final JsonSerializationContext context) {
-			return context.serialize(src.ingredients);
-		}
+	public JIngredients addItem(Identifier itemId) {
+		return this.add(JIngredient.ingredient().item(itemId));
+	}
+
+	public JIngredients addFabricCustom(Identifier type, Consumer<JsonObject> data) {
+		return this.add(JIngredient.fabricComponents(type, data));
+	}
+
+	public JIngredients addItem(Item itemId) {
+		return this.add(JIngredient.ingredient().item(itemId));
+	}
+
+	public JIngredients addTag(Identifier tagId) {
+		return this.add(JIngredient.ingredient().tag(tagId));
+	}
+
+	public JIngredients remove(JIngredient ingredient) {
+		this.ingredients.remove(ingredient);
+		return this;
+	}
+
+	public JIngredients clear() {
+		this.ingredients.clear();
+		return this;
+	}
+
+	public boolean contains(JIngredient ingredient) {
+		return this.ingredients.contains(ingredient);
 	}
 }

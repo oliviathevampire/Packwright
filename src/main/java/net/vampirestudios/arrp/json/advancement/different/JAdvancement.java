@@ -1,14 +1,15 @@
 package net.vampirestudios.arrp.json.advancement.different;
 
 import com.google.gson.annotations.SerializedName;
+import net.minecraft.advancements.AdvancementRewards;
+import net.minecraft.advancements.DisplayInfo;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.resources.Identifier;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.DisplayInfo;
-import net.minecraft.resources.Identifier;
 
 public class JAdvancement {
     private DisplayInfo display;

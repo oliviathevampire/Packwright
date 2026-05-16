@@ -2,6 +2,7 @@
 package net.vampirestudios.arrp.json.codec;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
@@ -117,4 +118,9 @@ public final class Codecs {
 				}
 		);
 	}
+
+	public static final Codec<JsonObject> JSON_OBJECT = Codec.PASSTHROUGH.xmap(
+			dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue().getAsJsonObject(),
+			object -> new Dynamic<>(JsonOps.INSTANCE, object)
+	);
 }

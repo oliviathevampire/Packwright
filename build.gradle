@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version '1.17.0-alpha.8'
     id 'maven-publish'
     id "me.modmuss50.mod-publish-plugin" version "1.1.0"
 }
@@ -56,7 +56,7 @@ publishing {
 
 publishMods {
     file = jar.archiveFile
-    changelog = "* Improved & Added a lot of World Gen stuff\n* Updated to 26.1.2\n* Cleaned up a lot of code"
+    changelog = "* Fixed some issues related to recipes and also added some new recipe stuff"
     type = STABLE
     modLoaders.add("fabric")
     modrinth {

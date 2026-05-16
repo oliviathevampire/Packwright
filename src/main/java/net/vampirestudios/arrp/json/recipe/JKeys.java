@@ -1,105 +1,67 @@
 package net.vampirestudios.arrp.json.recipe;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 import net.vampirestudios.arrp.json.codec.Codecs;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JKeys implements Cloneable {
-	protected final Map<String, JIngredient> keys;
-	protected final Map<String, List<JIngredient>> acceptableKeys;
+public class JKeys {
+	private final Map<String, List<JIngredient>> keys = new LinkedHashMap<>();
 
-	JKeys() {
-		this.keys = new HashMap<>(9, 1);
-		this.acceptableKeys = new HashMap<>();
+	public static final Codec<JKeys> CODEC =
+			Codec.unboundedMap(Codec.STRING, Codecs.oneOrList(JIngredient.CODEC))
+					.xmap(JKeys::new, JKeys::toMap);
+
+	public JKeys() {
+	}
+
+	private JKeys(Map<String, List<JIngredient>> keys) {
+		keys.forEach(this::keyAny);
 	}
 
 	public static JKeys keys() {
 		return new JKeys();
 	}
 
-	public JKeys key(final String key, final JIngredient value) {
-		this.keys.put(key, value);
-
-		return this;
+	public JKeys item(String key, Identifier itemId) {
+		return this.key(key, JIngredient.ingredient().item(itemId));
 	}
 
-	/** Optional sugar: supply multiple acceptable ingredients for a single key. */
-	public JKeys keyAny(final String key, final List<JIngredient> values) {
-		this.acceptableKeys.put(key, values);
-		return this;
+	public JKeys item(String key, Item itemId) {
+		return this.key(key, JIngredient.ingredient().item(itemId));
 	}
 
-	@Override
-	protected JKeys clone() {
-		try {
-			return (JKeys) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
+	public JKeys tag(String key, Identifier tagId) {
+		return this.key(key, JIngredient.ingredient().tag(tagId));
+	}
+
+	public JKeys key(String key, JIngredient value) {
+		return this.keyAny(key, List.of(value));
+	}
+
+	public JKeys keyAny(String key, JIngredient... values) {
+		return this.keyAny(key, List.of(values));
+	}
+
+	public JKeys keyAny(String key, List<JIngredient> values) {
+		if (values == null || values.isEmpty()) {
+			this.keys.remove(key);
+			return this;
 		}
-	}
 
-	// ---------- Codec ----------
-	/**
-	 * JSON shape:
-	 * {
-	 *   "A": { ...JIngredient... },                // single
-	 *   "B": [ { ... }, { ... } ]                  // list/any-of
-	 * }
-	 */
-	public static final Codec<JKeys> CODEC =
-			Codec.unboundedMap(Codec.STRING, Codecs.oneOrList(JIngredient.CODEC))
-					.xmap(JKeys::fromMap, JKeys::toMap)
-					.validate(JKeys::validateUnique);
-
-	private static JKeys fromMap(Map<String, List<JIngredient>> in) {
-		JKeys out = new JKeys();
-		for (var e : in.entrySet()) {
-			List<JIngredient> list = e.getValue();
-			if (list == null || list.isEmpty()) continue;
-			if (list.size() == 1) out.keys.put(e.getKey(), list.getFirst());
-			else out.acceptableKeys.put(e.getKey(), List.copyOf(list));
-		}
-		return out;
+		this.keys.put(key, List.copyOf(values));
+		return this;
 	}
 
 	private Map<String, List<JIngredient>> toMap() {
-		Map<String, List<JIngredient>> out = new LinkedHashMap<>();
-		for (var e : this.keys.entrySet()) out.put(e.getKey(), List.of(e.getValue()));
-		for (var e : this.acceptableKeys.entrySet()) out.put(e.getKey(), List.copyOf(e.getValue()));
-		return out;
+		return new LinkedHashMap<>(this.keys);
 	}
 
-	private static DataResult<JKeys> validateUnique(JKeys k) {
-		for (String s : k.keys.keySet()) {
-			if (k.acceptableKeys.containsKey(s)) {
-				return DataResult.error(() -> "JKeys: key '" + s + "' present as both single and list");
-			}
-		}
-		return DataResult.success(k);
-	}
-
-	public static class Serializer implements JsonSerializer<JKeys> {
-		@Override
-		public JsonElement serialize(final JKeys src, final Type typeOfSrc, final JsonSerializationContext context) {
-			final JsonObject object = new JsonObject();
-
-			src.keys.forEach((final String key, final JIngredient ingredient) -> object.add(key,
-					context.serialize(ingredient)));
-			src.acceptableKeys.forEach((final String key, final List<JIngredient> acceptableIngredients) -> object.add(
-					key,
-					context.serialize(acceptableIngredients)));
-
-			return object;
-		}
+	public Map<String, List<JIngredient>> getKeys() {
+		return Map.copyOf(this.keys);
 	}
 }

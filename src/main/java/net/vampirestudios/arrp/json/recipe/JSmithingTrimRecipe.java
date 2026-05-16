@@ -38,9 +38,4 @@ public final class JSmithingTrimRecipe extends JRecipe {
 	public JIngredient getTemplate() {
 		return template;
 	}
-
-	@Override
-	protected JSmithingTrimRecipe clone() {
-		return (JSmithingTrimRecipe) super.clone();
-	}
 }

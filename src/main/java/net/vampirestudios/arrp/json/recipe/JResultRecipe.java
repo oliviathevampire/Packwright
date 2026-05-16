@@ -7,20 +7,13 @@ public abstract class JResultRecipe extends JRecipe {
 
 	JResultRecipe(final Identifier type, final JResult result) {
 		super(type);
-
 		this.result = result;
 	}
 
-	/** Needed by codecs in subclasses. */
 	protected JResult getResult() { return result; }
 
 	@Override
 	public JResultRecipe group(final String group) {
 		return (JResultRecipe) super.group(group);
-	}
-
-	@Override
-	protected JResultRecipe clone() {
-		return (JResultRecipe) super.clone();
 	}
 }

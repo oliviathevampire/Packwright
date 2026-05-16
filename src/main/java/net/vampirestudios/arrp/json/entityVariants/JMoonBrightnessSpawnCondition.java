@@ -2,7 +2,7 @@ package net.vampirestudios.arrp.json.entityVariants;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.advancements.criterion.MinMaxBounds;
+import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.resources.Identifier;
 
 public class JMoonBrightnessSpawnCondition extends JSpawnCondition {

@@ -37,9 +37,4 @@ public class JShapedRecipe extends JResultRecipe {
 	public JShapedRecipe group(final String group) {
 		return (JShapedRecipe) super.group(group);
 	}
-
-	@Override
-	protected JShapedRecipe clone() {
-		return (JShapedRecipe) super.clone();
-	}
 }

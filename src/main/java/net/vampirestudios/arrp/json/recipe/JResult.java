@@ -1,50 +1,50 @@
 package net.vampirestudios.arrp.json.recipe;
 
-import com.mojang.datafixers.util.Either;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.Optional;
-import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
-public class JResult {
-	public static final Codec<JResult> OBJECT_CODEC = RecordCodecBuilder.create(i -> i.group(
-			Identifier.CODEC.fieldOf("item").forGetter(r -> r.item),
-			// count is OPTIONAL; only present for stacks
-			Codec.INT.optionalFieldOf("count").forGetter(r ->
-					(r instanceof JStackedResult s) ? Optional.ofNullable(s.getCount()) : Optional.empty()
-			),
-			// ✅ components OPTIONAL — don't encode when null
-			DataComponentPatch.CODEC.optionalFieldOf("components").forGetter(r -> Optional.ofNullable(r.components))
-	).apply(i, (id, oc, comps) -> {
-		JResult res = oc.isPresent() ? JResult.stackedResult(id, oc.get()) : JResult.result(id);
-		comps.ifPresent(res::components);
-		return res;
-	}));
+import java.util.Optional;
+import java.util.function.Consumer;
 
-	public static final Codec<JResult> CODEC = Codec.either(Identifier.CODEC, OBJECT_CODEC).xmap(
-			// decode
-			e -> e.map(JResult::result, x -> x),
-			// encode: compact as string when possible
-			r -> {
-				boolean hasCount = (r instanceof JStackedResult s) && s.getCount() != null && s.getCount() != 1;
-				boolean hasComps = r.components != null && !r.components.isEmpty(); // empty() is fine
-				return (!hasCount && !hasComps) ? Either.left(r.item) : Either.right(r);
-			}
+public class JResult {
+	protected static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.PASSTHROUGH.xmap(
+			dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue().getAsJsonObject(),
+			object -> new Dynamic<>(JsonOps.INSTANCE, object)
 	);
 
-	protected final Identifier item;
-	protected DataComponentPatch components; // NEW
+	public static final Codec<JResult> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Identifier.CODEC.fieldOf("id").forGetter(r -> r.itemId),
+			Codec.INT.optionalFieldOf("count").forGetter(r ->
+					r.hasCount() ? Optional.of(r.getCount()) : Optional.empty()
+			),
+			JSON_OBJECT_CODEC.optionalFieldOf("components").forGetter(r ->
+					r.hasComponents() ? Optional.of(r.components) : Optional.empty()
+			)
+	).apply(i, (id, count, components) -> {
+		JResult result = count.isPresent()
+				? JResult.stackedResult(id, count.get())
+				: JResult.result(id);
+
+		components.ifPresent(result::components);
+		return result;
+	}));
+
+	protected final Identifier itemId;
+	protected JsonObject components;
 
 	JResult(final Identifier id) {
-		this.item = id;
+		this.itemId = id;
 	}
 
-	public JResult(Identifier item, DataComponentPatch components) {
-		this.item = item;
-		this.components = components;
+	public JResult(Identifier itemId, JsonObject components) {
+		this.itemId = itemId;
+		this.components = components == null ? null : components.deepCopy();
 	}
 
 	public static JResult item(final Item item) {
@@ -55,46 +55,61 @@ public class JResult {
 		return new JResult(id);
 	}
 
+	public static JResult item(Item item, JsonObject components) {
+		return result(BuiltInRegistries.ITEM.getKey(item)).components(components);
+	}
+
+	public static JStackedResult itemStack(Item item, int count, JsonObject components) {
+		return (JStackedResult) stackedResult(BuiltInRegistries.ITEM.getKey(item), count).components(components);
+	}
+
 	public static JStackedResult itemStack(final Item item, final int count) {
 		return stackedResult(BuiltInRegistries.ITEM.getKey(item), count);
 	}
 
 	public static JStackedResult stackedResult(final Identifier id, final int count) {
-		final JStackedResult stackedResult = new JStackedResult(id);
-
-		stackedResult.count = count;
-
-		return stackedResult;
-	}
-
-	/** Set full component changes. */
-	public JResult components(DataComponentPatch changes) {
-		this.components = changes;
-		return this;
-	}
-
-	/** Builder-style convenience. */
-	public JResult components(java.util.function.Consumer<DataComponentPatch.Builder> build) {
-		DataComponentPatch.Builder b = DataComponentPatch.builder();
-		build.accept(b);
-		this.components = b.build();
-		return this;
-	}
-
-	public Identifier getItem() {
-		return item;
-	}
-
-	public DataComponentPatch getComponents() {
-		return components;
-	}
-
-	@Override
-	protected JResult clone() {
-		try {
-			return (JResult) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
+		if (count < 1) {
+			throw new IllegalArgumentException("Recipe result count must be at least 1: " + count);
 		}
+
+		final JStackedResult result = new JStackedResult(id);
+		result.count = count;
+		return result;
+	}
+
+	public JResult components(JsonObject components) {
+		this.components = components == null ? null : components.deepCopy();
+		return this;
+	}
+
+	public JResult components(Consumer<JsonObject> build) {
+		JsonObject object = new JsonObject();
+
+		if (build != null) {
+			build.accept(object);
+		}
+
+		this.components = object;
+		return this;
+	}
+
+	public Identifier getItemId() {
+		return itemId;
+	}
+
+	public JsonObject getComponents() {
+		return components == null ? null : components.deepCopy();
+	}
+
+	public int getCount() {
+		return this instanceof JStackedResult stacked ? stacked.getCount() : 1;
+	}
+
+	public boolean hasComponents() {
+		return components != null && !components.isEmpty();
+	}
+
+	public boolean hasCount() {
+		return this instanceof JStackedResult stacked && stacked.getCount() != 1;
 	}
 }
