@@ -1,0 +1,72 @@
+package net.vampirestudios.arrp.data.entity;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
+
+public class PigSoundVariant {
+	public static final Codec<PigSoundVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
+			SoundSet.CODEC.fieldOf("adult_sounds").forGetter(x -> x.adultSounds),
+			SoundSet.CODEC.fieldOf("baby_sounds").forGetter(x -> x.babySounds)
+	).apply(i, (adult, baby) -> {
+		PigSoundVariant out = new PigSoundVariant();
+		out.adultSounds = adult;
+		out.babySounds = baby;
+		return out;
+	}));
+
+	private SoundSet adultSounds;
+	private SoundSet babySounds;
+
+	public static PigSoundVariant pigSoundVariant() {
+		return new PigSoundVariant();
+	}
+
+	public PigSoundVariant adultSounds(SoundSet sounds) { this.adultSounds = sounds; return this; }
+	public PigSoundVariant babySounds(SoundSet sounds) { this.babySounds = sounds; return this; }
+
+	public SoundSet getAdultSounds() { return adultSounds; }
+	public SoundSet getBabySounds() { return babySounds; }
+
+	public static SoundSet sounds() {
+		return new SoundSet();
+	}
+
+	public static class SoundSet {
+		public static final Codec<SoundSet> CODEC = RecordCodecBuilder.create(i -> i.group(
+				Identifier.CODEC.fieldOf("ambient_sound").forGetter(x -> x.ambientSound),
+				Identifier.CODEC.fieldOf("hurt_sound").forGetter(x -> x.hurtSound),
+				Identifier.CODEC.fieldOf("death_sound").forGetter(x -> x.deathSound),
+				Identifier.CODEC.fieldOf("step_sound").forGetter(x -> x.stepSound),
+				Identifier.CODEC.fieldOf("eat_sound").forGetter(x -> x.eatSound)
+		).apply(i, SoundSet::new));
+
+		public SoundSet(Identifier ambientSound, Identifier hurtSound, Identifier deathSound, Identifier stepSound, Identifier eatSound) {
+			this.ambientSound = ambientSound;
+			this.hurtSound = hurtSound;
+			this.deathSound = deathSound;
+			this.stepSound = stepSound;
+			this.eatSound = eatSound;
+		}
+
+		public SoundSet() {}
+
+		private Identifier ambientSound;
+		private Identifier hurtSound;
+		private Identifier deathSound;
+		private Identifier stepSound;
+		private Identifier eatSound;
+
+		public SoundSet ambientSound(Identifier id) { this.ambientSound = java.util.Objects.requireNonNull(id, "ambientSound"); return this; }
+		public SoundSet hurtSound(Identifier id)    { this.hurtSound    = java.util.Objects.requireNonNull(id, "hurtSound");    return this; }
+		public SoundSet deathSound(Identifier id)   { this.deathSound   = java.util.Objects.requireNonNull(id, "deathSound");   return this; }
+		public SoundSet stepSound(Identifier id)    { this.stepSound    = java.util.Objects.requireNonNull(id, "stepSound");    return this; }
+		public SoundSet eatSound(Identifier id)     { this.eatSound     = java.util.Objects.requireNonNull(id, "eatSound");     return this; }
+
+		public Identifier getAmbientSound() { return ambientSound; }
+		public Identifier getHurtSound() { return hurtSound; }
+		public Identifier getDeathSound() { return deathSound; }
+		public Identifier getStepSound() { return stepSound; }
+		public Identifier getEatSound() { return eatSound; }
+	}
+}

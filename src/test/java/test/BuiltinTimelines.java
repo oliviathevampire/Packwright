@@ -3,59 +3,59 @@ package test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.vampirestudios.arrp.json.JsonBytes;
-import net.vampirestudios.arrp.json.timeline.JTimeline;
+import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
 
 public final class BuiltinTimelines {
 
-    public static JTimeline buildDayTimelineLike() {
-        JTimeline timeline = new JTimeline()
+    public static Timeline buildDayTimelineLike() {
+        Timeline timeline = new Timeline()
                 .period(24000);
 
         // gameplay: monsters burn in daylight
         timeline.track("minecraft:gameplay/monsters_burn",
-                new JTimeline.Track()
+                new Timeline.Track()
                         .modifier("or")
-                        .addKeyframe(new JTimeline.Keyframe(12542, new JsonPrimitive(false)))
-                        .addKeyframe(new JTimeline.Keyframe(23460, new JsonPrimitive(true)))
+                        .addKeyframe(new Timeline.Keyframe(12542, new JsonPrimitive(false)))
+                        .addKeyframe(new Timeline.Keyframe(23460, new JsonPrimitive(true)))
         );
 
 		timeline.track("minecraft:gameplay/monsters_burn",
-				JTimeline.Track.boolToggle("or", 12542, 23460, false, true)
+				Timeline.Track.boolToggle("or", 12542, 23460, false, true)
 		);
 
         // gameplay: sky light factor (scaled)
         timeline.track("minecraft:visual/sky_light_factor",
-                new JTimeline.Track()
+                new Timeline.Track()
                         .modifier("multiply")
-                        .addKeyframe(new JTimeline.Keyframe(730,   new JsonPrimitive(1.0f)))
-                        .addKeyframe(new JTimeline.Keyframe(11270, new JsonPrimitive(1.0f)))
-                        .addKeyframe(new JTimeline.Keyframe(13140, new JsonPrimitive(0.24f)))
-                        .addKeyframe(new JTimeline.Keyframe(22860, new JsonPrimitive(0.24f)))
+                        .addKeyframe(new Timeline.Keyframe(730,   new JsonPrimitive(1.0f)))
+                        .addKeyframe(new Timeline.Keyframe(11270, new JsonPrimitive(1.0f)))
+                        .addKeyframe(new Timeline.Keyframe(13140, new JsonPrimitive(0.24f)))
+                        .addKeyframe(new Timeline.Keyframe(22860, new JsonPrimitive(0.24f)))
         );
 
         // visual: fog color
         timeline.track("minecraft:visual/fog_color",
-                new JTimeline.Track()
+                new Timeline.Track()
                         .modifier("multiply")
-                        .addKeyframe(new JTimeline.Keyframe(133,   new JsonPrimitive("#ffffff")))
-                        .addKeyframe(new JTimeline.Keyframe(11867, new JsonPrimitive("#ffffff")))
-                        .addKeyframe(new JTimeline.Keyframe(13670, new JsonPrimitive("#0f0f16")))
-                        .addKeyframe(new JTimeline.Keyframe(22330, new JsonPrimitive("#0f0f16")))
+                        .addKeyframe(new Timeline.Keyframe(133,   new JsonPrimitive("#ffffff")))
+                        .addKeyframe(new Timeline.Keyframe(11867, new JsonPrimitive("#ffffff")))
+                        .addKeyframe(new Timeline.Keyframe(13670, new JsonPrimitive("#0f0f16")))
+                        .addKeyframe(new Timeline.Keyframe(22330, new JsonPrimitive("#0f0f16")))
         );
 
         // visual: sunrise_sunset_color (lots of keyframes)
-        JTimeline.Track sunrise = new JTimeline.Track();
-        sunrise.addKeyframe(new JTimeline.Keyframe(71,   new JsonPrimitive("#5fefa333")));
-        sunrise.addKeyframe(new JTimeline.Keyframe(310,  new JsonPrimitive("#29f5ba33")));
-        sunrise.addKeyframe(new JTimeline.Keyframe(565,  new JsonPrimitive("#06fbd433")));
+        Timeline.Track sunrise = new Timeline.Track();
+        sunrise.addKeyframe(new Timeline.Keyframe(71,   new JsonPrimitive("#5fefa333")));
+        sunrise.addKeyframe(new Timeline.Keyframe(310,  new JsonPrimitive("#29f5ba33")));
+        sunrise.addKeyframe(new Timeline.Keyframe(565,  new JsonPrimitive("#06fbd433")));
         // ... (you can add every one from day.json if you want)
         timeline.track("minecraft:visual/sunrise_sunset_color", sunrise);
 
         // visual: star_brightness, etc... same pattern
 
 
-		JTimeline.Track sunAngleTrack = new JTimeline.Track();
+		Timeline.Track sunAngleTrack = new Timeline.Track();
 
 		// cubic_bezier ease as object like Mojang:
 		JsonObject easeObj = new JsonObject();
@@ -68,20 +68,20 @@ public final class BuiltinTimelines {
 
 		sunAngleTrack
 				.ease(easeObj)
-				.addKeyframe(new JTimeline.Keyframe(6000, new JsonPrimitive(360.0f)))
-				.addKeyframe(new JTimeline.Keyframe(6000, new JsonPrimitive(0.0f)));
+				.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive(360.0f)))
+				.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive(0.0f)));
 
 		timeline.track("minecraft:visual/sun_angle", sunAngleTrack);
 
         return timeline;
     }
 
-	public static JTimeline buildMoonTimelineLike() {
-		JTimeline timeline = new JTimeline()
+	public static Timeline buildMoonTimelineLike() {
+		Timeline timeline = new Timeline()
 				.period(192000); // 8 Minecraft days
 
 		timeline.track("minecraft:gameplay/surface_slime_spawn_chance",
-				JTimeline.Track.numericCurve("maximum",
+				Timeline.Track.numericCurve("maximum",
 						0,      0.5f,
 						24000,  0.375f,
 						48000,  0.25f,
@@ -94,63 +94,63 @@ public final class BuiltinTimelines {
 		);
 
 		// Moon phase as string enums
-		JTimeline.Track phaseTrack = new JTimeline.Track();
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(0,      new JsonPrimitive("full_moon")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(24000,  new JsonPrimitive("waning_gibbous")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(48000,  new JsonPrimitive("third_quarter")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(72000,  new JsonPrimitive("waning_crescent")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(96000,  new JsonPrimitive("new_moon")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(120000, new JsonPrimitive("waxing_crescent")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(144000, new JsonPrimitive("first_quarter")));
-		phaseTrack.addKeyframe(new JTimeline.Keyframe(168000, new JsonPrimitive("waxing_gibbous")));
+		Timeline.Track phaseTrack = new Timeline.Track();
+		phaseTrack.addKeyframe(new Timeline.Keyframe(0,      new JsonPrimitive("full_moon")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(24000,  new JsonPrimitive("waning_gibbous")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(48000,  new JsonPrimitive("third_quarter")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(72000,  new JsonPrimitive("waning_crescent")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(96000,  new JsonPrimitive("new_moon")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(120000, new JsonPrimitive("waxing_crescent")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(144000, new JsonPrimitive("first_quarter")));
+		phaseTrack.addKeyframe(new Timeline.Keyframe(168000, new JsonPrimitive("waxing_gibbous")));
 
 		timeline.track("minecraft:visual/moon_phase", phaseTrack);
 
 		return timeline;
 	}
 
-	public static JTimeline buildVillagerScheduleLike() {
-		JTimeline timeline = new JTimeline()
+	public static Timeline buildVillagerScheduleLike() {
+		Timeline timeline = new Timeline()
 				.period(24000);
 
 		// Adult villager schedule
-		JTimeline.Track adult = new JTimeline.Track();
-		adult.addKeyframe(new JTimeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
-		adult.addKeyframe(new JTimeline.Keyframe(2000,  new JsonPrimitive("minecraft:work")));
-		adult.addKeyframe(new JTimeline.Keyframe(9000,  new JsonPrimitive("minecraft:meet")));
-		adult.addKeyframe(new JTimeline.Keyframe(11000, new JsonPrimitive("minecraft:idle")));
-		adult.addKeyframe(new JTimeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
+		Timeline.Track adult = new Timeline.Track();
+		adult.addKeyframe(new Timeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
+		adult.addKeyframe(new Timeline.Keyframe(2000,  new JsonPrimitive("minecraft:work")));
+		adult.addKeyframe(new Timeline.Keyframe(9000,  new JsonPrimitive("minecraft:meet")));
+		adult.addKeyframe(new Timeline.Keyframe(11000, new JsonPrimitive("minecraft:idle")));
+		adult.addKeyframe(new Timeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
 		timeline.track("minecraft:gameplay/villager_activity", adult);
 
 		// Baby villager schedule
-		JTimeline.Track baby = new JTimeline.Track();
-		baby.addKeyframe(new JTimeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
-		baby.addKeyframe(new JTimeline.Keyframe(3000,  new JsonPrimitive("minecraft:play")));
-		baby.addKeyframe(new JTimeline.Keyframe(6000,  new JsonPrimitive("minecraft:idle")));
-		baby.addKeyframe(new JTimeline.Keyframe(10000, new JsonPrimitive("minecraft:play")));
-		baby.addKeyframe(new JTimeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
+		Timeline.Track baby = new Timeline.Track();
+		baby.addKeyframe(new Timeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
+		baby.addKeyframe(new Timeline.Keyframe(3000,  new JsonPrimitive("minecraft:play")));
+		baby.addKeyframe(new Timeline.Keyframe(6000,  new JsonPrimitive("minecraft:idle")));
+		baby.addKeyframe(new Timeline.Keyframe(10000, new JsonPrimitive("minecraft:play")));
+		baby.addKeyframe(new Timeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
 		timeline.track("minecraft:gameplay/baby_villager_activity", baby);
 
 		return timeline;
 	}
 
-	public static JTimeline buildEarlyGameLike() {
-		JTimeline timeline = new JTimeline();
+	public static Timeline buildEarlyGameLike() {
+		Timeline timeline = new Timeline();
 		// period_ticks omitted → one-shot style
 
-		JTimeline.Track patrolTrack = new JTimeline.Track()
+		Timeline.Track patrolTrack = new Timeline.Track()
 				.modifier("and"); // from json: "modifier": "and"
 
-		patrolTrack.addKeyframe(new JTimeline.Keyframe(0,      new JsonPrimitive(false)));
-		patrolTrack.addKeyframe(new JTimeline.Keyframe(120000, new JsonPrimitive(true)));
+		patrolTrack.addKeyframe(new Timeline.Keyframe(0,      new JsonPrimitive(false)));
+		patrolTrack.addKeyframe(new Timeline.Keyframe(120000, new JsonPrimitive(true)));
 
 		timeline.track("minecraft:gameplay/can_pillager_patrol_spawn", patrolTrack);
 		return timeline;
 	}
 
     public static void dumpDayTimelineJson() {
-        JTimeline day = buildDayTimelineLike();
+        Timeline day = buildDayTimelineLike();
 		System.out.println("day timeline:");
-		System.out.println(JsonBytes.encodeToPrettyString(JTimeline.CODEC, day));
+		System.out.println(JsonBytes.encodeToPrettyString(Timeline.CODEC, day));
     }
 }

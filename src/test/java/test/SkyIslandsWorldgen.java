@@ -1,21 +1,21 @@
 package test;
 
 import com.google.gson.JsonPrimitive;
-import net.vampirestudios.arrp.json.JsonBytes;
-import net.vampirestudios.arrp.json.timeline.JTimeline;
-import net.vampirestudios.arrp.json.worldgen.BlockState;
-import net.vampirestudios.arrp.json.worldgen.IntProvider;
-import net.vampirestudios.arrp.json.worldgen.JAttributeValue;
-import net.vampirestudios.arrp.json.worldgen.VerticalAnchor;
-import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
-import net.vampirestudios.arrp.json.worldgen.feature.JConfiguredFeature;
-import net.vampirestudios.arrp.json.worldgen.feature.JPlacedFeature;
-import net.vampirestudios.arrp.json.worldgen.feature.config.*;
-import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
+import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.worldgen.BlockState;
+import net.vampirestudios.arrp.data.worldgen.IntProvider;
+import net.vampirestudios.arrp.data.worldgen.AttributeValue;
+import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
+import net.vampirestudios.arrp.data.worldgen.biome.Biome;
+import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
+import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
+import net.vampirestudios.arrp.data.worldgen.feature.ConfiguredFeature;
+import net.vampirestudios.arrp.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.arrp.data.worldgen.feature.config.*;
+import net.vampirestudios.arrp.data.worldgen.noise.NoiseSettings;
+import net.vampirestudios.arrp.data.worldgen.structure.Structure;
+import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
 import net.minecraft.tags.BlockTags;
 
 import java.util.HashMap;
@@ -27,53 +27,53 @@ public class SkyIslandsWorldgen {
 	 * 1) Timeline: my_mod:sky_islands_sky_cycle
 	 * ---------------------------------------------------------- */
 
-	public static JTimeline buildSkyIslandsSkyTimeline() {
-		return new JTimeline()
+	public static Timeline buildSkyIslandsSkyTimeline() {
+		return new Timeline()
 				.period(24000)
 				.track("minecraft:visual/sky_color",
-						new JTimeline.Track()
+						new Timeline.Track()
 								.ease("linear")
-								.addKeyframe(new JTimeline.Keyframe(0,    new JsonPrimitive("#0b0f26")))  // night
-								.addKeyframe(new JTimeline.Keyframe(6000, new JsonPrimitive("#ffbf80")))  // sunrise
-								.addKeyframe(new JTimeline.Keyframe(12000,new JsonPrimitive("#6eb1ff")))  // noon
-								.addKeyframe(new JTimeline.Keyframe(18000,new JsonPrimitive("#141a33")))  // dusk
+								.addKeyframe(new Timeline.Keyframe(0,    new JsonPrimitive("#0b0f26")))  // night
+								.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive("#ffbf80")))  // sunrise
+								.addKeyframe(new Timeline.Keyframe(12000,new JsonPrimitive("#6eb1ff")))  // noon
+								.addKeyframe(new Timeline.Keyframe(18000,new JsonPrimitive("#141a33")))  // dusk
 				)
 				.track("minecraft:visual/fog_color",
-						new JTimeline.Track()
+						new Timeline.Track()
 								.ease("linear")
-								.addKeyframe(new JTimeline.Keyframe(0,    new JsonPrimitive("#151a26")))
-								.addKeyframe(new JTimeline.Keyframe(6000, new JsonPrimitive("#d8c7ff")))
-								.addKeyframe(new JTimeline.Keyframe(12000,new JsonPrimitive("#c0d8ff")))
-								.addKeyframe(new JTimeline.Keyframe(18000,new JsonPrimitive("#202535")))
+								.addKeyframe(new Timeline.Keyframe(0,    new JsonPrimitive("#151a26")))
+								.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive("#d8c7ff")))
+								.addKeyframe(new Timeline.Keyframe(12000,new JsonPrimitive("#c0d8ff")))
+								.addKeyframe(new Timeline.Keyframe(18000,new JsonPrimitive("#202535")))
 				);
 	}
 
 	public static void dumpSkyTimelineJson() {
-		JTimeline timeline = buildSkyIslandsSkyTimeline();
+		Timeline timeline = buildSkyIslandsSkyTimeline();
 		System.out.println("Timeline JSON (my_mod:sky_islands_sky_cycle):");
-		System.out.println(JsonBytes.encodeToPrettyString(JTimeline.CODEC, timeline));
+		System.out.println(JsonBytes.encodeToPrettyString(Timeline.CODEC, timeline));
 	}
 
 	/* ----------------------------------------------------------
 	 * 2) Biome: my_mod:sky_islands_biome
 	 * ---------------------------------------------------------- */
 
-	public static JBiome buildSkyIslandsBiome() {
-		var attribMap = new HashMap<String, JAttributeValue>();
-		attribMap.put("minecraft:visual/sky_color", JAttributeValue.ofString("#6eb1ff"));
-		attribMap.put("minecraft:visual/fog_color", JAttributeValue.ofString("#c0d8ff"));
-		attribMap.put("minecraft:visual/water_fog_start_distance", JAttributeValue.ofFloat(0.0f));
-		attribMap.put("minecraft:visual/water_fog_end_distance", JAttributeValue.ofFloat(96.0f));
-		attribMap.put("my_mod:gameplay/low_gravity_factor", JAttributeValue.ofFloat(0.7f));
+	public static Biome buildSkyIslandsBiome() {
+		var attribMap = new HashMap<String, AttributeValue>();
+		attribMap.put("minecraft:visual/sky_color", AttributeValue.ofString("#6eb1ff"));
+		attribMap.put("minecraft:visual/fog_color", AttributeValue.ofString("#c0d8ff"));
+		attribMap.put("minecraft:visual/water_fog_start_distance", AttributeValue.ofFloat(0.0f));
+		attribMap.put("minecraft:visual/water_fog_end_distance", AttributeValue.ofFloat(96.0f));
+		attribMap.put("my_mod:gameplay/low_gravity_factor", AttributeValue.ofFloat(0.7f));
 
-		return JBiome.biome()
+		return Biome.biome()
 				.hasPrecipitation(true)
 				.temperature(0.8F)
 				.downfall(0.4F)
-				.effects(new JBiome.Effects().waterColor(4159204))
+				.effects(new Biome.Effects().waterColor(4159204))
 				.attributes(attribMap)
-				.spawnSettings(new JBiome.SpawnSettings().setCreatureSpawnProbability(0.07F))
-				.generation(new JBiome.Generation()
+				.spawnSettings(new Biome.SpawnSettings().setCreatureSpawnProbability(0.07F))
+				.generation(new Biome.Generation()
 						.addFeature(7, "my_mod:sky_islands_trees")
 						.addFeature(8, "my_mod:sky_islands_copper_ore")
 						.addFeature(9, "my_mod:sky_islands_flowers"));
@@ -89,17 +89,17 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static void dumpSkyIslandsBiomeJson() {
-		JBiome biome = buildSkyIslandsBiome();
+		Biome biome = buildSkyIslandsBiome();
 		System.out.println("Biome JSON (my_mod:sky_islands_biome):");
-		System.out.println(JsonBytes.encodeToPrettyString(JBiome.CODEC, biome));
+		System.out.println(JsonBytes.encodeToPrettyString(Biome.CODEC, biome));
 	}
 
 	/* ----------------------------------------------------------
 	 * 3) Dimension Type: my_mod:sky_islands_type
 	 * ---------------------------------------------------------- */
 
-	public static JDimensionType buildSkyIslandsDimensionType() {
-		return JDimensionType.dimensionType()
+	public static DimensionType buildSkyIslandsDimensionType() {
+		return DimensionType.dimensionType()
 				.hasSkylight(true)
 				.hasCeiling(false)
 				.coordinateScale(1.0)
@@ -116,23 +116,23 @@ public class SkyIslandsWorldgen {
 				.attribute("minecraft:gameplay/sky_light_level", 15.0f)
 				.attribute("my_mod:visual/cloud_density", 0.4f)
 				.timelinesTag("my_mod:sky_islands_sky_cycle")
-				.skybox(JDimensionType.Skybox.OVERWORLD)
-				.cardinalLight(JDimensionType.CardinalLightType.DEFAULT)
+				.skybox(DimensionType.Skybox.OVERWORLD)
+				.cardinalLight(DimensionType.CardinalLightType.DEFAULT)
 				.hasFixedTime(false);
 	}
 
 	public static void dumpSkyIslandsDimensionTypeJson() {
-		JDimensionType type = buildSkyIslandsDimensionType();
+		DimensionType type = buildSkyIslandsDimensionType();
 		System.out.println("Dimension Type JSON (my_mod:sky_islands_type):");
-		System.out.println(JsonBytes.encodeToPrettyString(JDimensionType.CODEC, type));
+		System.out.println(JsonBytes.encodeToPrettyString(DimensionType.CODEC, type));
 	}
 
 	/* ----------------------------------------------------------
 	 * 4) Noise Settings: my_mod:sky_islands
 	 * ---------------------------------------------------------- */
 
-	public static JNoiseSettings buildSkyIslandsNoiseSettings() {
-		return JNoiseSettings.settings()
+	public static NoiseSettings buildSkyIslandsNoiseSettings() {
+		return NoiseSettings.settings()
 				.seaLevel(32)
 				.legacyRandomSource(false)
 				.defaultBlockId("minecraft:stone")
@@ -141,51 +141,51 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static void dumpSkyIslandsNoiseSettingsJson() {
-		JNoiseSettings settings = buildSkyIslandsNoiseSettings();
+		NoiseSettings settings = buildSkyIslandsNoiseSettings();
 		System.out.println("Noise Settings JSON (my_mod:sky_islands):");
-		System.out.println(JsonBytes.encodeToPrettyString(JNoiseSettings.CODEC, settings));
+		System.out.println(JsonBytes.encodeToPrettyString(NoiseSettings.CODEC, settings));
 	}
 
 	/* ----------------------------------------------------------
 	 * 5) Dimension: my_mod:sky_islands
 	 * ---------------------------------------------------------- */
 
-	public static JDimension buildSkyIslandsDimension() {
-		return JDimension.dimension()
+	public static Dimension buildSkyIslandsDimension() {
+		return Dimension.dimension()
 				.type("my_mod:sky_islands_type")
 				.noiseGenerator("my_mod:sky_islands")         // settings id
 				.fixedBiome("my_mod:sky_islands_biome");      // fixed biome source
 	}
 
 	public static void dumpSkyIslandsDimensionJson() {
-		JDimension dim = buildSkyIslandsDimension();
+		Dimension dim = buildSkyIslandsDimension();
 		System.out.println("Dimension JSON (my_mod:sky_islands):");
-		System.out.println(JsonBytes.encodeToPrettyString(JDimension.CODEC, dim));
+		System.out.println(JsonBytes.encodeToPrettyString(Dimension.CODEC, dim));
 	}
 
 	/* ----------------------------------------------------------
 	 * 6) Configured Feature: my_mod:sky_islands_trees
 	 * ---------------------------------------------------------- */
 
-	public static JConfiguredFeature buildSkyIslandsTreesConfigured() {
-		return JConfiguredFeature.tree(SimpleTreeConfig
+	public static ConfiguredFeature buildSkyIslandsTreesConfigured() {
+		return ConfiguredFeature.tree(SimpleTreeConfig
 				.tree("minecraft:oak_log", "minecraft:oak_leaves")
 				.ignoreVines(true)
 		);
 	}
 
 	public static void dumpSkyIslandsTreesConfiguredJson() {
-		JConfiguredFeature cfg = buildSkyIslandsTreesConfigured();
+		ConfiguredFeature cfg = buildSkyIslandsTreesConfigured();
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_trees):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, cfg));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, cfg));
 	}
 
 	/* ----------------------------------------------------------
 	 * 7) Placed Feature: my_mod:sky_islands_trees
 	 * ---------------------------------------------------------- */
 
-	public static JPlacedFeature buildSkyIslandsTreesPlaced() {
-		return JPlacedFeature.placed("my_mod:sky_islands_trees")
+	public static PlacedFeature buildSkyIslandsTreesPlaced() {
+		return PlacedFeature.placed("my_mod:sky_islands_trees")
 				.count(3)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
@@ -193,44 +193,44 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static void dumpSkyIslandsTreesPlacedJson() {
-		JPlacedFeature placed = buildSkyIslandsTreesPlaced();
+		PlacedFeature placed = buildSkyIslandsTreesPlaced();
 		System.out.println("Placed Feature JSON (my_mod:sky_islands_trees):");
-		System.out.println(JsonBytes.encodeToPrettyString(JPlacedFeature.CODEC, placed));
+		System.out.println(JsonBytes.encodeToPrettyString(PlacedFeature.CODEC, placed));
 	}
 
 	/* ----------------------------------------------------------
 	 * 7b) Feature examples: ore and random patch
 	 * ---------------------------------------------------------- */
 
-	public static JConfiguredFeature buildSkyIslandsCopperOreConfigured() {
-		return JConfiguredFeature.ore(OreConfig.ore("#minecraft:stone_ore_replaceables", "minecraft:copper_ore", 16));
+	public static ConfiguredFeature buildSkyIslandsCopperOreConfigured() {
+		return ConfiguredFeature.ore(OreConfig.ore("#minecraft:stone_ore_replaceables", "minecraft:copper_ore", 16));
 	}
 
-	public static JPlacedFeature buildSkyIslandsCopperOrePlaced() {
-		return JPlacedFeature.placed("my_mod:sky_islands_copper_ore")
+	public static PlacedFeature buildSkyIslandsCopperOrePlaced() {
+		return PlacedFeature.placed("my_mod:sky_islands_copper_ore")
 				.count(IntProvider.uniform(8, 16))
 				.inSquare()
 				.uniformHeight(VerticalAnchor.absolute(-16), VerticalAnchor.absolute(96))
-				.blockPredicateFilter(JPlacedFeature.BlockPredicate.matchingBlockTag("minecraft:stone_ore_replaceables"))
+				.blockPredicateFilter(PlacedFeature.BlockPredicate.matchingBlockTag("minecraft:stone_ore_replaceables"))
 				.biomeFilter();
 	}
 
-	public static JConfiguredFeature buildSkyIslandsFlowerConfigured() {
-		return JConfiguredFeature.simpleBlock(SimpleBlockConfig.simpleBlock("minecraft:dandelion"));
+	public static ConfiguredFeature buildSkyIslandsFlowerConfigured() {
+		return ConfiguredFeature.simpleBlock(SimpleBlockConfig.simpleBlock("minecraft:dandelion"));
 	}
 
-	public static JPlacedFeature buildSkyIslandsFlowerPlaced() {
-		return JPlacedFeature.placed("my_mod:sky_islands_flower")
+	public static PlacedFeature buildSkyIslandsFlowerPlaced() {
+		return PlacedFeature.placed("my_mod:sky_islands_flower")
 				.rarityFilter(3)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
 				.randomOffset(IntProvider.uniform(0, 2), IntProvider.constant(1))
-				.environmentScan("down", JPlacedFeature.BlockPredicate.wouldSurvive("minecraft:dandelion"), 4)
+				.environmentScan("down", PlacedFeature.BlockPredicate.wouldSurvive("minecraft:dandelion"), 4)
 				.biomeFilter();
 	}
 
-	public static JConfiguredFeature buildSkyIslandsFlowerPatchConfigured() {
-		return JConfiguredFeature.randomPatch(RandomPatchConfig.randomPatch("my_mod:sky_islands_flower")
+	public static ConfiguredFeature buildSkyIslandsFlowerPatchConfigured() {
+		return ConfiguredFeature.randomPatch(RandomPatchConfig.randomPatch("my_mod:sky_islands_flower")
 				.tries(48)
 				.xzSpread(6)
 				.ySpread(2));
@@ -238,82 +238,82 @@ public class SkyIslandsWorldgen {
 
 	public static void dumpSkyIslandsFeatureExamplesJson() {
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_copper_ore):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsCopperOreConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsCopperOreConfigured()));
 		System.out.println("Placed Feature JSON (my_mod:sky_islands_copper_ore):");
-		System.out.println(JsonBytes.encodeToPrettyString(JPlacedFeature.CODEC, buildSkyIslandsCopperOrePlaced()));
+		System.out.println(JsonBytes.encodeToPrettyString(PlacedFeature.CODEC, buildSkyIslandsCopperOrePlaced()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_flower):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsFlowerConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsFlowerConfigured()));
 		System.out.println("Placed Feature JSON (my_mod:sky_islands_flower):");
-		System.out.println(JsonBytes.encodeToPrettyString(JPlacedFeature.CODEC, buildSkyIslandsFlowerPlaced()));
+		System.out.println(JsonBytes.encodeToPrettyString(PlacedFeature.CODEC, buildSkyIslandsFlowerPlaced()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_flowers):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsFlowerPatchConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsFlowerPatchConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_clay_disk):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsClayDiskConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsClayDiskConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_water_spring):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsWaterSpringConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsWaterSpringConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_random_tree):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsRandomTreeConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsRandomTreeConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_leaf_pile):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsLeafPileConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsLeafPileConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_lake):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsLakeConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsLakeConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_huge_fungus):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsHugeFungusConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsHugeFungusConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_iceberg):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsIcebergConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsIcebergConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_replace_single_block):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsReplaceSingleBlockConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsReplaceSingleBlockConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_blackstone_blobs):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsBlackstoneBlobsConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsBlackstoneBlobsConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_huge_red_mushroom):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsHugeRedMushroomConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsHugeRedMushroomConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_nether_vegetation):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsNetherVegetationConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsNetherVegetationConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_delta):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsDeltaConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsDeltaConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_basalt_columns):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsBasaltColumnsConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsBasaltColumnsConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_fill_layer):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsFillLayerConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsFillLayerConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_sea_pickle):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsSeaPickleConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsSeaPickleConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_bamboo):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsBambooConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsBambooConfigured()));
 		System.out.println("Configured Feature JSON (my_mod:sky_islands_underwater_magma):");
-		System.out.println(JsonBytes.encodeToPrettyString(JConfiguredFeature.CODEC, buildSkyIslandsUnderwaterMagmaConfigured()));
+		System.out.println(JsonBytes.encodeToPrettyString(ConfiguredFeature.CODEC, buildSkyIslandsUnderwaterMagmaConfigured()));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsClayDiskConfigured() {
-		return JConfiguredFeature.disk(DiskConfig.disk("minecraft:clay", "minecraft:dirt", 3)
+	public static ConfiguredFeature buildSkyIslandsClayDiskConfigured() {
+		return ConfiguredFeature.disk(DiskConfig.disk("minecraft:clay", "minecraft:dirt", 3)
 				.radius(IntProvider.uniform(2, 4))
 				.halfHeight(1));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsWaterSpringConfigured() {
-		return JConfiguredFeature.spring(SpringConfig.spring("minecraft:water")
+	public static ConfiguredFeature buildSkyIslandsWaterSpringConfigured() {
+		return ConfiguredFeature.spring(SpringConfig.spring("minecraft:water")
 				.requiresBlockBelow(true)
 				.rockCount(4)
 				.holeCount(1)
 				.validBlocks(List.of("minecraft:stone", "minecraft:deepslate")));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsRandomTreeConfigured() {
-		return JConfiguredFeature.randomSelector(new RandomSelectorConfig()
+	public static ConfiguredFeature buildSkyIslandsRandomTreeConfigured() {
+		return ConfiguredFeature.randomSelector(new RandomSelectorConfig()
 				.feature("my_mod:sky_islands_trees", 0.35F)
 				.feature("minecraft:fancy_oak", 0.15F)
 				.defaultFeature("minecraft:oak"));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsLeafPileConfigured() {
-		return JConfiguredFeature.blockPile(BlockPileConfig.blockPile("minecraft:oak_leaves"));
+	public static ConfiguredFeature buildSkyIslandsLeafPileConfigured() {
+		return ConfiguredFeature.blockPile(BlockPileConfig.blockPile("minecraft:oak_leaves"));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsLakeConfigured() {
-		return JConfiguredFeature.lake(LakeConfig.lake("minecraft:water", "minecraft:stone"));
+	public static ConfiguredFeature buildSkyIslandsLakeConfigured() {
+		return ConfiguredFeature.lake(LakeConfig.lake("minecraft:water", "minecraft:stone"));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsHugeFungusConfigured() {
-		return JConfiguredFeature.hugeFungus(new HugeFungusConfig()
+	public static ConfiguredFeature buildSkyIslandsHugeFungusConfigured() {
+		return ConfiguredFeature.hugeFungus(new HugeFungusConfig()
 				.validBaseBlock(BlockState.blockState("minecraft:warped_nylium"))
 				.stemState(BlockState.blockState("minecraft:warped_stem"))
 				.hatState(BlockState.blockState("minecraft:warped_wart_block"))
@@ -321,72 +321,72 @@ public class SkyIslandsWorldgen {
 				.planted(false));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsIcebergConfigured() {
-		return JConfiguredFeature.iceberg(BlockStateConfig.state("minecraft:packed_ice"));
+	public static ConfiguredFeature buildSkyIslandsIcebergConfigured() {
+		return ConfiguredFeature.iceberg(BlockStateConfig.state("minecraft:packed_ice"));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsReplaceSingleBlockConfigured() {
-		return JConfiguredFeature.replaceSingleBlock(ReplaceBlockConfig
+	public static ConfiguredFeature buildSkyIslandsReplaceSingleBlockConfigured() {
+		return ConfiguredFeature.replaceSingleBlock(ReplaceBlockConfig
 				.replace("minecraft:stone", "minecraft:mossy_cobblestone")
 				.target(RuleTest.tag("minecraft:dirt"), BlockState.blockState("minecraft:rooted_dirt")));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsBlackstoneBlobsConfigured() {
-		return JConfiguredFeature.replaceBlobs(ReplaceSphereConfig
+	public static ConfiguredFeature buildSkyIslandsBlackstoneBlobsConfigured() {
+		return ConfiguredFeature.replaceBlobs(ReplaceSphereConfig
 				.replaceSphere("minecraft:netherrack", "minecraft:blackstone", 3)
 				.radius(IntProvider.uniform(2, 5)));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsHugeRedMushroomConfigured() {
-		return JConfiguredFeature.hugeRedMushroom(HugeMushroomConfig
+	public static ConfiguredFeature buildSkyIslandsHugeRedMushroomConfigured() {
+		return ConfiguredFeature.hugeRedMushroom(HugeMushroomConfig
 				.hugeMushroom("minecraft:red_mushroom_block", "minecraft:mushroom_stem")
 				.foliageRadius(2)
-				.canPlaceOn(JPlacedFeature.BlockPredicate.matchingBlocks("minecraft:mycelium", "minecraft:podzol")));
+				.canPlaceOn(PlacedFeature.BlockPredicate.matchingBlocks("minecraft:mycelium", "minecraft:podzol")));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsNetherVegetationConfigured() {
-		return JConfiguredFeature.netherForestVegetation(NetherForestVegetationConfig
+	public static ConfiguredFeature buildSkyIslandsNetherVegetationConfigured() {
+		return ConfiguredFeature.netherForestVegetation(NetherForestVegetationConfig
 				.vegetation("minecraft:warped_roots")
 				.spreadWidth(8)
 				.spreadHeight(4));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsDeltaConfigured() {
-		return JConfiguredFeature.deltaFeature(DeltaConfig
+	public static ConfiguredFeature buildSkyIslandsDeltaConfigured() {
+		return ConfiguredFeature.deltaFeature(DeltaConfig
 				.delta("minecraft:lava", "minecraft:magma_block")
 				.size(IntProvider.uniform(3, 5))
 				.rimSize(IntProvider.uniform(1, 2)));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsBasaltColumnsConfigured() {
-		return JConfiguredFeature.basaltColumns(ColumnConfig
+	public static ConfiguredFeature buildSkyIslandsBasaltColumnsConfigured() {
+		return ConfiguredFeature.basaltColumns(ColumnConfig
 				.column(1, 5)
 				.reach(IntProvider.uniform(1, 2))
 				.height(IntProvider.uniform(4, 8)));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsFillLayerConfigured() {
-		return JConfiguredFeature.fillLayer(LayerConfig.layer(2, "minecraft:deepslate"));
+	public static ConfiguredFeature buildSkyIslandsFillLayerConfigured() {
+		return ConfiguredFeature.fillLayer(LayerConfig.layer(2, "minecraft:deepslate"));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsSeaPickleConfigured() {
-		return JConfiguredFeature.seaPickle(new CountConfig().count(IntProvider.uniform(1, 4)));
+	public static ConfiguredFeature buildSkyIslandsSeaPickleConfigured() {
+		return ConfiguredFeature.seaPickle(new CountConfig().count(IntProvider.uniform(1, 4)));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsBambooConfigured() {
-		return JConfiguredFeature.bamboo(ProbabilityConfig.of(0.35F));
+	public static ConfiguredFeature buildSkyIslandsBambooConfigured() {
+		return ConfiguredFeature.bamboo(ProbabilityConfig.of(0.35F));
 	}
 
-	public static JConfiguredFeature buildSkyIslandsUnderwaterMagmaConfigured() {
-		return JConfiguredFeature.underwaterMagma(UnderwaterMagmaConfig.underwaterMagma(5, 2, 0.35F));
+	public static ConfiguredFeature buildSkyIslandsUnderwaterMagmaConfigured() {
+		return ConfiguredFeature.underwaterMagma(UnderwaterMagmaConfig.underwaterMagma(5, 2, 0.35F));
 	}
 
 	/* ----------------------------------------------------------
 	 * 8) Structure: my_mod:sky_ruin
 	 * ---------------------------------------------------------- */
 
-	public static JStructure buildSkyRuinStructure() {
-		return JStructure.jigsaw("my_mod:sky_ruin/start_pool")
+	public static Structure buildSkyRuinStructure() {
+		return Structure.jigsaw("my_mod:sky_ruin/start_pool")
 				.biomesId("my_mod:sky_islands_biome")
 				.step("surface_structures")
 				.size(1)
@@ -396,24 +396,24 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static void dumpSkyRuinStructureJson() {
-		JStructure structure = buildSkyRuinStructure();
+		Structure structure = buildSkyRuinStructure();
 		System.out.println("Structure JSON (my_mod:sky_ruin):");
-		System.out.println(JsonBytes.encodeToPrettyString(JStructure.CODEC, structure));
+		System.out.println(JsonBytes.encodeToPrettyString(Structure.CODEC, structure));
 	}
 
 	/* ----------------------------------------------------------
 	 * 9) Structure Set: my_mod:sky_ruin
 	 * ---------------------------------------------------------- */
 
-	public static JStructureSet buildSkyRuinStructureSet() {
-		return JStructureSet
+	public static StructureSet buildSkyRuinStructureSet() {
+		return StructureSet
 				.randomSpread("my_mod:sky_ruin", 1, 1234567, 40, 8);
 	}
 
 	public static void dumpSkyRuinStructureSetJson() {
-		JStructureSet set = buildSkyRuinStructureSet();
+		StructureSet set = buildSkyRuinStructureSet();
 		System.out.println("Structure Set JSON (my_mod:sky_ruin):");
-		System.out.println(JsonBytes.encodeToPrettyString(JStructureSet.CODEC, set));
+		System.out.println(JsonBytes.encodeToPrettyString(StructureSet.CODEC, set));
 	}
 
 	/* ----------------------------------------------------------

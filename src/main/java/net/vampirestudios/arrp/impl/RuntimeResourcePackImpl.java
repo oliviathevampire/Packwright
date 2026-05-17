@@ -10,32 +10,32 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.vampirestudios.arrp.ARRPException;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
-import net.vampirestudios.arrp.json.JsonBytes;
-import net.vampirestudios.arrp.json.advancement.JAdvancement;
-import net.vampirestudios.arrp.json.animation.JAnimation;
-import net.vampirestudios.arrp.json.blockstate.JState;
-import net.vampirestudios.arrp.json.entityVariants.*;
-import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
-import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
-import net.vampirestudios.arrp.json.lang.JLang;
-import net.vampirestudios.arrp.json.loot.JLootTable;
-import net.vampirestudios.arrp.json.models.JModel;
-import net.vampirestudios.arrp.json.models.JTextures;
-import net.vampirestudios.arrp.json.recipe.JRecipe;
-import net.vampirestudios.arrp.json.registry.*;
-import net.vampirestudios.arrp.json.tags.JTag;
-import net.vampirestudios.arrp.json.timeline.JTimeline;
-import net.vampirestudios.arrp.json.worldgen.*;
-import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
-import net.vampirestudios.arrp.json.worldgen.feature.JConfiguredFeature;
-import net.vampirestudios.arrp.json.worldgen.feature.JPlacedFeature;
-import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
+import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.arrp.data.advancement.Advancement;
+import net.vampirestudios.arrp.assets.animation.Animation;
+import net.vampirestudios.arrp.assets.blockstates.BlockState;
+import net.vampirestudios.arrp.data.entity.*;
+import net.vampirestudios.arrp.assets.equipment.EquipmentModel;
+import net.vampirestudios.arrp.assets.equipment.TrimMaterial;
+import net.vampirestudios.arrp.assets.equipment.TrimPattern;
+import net.vampirestudios.arrp.assets.item.ItemInfo;
+import net.vampirestudios.arrp.assets.lang.Lang;
+import net.vampirestudios.arrp.data.loot.LootTable;
+import net.vampirestudios.arrp.assets.models.Model;
+import net.vampirestudios.arrp.assets.models.Textures;
+import net.vampirestudios.arrp.data.recipe.Recipe;
+import net.vampirestudios.arrp.data.registry.*;
+import net.vampirestudios.arrp.data.tags.Tag;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.worldgen.*;
+import net.vampirestudios.arrp.data.worldgen.biome.Biome;
+import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
+import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
+import net.vampirestudios.arrp.data.worldgen.feature.ConfiguredFeature;
+import net.vampirestudios.arrp.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.arrp.data.worldgen.noise.NoiseSettings;
+import net.vampirestudios.arrp.data.worldgen.structure.Structure;
+import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
 import net.vampirestudios.arrp.mixin.ShapedRecipeBuilderAccessor;
 import net.vampirestudios.arrp.util.CallableFunction;
 import net.vampirestudios.arrp.util.CountingInputStream;
@@ -81,8 +81,8 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	public static final Gson GSON = new GsonBuilder()
 									.setPrettyPrinting()
 									.disableHtmlEscaping()
-									.registerTypeAdapter(JTextures.class, new JTextures.Serializer())
-									.registerTypeAdapter(JAnimation.class, new JAnimation.Serializer())
+									.registerTypeAdapter(Textures.class, new Textures.Serializer())
+									.registerTypeAdapter(Animation.class, new Animation.Serializer())
 									.create();
 	// if it works, don't touch it
 	static final Set<String> KEY_WARNINGS = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -129,7 +129,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	private final Map<Identifier, Supplier<byte[]>> data = new ConcurrentHashMap<>();
 	private final Map<Identifier, Supplier<byte[]>> assets = new ConcurrentHashMap<>();
 	private final Map<List<String>, Supplier<byte[]>> root = new ConcurrentHashMap<>();
-	private final Map<Identifier, JLang> langMergable = new ConcurrentHashMap<>();
+	private final Map<Identifier, Lang> langMergable = new ConcurrentHashMap<>();
 
 	public RuntimeResourcePackImpl(Identifier id) {
 		super(new PackLocationInfo(id.getNamespace() + ";" + id.getPath(), Component.nullToEmpty("Runtime Resource Pack " + id), PackSource.DEFAULT, Optional.empty()));
@@ -168,16 +168,16 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
-	public byte[] addLang(Identifier identifier, JLang lang) {
+	public byte[] addLang(Identifier identifier, Lang lang) {
 		return this.addJsonAsset(identifier, "lang", lang.getLang());
 	}
 
 	@Override
-	public void mergeLang(Identifier identifier, JLang lang) {
+	public void mergeLang(Identifier identifier, Lang lang) {
 		this.langMergable.compute(identifier, (identifier1, lang1) -> {
 			if (lang1 == null) {
-				lang1 = new JLang();
-				JLang finalLang = lang1;
+				lang1 = new Lang();
+				Lang finalLang = lang1;
 				this.addLazyResource(PackType.CLIENT_RESOURCES, identifier, (pack, identifier2) -> {
 					return pack.addLang(identifier, finalLang);
 				});
@@ -188,78 +188,78 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
-	public byte[] addLootTable(Identifier identifier, JLootTable table) {
-		return this.addCodecData(identifier, "loot_table", JLootTable.CODEC, table);
+	public byte[] addLootTable(Identifier identifier, LootTable table) {
+		return this.addCodecData(identifier, "loot_table", LootTable.CODEC, table);
 	}
 
 	@Override
-	public byte[] addWolfVariant(Identifier id, JWolfVariant variant) {
-		return this.addCodecData(id, "wolf_variant", JWolfVariant.CODEC, variant);
+	public byte[] addWolfVariant(Identifier id, WolfVariant variant) {
+		return this.addCodecData(id, "wolf_variant", WolfVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addZombieNautilusVariant(Identifier id, JZombieNautilusVariant variant) {
-		return this.addCodecData(id, "zombie_nautilus_variant", JZombieNautilusVariant.CODEC, variant);
+	public byte[] addZombieNautilusVariant(Identifier id, ZombieNautilusVariant variant) {
+		return this.addCodecData(id, "zombie_nautilus_variant", ZombieNautilusVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addChickenVariant(Identifier id, JChickenVariant variant) {
-		return this.addCodecData(id, "chicken_variant", JChickenVariant.CODEC, variant);
+	public byte[] addChickenVariant(Identifier id, ChickenVariant variant) {
+		return this.addCodecData(id, "chicken_variant", ChickenVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addCowVariant(Identifier id, JCowVariant variant) {
-		return this.addCodecData(id, "cow_variant", JCowVariant.CODEC, variant);
+	public byte[] addCowVariant(Identifier id, CowVariant variant) {
+		return this.addCodecData(id, "cow_variant", CowVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addPigVariant(Identifier id, JPigVariant variant) {
-		return this.addCodecData(id, "pig_variant", JPigVariant.CODEC, variant);
+	public byte[] addPigVariant(Identifier id, PigVariant variant) {
+		return this.addCodecData(id, "pig_variant", PigVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addWolfSoundVariant(Identifier id, JWolfSoundVariant variant) {
-		return this.addCodecData(id, "wolf_sound_variant", JWolfSoundVariant.CODEC, variant);
+	public byte[] addWolfSoundVariant(Identifier id, WolfSoundVariant variant) {
+		return this.addCodecData(id, "wolf_sound_variant", WolfSoundVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addCatSoundVariant(Identifier id, JCatSoundVariant variant) {
-		return this.addCodecData(id, "cat_sound_variant", JCatSoundVariant.CODEC, variant);
+	public byte[] addCatSoundVariant(Identifier id, CatSoundVariant variant) {
+		return this.addCodecData(id, "cat_sound_variant", CatSoundVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addChickenSoundVariant(Identifier id, JChickenSoundVariant variant) {
-		return this.addCodecData(id, "chicken_sound_variant", JChickenSoundVariant.CODEC, variant);
+	public byte[] addChickenSoundVariant(Identifier id, ChickenSoundVariant variant) {
+		return this.addCodecData(id, "chicken_sound_variant", ChickenSoundVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addCowSoundVariant(Identifier id, JCowSoundVariant variant) {
-		return this.addCodecData(id, "cow_sound_variant", JCowSoundVariant.CODEC, variant);
+	public byte[] addCowSoundVariant(Identifier id, CowSoundVariant variant) {
+		return this.addCodecData(id, "cow_sound_variant", CowSoundVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addPigSoundVariant(Identifier id, JPigSoundVariant variant) {
-		return this.addCodecData(id, "pig_sound_variant", JPigSoundVariant.CODEC, variant);
+	public byte[] addPigSoundVariant(Identifier id, PigSoundVariant variant) {
+		return this.addCodecData(id, "pig_sound_variant", PigSoundVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, JSimpleMobVariant variant) {
-		return this.addCodecData(id, variantFolder.getPath(), JSimpleMobVariant.CODEC, variant);
+	public byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, SimpleMobVariant variant) {
+		return this.addCodecData(id, variantFolder.getPath(), SimpleMobVariant.CODEC, variant);
 	}
 
 	@Override
-	public byte[] addCatVariant(Identifier id, JSimpleMobVariant v) {
+	public byte[] addCatVariant(Identifier id, SimpleMobVariant v) {
 		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft", "cat_variant"), id, v);
 	}
 
 	@Override
-	public byte[] addFrogVariant(Identifier id, JSimpleMobVariant v) {
+	public byte[] addFrogVariant(Identifier id, SimpleMobVariant v) {
 		return addSimpleMobVariant(Identifier.fromNamespaceAndPath("minecraft", "frog_variant"), id, v);
 	}
 
 	@Override
-	public byte[] addPaintingVariant(Identifier id, JPaintingVariant variant) {
-		return this.addCodecData(id, "painting_variant", JPaintingVariant.CODEC, variant);
+	public byte[] addPaintingVariant(Identifier id, PaintingVariant variant) {
+		return this.addCodecData(id, "painting_variant", PaintingVariant.CODEC, variant);
 	}
 
 	@Override
@@ -333,113 +333,113 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
-	public byte[] addAdvancement(JAdvancement advancement, Identifier path) {
-		return this.addCodecData(path, "advancement", JAdvancement.CODEC, advancement);
+	public byte[] addAdvancement(Advancement advancement, Identifier path) {
+		return this.addCodecData(path, "advancement", Advancement.CODEC, advancement);
 	}
 
 	@Override
-	public byte[] addModel(JModel model, Identifier path) {
+	public byte[] addModel(Model model, Identifier path) {
 		return this.addJsonAsset(path, "models", model);
 	}
 
 	@Override
-	public byte[] addItemModelInfo(JItemInfo model, Identifier path) {
-		return this.addCodecAsset(path, "items", JItemInfo.CODEC, model);
+	public byte[] addItemModelInfo(ItemInfo model, Identifier path) {
+		return this.addCodecAsset(path, "items", ItemInfo.CODEC, model);
 	}
 
 	@Override
-	public byte[] addEquipmentModel(JEquipmentModel model, Identifier path) {
-		return this.addCodecAsset(path, "equipment", JEquipmentModel.CODEC, model);
+	public byte[] addEquipmentModel(EquipmentModel model, Identifier path) {
+		return this.addCodecAsset(path, "equipment", EquipmentModel.CODEC, model);
 	}
 
 	@Override
-	public byte[] addTrimMaterial(Identifier id, JTrimMaterial material) {
-		return this.addCodecData(id, "trim_material", JTrimMaterial.CODEC, material);
+	public byte[] addTrimMaterial(Identifier id, TrimMaterial material) {
+		return this.addCodecData(id, "trim_material", TrimMaterial.CODEC, material);
 	}
 
 	@Override
-	public byte[] addTrimPattern(Identifier id, JTrimPattern pattern) {
-		return this.addCodecData(id, "trim_pattern", JTrimPattern.CODEC, pattern);
+	public byte[] addTrimPattern(Identifier id, TrimPattern pattern) {
+		return this.addCodecData(id, "trim_pattern", TrimPattern.CODEC, pattern);
 	}
 
 	@Override
-	public byte[] addBannerPattern(Identifier id, JBannerPattern pattern) {
-		return this.addCodecData(id, "banner_pattern", JBannerPattern.CODEC, pattern);
+	public byte[] addBannerPattern(Identifier id, BannerPattern pattern) {
+		return this.addCodecData(id, "banner_pattern", BannerPattern.CODEC, pattern);
 	}
 
 	@Override
-	public byte[] addDecoratedPotPattern(Identifier id, JDecoratedPotPattern pattern) {
-		return this.addCodecData(id, "decorated_pot_pattern", JDecoratedPotPattern.CODEC, pattern);
+	public byte[] addDecoratedPotPattern(Identifier id, DecoratedPotPattern pattern) {
+		return this.addCodecData(id, "decorated_pot_pattern", DecoratedPotPattern.CODEC, pattern);
 	}
 
 	@Override
-	public byte[] addEnchantment(Identifier id, JEnchantment enchantment) {
-		return this.addCodecData(id, "enchantment", JEnchantment.CODEC, enchantment);
+	public byte[] addEnchantment(Identifier id, Enchantment enchantment) {
+		return this.addCodecData(id, "enchantment", Enchantment.CODEC, enchantment);
 	}
 
 	@Override
-	public byte[] addDamageType(Identifier id, JDamageType damageType) {
-		return this.addCodecData(id, "damage_type", JDamageType.CODEC, damageType);
+	public byte[] addDamageType(Identifier id, DamageType damageType) {
+		return this.addCodecData(id, "damage_type", DamageType.CODEC, damageType);
 	}
 
 	@Override
-	public byte[] addInstrument(Identifier id, JInstrument instrument) {
-		return this.addCodecData(id, "instrument", JInstrument.CODEC, instrument);
+	public byte[] addInstrument(Identifier id, Instrument instrument) {
+		return this.addCodecData(id, "instrument", Instrument.CODEC, instrument);
 	}
 
 	@Override
-	public byte[] addJukeboxSong(Identifier id, JJukeboxSong song) {
-		return this.addCodecData(id, "jukebox_song", JJukeboxSong.CODEC, song);
+	public byte[] addJukeboxSong(Identifier id, JukeboxSong song) {
+		return this.addCodecData(id, "jukebox_song", JukeboxSong.CODEC, song);
 	}
 
 	@Override
-	public byte[] addConfiguredCarver(Identifier id, JConfiguredCarver configuredCarver) {
-		return this.addCodecData(id, "worldgen/configured_carver", JConfiguredCarver.CODEC, configuredCarver);
+	public byte[] addConfiguredCarver(Identifier id, ConfiguredCarver configuredCarver) {
+		return this.addCodecData(id, "worldgen/configured_carver", ConfiguredCarver.CODEC, configuredCarver);
 	}
 
 	@Override
-	public byte[] addProcessorList(Identifier id, JProcessorList processorList) {
-		return this.addCodecData(id, "worldgen/processor_list", JProcessorList.CODEC, processorList);
+	public byte[] addProcessorList(Identifier id, ProcessorList processorList) {
+		return this.addCodecData(id, "worldgen/processor_list", ProcessorList.CODEC, processorList);
 	}
 
 	@Override
-	public byte[] addTemplatePool(Identifier id, JTemplatePool templatePool) {
-		return this.addCodecData(id, "worldgen/template_pool", JTemplatePool.CODEC, templatePool);
+	public byte[] addTemplatePool(Identifier id, TemplatePool templatePool) {
+		return this.addCodecData(id, "worldgen/template_pool", TemplatePool.CODEC, templatePool);
 	}
 
 	@Override
-	public byte[] addWorldPreset(Identifier id, JWorldPreset worldPreset) {
-		return this.addCodecData(id, "worldgen/world_preset", JWorldPreset.CODEC, worldPreset);
+	public byte[] addWorldPreset(Identifier id, WorldPreset worldPreset) {
+		return this.addCodecData(id, "worldgen/world_preset", WorldPreset.CODEC, worldPreset);
 	}
 
 	@Override
-	public byte[] addFlatLevelGeneratorPreset(Identifier id, JFlatLevelGeneratorPreset preset) {
-		return this.addCodecData(id, "worldgen/flat_level_generator_preset", JFlatLevelGeneratorPreset.CODEC, preset);
+	public byte[] addFlatLevelGeneratorPreset(Identifier id, FlatLevelGeneratorPreset preset) {
+		return this.addCodecData(id, "worldgen/flat_level_generator_preset", FlatLevelGeneratorPreset.CODEC, preset);
 	}
 
 	@Override
-	public byte[] addTradeSet(Identifier id, JTradeSet tradeSet) {
-		return this.addCodecData(id, "trade_set", JTradeSet.CODEC, tradeSet);
+	public byte[] addTradeSet(Identifier id, TradeSet tradeSet) {
+		return this.addCodecData(id, "trade_set", TradeSet.CODEC, tradeSet);
 	}
 
 	@Override
-	public byte[] addVillagerTrade(Identifier id, JVillagerTrade trade) {
-		return this.addCodecData(id, "villager_trade", JVillagerTrade.CODEC, trade);
+	public byte[] addVillagerTrade(Identifier id, VillagerTrade trade) {
+		return this.addCodecData(id, "villager_trade", VillagerTrade.CODEC, trade);
 	}
 
 	@Override
-	public byte[] addDialog(Identifier id, JDialog dialog) {
-		return this.addCodecData(id, "dialog", JDialog.CODEC, dialog);
+	public byte[] addDialog(Identifier id, Dialog dialog) {
+		return this.addCodecData(id, "dialog", Dialog.CODEC, dialog);
 	}
 
 	@Override
-	public byte[] addWorldClock(Identifier id, JWorldClock clock) {
-		return this.addCodecData(id, "world_clock", JWorldClock.CODEC, clock);
+	public byte[] addWorldClock(Identifier id, WorldClock clock) {
+		return this.addCodecData(id, "world_clock", WorldClock.CODEC, clock);
 	}
 
 	@Override
-	public byte[] addBlockState(JState state, Identifier path) {
-		return this.addCodecAsset(path, "blockstates", JState.CODEC, state);
+	public byte[] addBlockState(BlockState state, Identifier path) {
+		return this.addCodecAsset(path, "blockstates", BlockState.CODEC, state);
 	}
 
 	@Override
@@ -454,18 +454,18 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
-	public byte[] addAnimation(Identifier id, JAnimation animation) {
+	public byte[] addAnimation(Identifier id, Animation animation) {
 		return this.addAsset(fix(id, "textures", "png.mcmeta"), toJsonBytes(animation));
 	}
 
 	@Override
-	public byte[] addTag(Identifier id, JTag tag) {
-		return this.addCodecData(id, "tags", JTag.CODEC, tag);
+	public byte[] addTag(Identifier id, Tag tag) {
+		return this.addCodecData(id, "tags", Tag.CODEC, tag);
 	}
 
 	@Override
-	public byte[] addRecipe(Identifier id, JRecipe recipe) {
-		return this.addCodecData(id, "recipe", JRecipe.CODEC, recipe);
+	public byte[] addRecipe(Identifier id, Recipe recipe) {
+		return this.addCodecData(id, "recipe", Recipe.CODEC, recipe);
 	}
 
 	@Override
@@ -483,48 +483,48 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
-	public byte[] addTimeline(Identifier id, JTimeline timeline) {
-		return this.addCodecData(id, "timelines", JTimeline.CODEC, timeline);
+	public byte[] addTimeline(Identifier id, Timeline timeline) {
+		return this.addCodecData(id, "timelines", Timeline.CODEC, timeline);
 	}
 
 	@Override
-	public byte[] addBiome(Identifier id, JBiome biome) {
-		return this.addCodecData(id, "worldgen/biome", JBiome.CODEC, biome);
+	public byte[] addBiome(Identifier id, Biome biome) {
+		return this.addCodecData(id, "worldgen/biome", Biome.CODEC, biome);
 	}
 
 	@Override
-	public byte[] addDimension(Identifier id, JDimension dimension) {
-		return this.addCodecData(id, "dimension", JDimension.CODEC, dimension);
+	public byte[] addDimension(Identifier id, Dimension dimension) {
+		return this.addCodecData(id, "dimension", Dimension.CODEC, dimension);
 	}
 
 	@Override
-	public byte[] addDimensionType(Identifier id, JDimensionType dimensionType) {
-		return this.addCodecData(id, "dimension_type", JDimensionType.CODEC, dimensionType);
+	public byte[] addDimensionType(Identifier id, DimensionType dimensionType) {
+		return this.addCodecData(id, "dimension_type", DimensionType.CODEC, dimensionType);
 	}
 
 	@Override
-	public byte[] addConfiguredFeature(Identifier id, JConfiguredFeature configuredFeature) {
-		return this.addCodecData(id, "worldgen/configured_feature", JConfiguredFeature.CODEC, configuredFeature);
+	public byte[] addConfiguredFeature(Identifier id, ConfiguredFeature configuredFeature) {
+		return this.addCodecData(id, "worldgen/configured_feature", ConfiguredFeature.CODEC, configuredFeature);
 	}
 
 	@Override
-	public byte[] addPlacedFeature(Identifier id, JPlacedFeature placedFeature) {
-		return this.addCodecData(id, "worldgen/placed_feature", JPlacedFeature.CODEC, placedFeature);
+	public byte[] addPlacedFeature(Identifier id, PlacedFeature placedFeature) {
+		return this.addCodecData(id, "worldgen/placed_feature", PlacedFeature.CODEC, placedFeature);
 	}
 
 	@Override
-	public byte[] addNoiseSettings(Identifier id, JNoiseSettings noiseSettings) {
-		return this.addCodecData(id, "worldgen/noise_settings", JNoiseSettings.CODEC, noiseSettings);
+	public byte[] addNoiseSettings(Identifier id, NoiseSettings noiseSettings) {
+		return this.addCodecData(id, "worldgen/noise_settings", NoiseSettings.CODEC, noiseSettings);
 	}
 
 	@Override
-	public byte[] addStructure(Identifier id, JStructure structure) {
-		return this.addCodecData(id, "worldgen/structure", JStructure.CODEC, structure);
+	public byte[] addStructure(Identifier id, Structure structure) {
+		return this.addCodecData(id, "worldgen/structure", Structure.CODEC, structure);
 	}
 
 	@Override
-	public byte[] addStructureSet(Identifier id, JStructureSet structureSet) {
-		return this.addCodecData(id, "worldgen/structure_set", JStructureSet.CODEC, structureSet);
+	public byte[] addStructureSet(Identifier id, StructureSet structureSet) {
+		return this.addCodecData(id, "worldgen/structure_set", StructureSet.CODEC, structureSet);
 	}
 
 	@Override
@@ -799,7 +799,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 			}
 
 		} catch (IOException e) {
-			throw new ARRPException("Failed to write resource file: " + namespace + "/" + path, e);
+			throw new ARRPException("Failed to write resource file: " + identifier.getNamespace() + "/" + identifier.getPath(), e);
 		}
 	}
 

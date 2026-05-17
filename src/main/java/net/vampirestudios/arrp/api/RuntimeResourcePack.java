@@ -12,30 +12,30 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.util.StringRepresentable;
 import net.vampirestudios.arrp.JsonSerializers;
 import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
-import net.vampirestudios.arrp.json.advancement.JAdvancement;
-import net.vampirestudios.arrp.json.animation.JAnimation;
-import net.vampirestudios.arrp.json.blockstate.JState;
-import net.vampirestudios.arrp.json.entityVariants.*;
-import net.vampirestudios.arrp.json.equipmentinfo.JEquipmentModel;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimMaterial;
-import net.vampirestudios.arrp.json.equipmentinfo.JTrimPattern;
-import net.vampirestudios.arrp.json.iteminfo.JItemInfo;
-import net.vampirestudios.arrp.json.lang.JLang;
-import net.vampirestudios.arrp.json.loot.JLootTable;
-import net.vampirestudios.arrp.json.models.JModel;
-import net.vampirestudios.arrp.json.recipe.JRecipe;
-import net.vampirestudios.arrp.json.registry.*;
-import net.vampirestudios.arrp.json.tags.JTag;
-import net.vampirestudios.arrp.json.timeline.JTimeline;
-import net.vampirestudios.arrp.json.worldgen.*;
-import net.vampirestudios.arrp.json.worldgen.biome.JBiome;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimension;
-import net.vampirestudios.arrp.json.worldgen.dimension.JDimensionType;
-import net.vampirestudios.arrp.json.worldgen.feature.JConfiguredFeature;
-import net.vampirestudios.arrp.json.worldgen.feature.JPlacedFeature;
-import net.vampirestudios.arrp.json.worldgen.noise.JNoiseSettings;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructure;
-import net.vampirestudios.arrp.json.worldgen.structure.JStructureSet;
+import net.vampirestudios.arrp.data.advancement.Advancement;
+import net.vampirestudios.arrp.assets.animation.Animation;
+import net.vampirestudios.arrp.assets.blockstates.BlockState;
+import net.vampirestudios.arrp.data.entity.*;
+import net.vampirestudios.arrp.assets.equipment.EquipmentModel;
+import net.vampirestudios.arrp.assets.equipment.TrimMaterial;
+import net.vampirestudios.arrp.assets.equipment.TrimPattern;
+import net.vampirestudios.arrp.assets.item.ItemInfo;
+import net.vampirestudios.arrp.assets.lang.Lang;
+import net.vampirestudios.arrp.data.loot.LootTable;
+import net.vampirestudios.arrp.assets.models.Model;
+import net.vampirestudios.arrp.data.recipe.Recipe;
+import net.vampirestudios.arrp.data.registry.*;
+import net.vampirestudios.arrp.data.tags.Tag;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.worldgen.*;
+import net.vampirestudios.arrp.data.worldgen.biome.Biome;
+import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
+import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
+import net.vampirestudios.arrp.data.worldgen.feature.ConfiguredFeature;
+import net.vampirestudios.arrp.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.arrp.data.worldgen.noise.NoiseSettings;
+import net.vampirestudios.arrp.data.worldgen.structure.Structure;
+import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
 import net.vampirestudios.arrp.util.CallableFunction;
 import org.jetbrains.annotations.Contract;
 import org.joml.Vector3f;
@@ -118,44 +118,44 @@ public interface RuntimeResourcePack extends PackResources {
 	 * <p>
 	 * ex. addLang(MyMod.id("en_us"), lang().translate("something.something", "test"))
 	 */
-	byte[] addLang(Identifier identifier, JLang lang);
+	byte[] addLang(Identifier identifier, Lang lang);
 
 	/**
 	 * Multiple calls to this method with the same identifier will merge them into one lang file
 	 */
-	void mergeLang(Identifier identifier, JLang lang);
+	void mergeLang(Identifier identifier, Lang lang);
 
 	/**
 	 * adds a loot table
 	 */
-	byte[] addLootTable(Identifier identifier, JLootTable table);
+	byte[] addLootTable(Identifier identifier, LootTable table);
 
-	byte[] addEnchantment(Identifier id, JEnchantment enchantment);
+	byte[] addEnchantment(Identifier id, Enchantment enchantment);
 
-	byte[] addWolfVariant(Identifier id, JWolfVariant variant);
+	byte[] addWolfVariant(Identifier id, WolfVariant variant);
 
-	byte[] addZombieNautilusVariant(Identifier id, JZombieNautilusVariant variant);
+	byte[] addZombieNautilusVariant(Identifier id, ZombieNautilusVariant variant);
 
-	byte[] addChickenVariant(Identifier id, JChickenVariant variant);
-	byte[] addCowVariant(Identifier id, JCowVariant variant);
-	byte[] addPigVariant(Identifier id, JPigVariant variant);
-	byte[] addWolfSoundVariant(Identifier id, JWolfSoundVariant variant);
+	byte[] addChickenVariant(Identifier id, ChickenVariant variant);
+	byte[] addCowVariant(Identifier id, CowVariant variant);
+	byte[] addPigVariant(Identifier id, PigVariant variant);
+	byte[] addWolfSoundVariant(Identifier id, WolfSoundVariant variant);
 
-	byte[] addCatSoundVariant(Identifier id, JCatSoundVariant variant);
+	byte[] addCatSoundVariant(Identifier id, CatSoundVariant variant);
 
-	byte[] addChickenSoundVariant(Identifier id, JChickenSoundVariant variant);
+	byte[] addChickenSoundVariant(Identifier id, ChickenSoundVariant variant);
 
-	byte[] addCowSoundVariant(Identifier id, JCowSoundVariant variant);
+	byte[] addCowSoundVariant(Identifier id, CowSoundVariant variant);
 
-	byte[] addPigSoundVariant(Identifier id, JPigSoundVariant variant);
+	byte[] addPigSoundVariant(Identifier id, PigSoundVariant variant);
 
-	byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, JSimpleMobVariant variant);
+	byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, SimpleMobVariant variant);
 
-	byte[] addCatVariant(Identifier id, JSimpleMobVariant variant);
+	byte[] addCatVariant(Identifier id, SimpleMobVariant variant);
 
-	byte[] addFrogVariant(Identifier id, JSimpleMobVariant variant);
+	byte[] addFrogVariant(Identifier id, SimpleMobVariant variant);
 
-	byte[] addPaintingVariant(Identifier id, JPaintingVariant variant);
+	byte[] addPaintingVariant(Identifier id, PaintingVariant variant);
 
 	/**
 	 * adds an async resource, this is evaluated off-thread, this does not hold all resource retrieval unlike
@@ -219,67 +219,67 @@ public interface RuntimeResourcePack extends PackResources {
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addAdvancement(JAdvancement model, Identifier path);
+	byte[] addAdvancement(Advancement model, Identifier path);
 
 	/**
 	 * add a model, Items should go in item/... and Blocks in block/... ex. mymod:items/my_item ".json" is
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addModel(JModel model, Identifier path);
+	byte[] addModel(Model model, Identifier path);
 
 	/**
 	 * add a item model info, Goes in items/. mymod:items/my_item ".json" is
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addItemModelInfo(JItemInfo model, Identifier path);
+	byte[] addItemModelInfo(ItemInfo model, Identifier path);
 
 
 	/**
 	 * Write a vanilla-style equipment‐model JSON to
 	 * assets/<namespace>/equipment/<path>.json
 	 */
-	byte[] addEquipmentModel(JEquipmentModel model, Identifier path);
+	byte[] addEquipmentModel(EquipmentModel model, Identifier path);
 
-	byte[] addTrimMaterial(Identifier id, JTrimMaterial material);
+	byte[] addTrimMaterial(Identifier id, TrimMaterial material);
 
-	byte[] addTrimPattern(Identifier id, JTrimPattern pattern);
+	byte[] addTrimPattern(Identifier id, TrimPattern pattern);
 
-	byte[] addBannerPattern(Identifier id, JBannerPattern pattern);
+	byte[] addBannerPattern(Identifier id, BannerPattern pattern);
 
-	byte[] addDecoratedPotPattern(Identifier id, JDecoratedPotPattern pattern);
+	byte[] addDecoratedPotPattern(Identifier id, DecoratedPotPattern pattern);
 
-	byte[] addDamageType(Identifier id, JDamageType damageType);
+	byte[] addDamageType(Identifier id, DamageType damageType);
 
-	byte[] addInstrument(Identifier id, JInstrument instrument);
+	byte[] addInstrument(Identifier id, Instrument instrument);
 
-	byte[] addJukeboxSong(Identifier id, JJukeboxSong song);
+	byte[] addJukeboxSong(Identifier id, JukeboxSong song);
 
-	byte[] addConfiguredCarver(Identifier id, JConfiguredCarver configuredCarver);
+	byte[] addConfiguredCarver(Identifier id, ConfiguredCarver configuredCarver);
 
-	byte[] addProcessorList(Identifier id, JProcessorList processorList);
+	byte[] addProcessorList(Identifier id, ProcessorList processorList);
 
-	byte[] addTemplatePool(Identifier id, JTemplatePool templatePool);
+	byte[] addTemplatePool(Identifier id, TemplatePool templatePool);
 
-	byte[] addWorldPreset(Identifier id, JWorldPreset worldPreset);
+	byte[] addWorldPreset(Identifier id, WorldPreset worldPreset);
 
-	byte[] addFlatLevelGeneratorPreset(Identifier id, JFlatLevelGeneratorPreset preset);
+	byte[] addFlatLevelGeneratorPreset(Identifier id, FlatLevelGeneratorPreset preset);
 
-	byte[] addTradeSet(Identifier id, JTradeSet tradeSet);
+	byte[] addTradeSet(Identifier id, TradeSet tradeSet);
 
-	byte[] addVillagerTrade(Identifier id, JVillagerTrade trade);
+	byte[] addVillagerTrade(Identifier id, VillagerTrade trade);
 
-	byte[] addDialog(Identifier id, JDialog dialog);
+	byte[] addDialog(Identifier id, Dialog dialog);
 
-	byte[] addWorldClock(Identifier id, JWorldClock clock);
+	byte[] addWorldClock(Identifier id, WorldClock clock);
 
 	/**
 	 * adds a blockstate json
 	 * <p>
 	 * ".json" is automatically appended to the path
 	 */
-	byte[] addBlockState(JState state, Identifier path);
+	byte[] addBlockState(BlockState state, Identifier path);
 
 	/**
 	 * adds a texture png
@@ -293,14 +293,14 @@ public interface RuntimeResourcePack extends PackResources {
 	 * <p>
 	 * ".png.mcmeta" is automatically appended to the path
 	 */
-	byte[] addAnimation(Identifier id, JAnimation animation);
+	byte[] addAnimation(Identifier id, Animation animation);
 
 	/**
 	 * add a tag under the id
 	 * <p>
 	 * ".json" is automatically appended to the path
 	 */
-	byte[] addTag(Identifier id, JTag tag);
+	byte[] addTag(Identifier id, Tag tag);
 
 	/**
 	 * add a recipe
@@ -311,35 +311,35 @@ public interface RuntimeResourcePack extends PackResources {
 	 * @param recipe the recipe to add
 	 * @return the new resource
 	 */
-	byte[] addRecipe(Identifier id, JRecipe recipe);
+	byte[] addRecipe(Identifier id, Recipe recipe);
 
 	byte[] addRecipe(Identifier id, RecipeBuilder recipe);
 
-	default void addRecipes(java.util.Map<Identifier, JRecipe> recipes) {
+	default void addRecipes(java.util.Map<Identifier, Recipe> recipes) {
 		recipes.forEach(this::addRecipe);
 	}
 
-	default void addTags(java.util.Map<Identifier, JTag> tags) {
+	default void addTags(java.util.Map<Identifier, Tag> tags) {
 		tags.forEach(this::addTag);
 	}
 
-	byte[] addTimeline(Identifier id, JTimeline timeline);
+	byte[] addTimeline(Identifier id, Timeline timeline);
 
-	byte[] addBiome(Identifier id, JBiome biome);
+	byte[] addBiome(Identifier id, Biome biome);
 
-	byte[] addDimension(Identifier id, JDimension dimension);
+	byte[] addDimension(Identifier id, Dimension dimension);
 
-	byte[] addDimensionType(Identifier id, JDimensionType dimensionType);
+	byte[] addDimensionType(Identifier id, DimensionType dimensionType);
 
-	byte[] addConfiguredFeature(Identifier id, JConfiguredFeature configuredFeature);
+	byte[] addConfiguredFeature(Identifier id, ConfiguredFeature configuredFeature);
 
-	byte[] addPlacedFeature(Identifier id, JPlacedFeature placedFeature);
+	byte[] addPlacedFeature(Identifier id, PlacedFeature placedFeature);
 
-	byte[] addNoiseSettings(Identifier id, JNoiseSettings noiseSettings);
+	byte[] addNoiseSettings(Identifier id, NoiseSettings noiseSettings);
 
-	byte[] addStructure(Identifier id, JStructure structure);
+	byte[] addStructure(Identifier id, Structure structure);
 
-	byte[] addStructureSet(Identifier id, JStructureSet structureSet);
+	byte[] addStructureSet(Identifier id, StructureSet structureSet);
 
 	/**
 	 * invokes the action on the RRP executor, RRPs are thread-safe you can create expensive assets here, all resources
