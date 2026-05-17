@@ -30,6 +30,10 @@ public class JBlockModel implements Cloneable {
 		return m;
 	}));
 
+	public static JBlockModel blockModel(Identifier model) {
+		return new JBlockModel(model);
+	}
+
 	public JBlockModel(Identifier model) {
 		this.model = model;
 	}

@@ -51,6 +51,14 @@ public class JIngredient {
 		return new JIngredient();
 	}
 
+	public static JIngredient of(Identifier item) {
+		return ingredient().item(item);
+	}
+
+	public static JIngredient ofTag(Identifier tag) {
+		return ingredient().tag(tag);
+	}
+
 	public static JIngredient alternative(JIngredient... ingredients) {
 		return ingredient().addAll(ingredients);
 	}

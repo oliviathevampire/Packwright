@@ -14,7 +14,7 @@ public class JPropertyUseCycle extends JProperty {
 	).apply(i, JPropertyUseCycle::new));
 
 	static {
-		JProperty.register(TYPE, CODEC.xmap(x -> x, x -> x));
+		JProperty.register(TYPE, CODEC);
 	}
 
 	private float period = 1.0f; // Default period is 1.0

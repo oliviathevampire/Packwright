@@ -1,6 +1,5 @@
 package net.vampirestudios.arrp.json.iteminfo.property;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.vampirestudios.arrp.json.codec.Codecs;
@@ -18,15 +17,8 @@ public abstract class JProperty {
         this.type = type;
     }
 
-    // Getter
     public String getPropertyType() {
         return type;
-    }
-
-    public JsonObject toJson() {
-        JsonObject json = new JsonObject();
-        json.addProperty("property", this.getPropertyType());
-        return json;
     }
 
     // ===== Registry + base codec =====

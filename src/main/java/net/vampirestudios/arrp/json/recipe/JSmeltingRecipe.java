@@ -1,21 +1,10 @@
 package net.vampirestudios.arrp.json.recipe;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
 public class JSmeltingRecipe extends JCookingRecipe {
-	public static final Codec<JSmeltingRecipe> CODEC =
-			RecordCodecBuilder.create(instance -> instance.group(
-					ingredientCodec(),
-					resultCodec(),
-					experienceCodec(),
-					cookingTimeCodec()
-			).apply(instance, (ingredient, result, xp, time) ->
-					new JSmeltingRecipe(ingredient, result)
-							.experience(xp)
-							.cookingTime(time)
-			));
+	public static final Codec<JSmeltingRecipe> CODEC = buildCodec(JSmeltingRecipe::new);
 
 	static {
 		JRecipe.register(Identifier.withDefaultNamespace("smelting"), CODEC);

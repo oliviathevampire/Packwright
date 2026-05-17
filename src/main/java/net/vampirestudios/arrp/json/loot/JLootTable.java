@@ -39,6 +39,16 @@ public class JLootTable {
 		return new JLootTable(type);
 	}
 
+	/** Single-item block drop: one pool, one roll, one item entry. */
+	public static JLootTable dropping(Identifier item) {
+		return loot("minecraft:block")
+				.pool(pool().rolls(1).entry(entry().type("minecraft:item").name(item.toString())));
+	}
+
+	public static JLootTable dropping(String item) {
+		return dropping(Identifier.parse(item));
+	}
+
 	public static JEntry entry() {
 		return new JEntry();
 	}
@@ -89,6 +99,6 @@ public class JLootTable {
 	}
 
 	public List<JPool> getPools() {
-		return pools;
+		return pools == null ? List.of() : List.copyOf(pools);
 	}
 }

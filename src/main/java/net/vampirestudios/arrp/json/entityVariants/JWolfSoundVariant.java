@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
+import java.util.Objects;
+
 /**
  * data/<ns>/wolf_sound_variant/<id>.json
  *
@@ -48,12 +50,12 @@ public class JWolfSoundVariant {
         return new JWolfSoundVariant();
     }
 
-    public JWolfSoundVariant ambientSound(Identifier id) { this.ambientSound = id; return this; }
-    public JWolfSoundVariant deathSound(Identifier id)   { this.deathSound = id; return this; }
-    public JWolfSoundVariant growlSound(Identifier id)   { this.growlSound = id; return this; }
-    public JWolfSoundVariant hurtSound(Identifier id)    { this.hurtSound = id; return this; }
-    public JWolfSoundVariant pantSound(Identifier id)    { this.pantSound = id; return this; }
-    public JWolfSoundVariant whineSound(Identifier id)   { this.whineSound = id; return this; }
+    public JWolfSoundVariant ambientSound(Identifier id) { this.ambientSound = Objects.requireNonNull(id, "ambientSound"); return this; }
+    public JWolfSoundVariant deathSound(Identifier id)   { this.deathSound   = Objects.requireNonNull(id, "deathSound");   return this; }
+    public JWolfSoundVariant growlSound(Identifier id)   { this.growlSound   = Objects.requireNonNull(id, "growlSound");   return this; }
+    public JWolfSoundVariant hurtSound(Identifier id)    { this.hurtSound    = Objects.requireNonNull(id, "hurtSound");    return this; }
+    public JWolfSoundVariant pantSound(Identifier id)    { this.pantSound    = Objects.requireNonNull(id, "pantSound");    return this; }
+    public JWolfSoundVariant whineSound(Identifier id)   { this.whineSound   = Objects.requireNonNull(id, "whineSound");   return this; }
 
     public Identifier getAmbientSound() { return ambientSound; }
     public Identifier getDeathSound()   { return deathSound; }

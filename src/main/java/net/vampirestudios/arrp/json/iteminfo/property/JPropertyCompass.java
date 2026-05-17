@@ -1,6 +1,5 @@
 package net.vampirestudios.arrp.json.iteminfo.property;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -19,14 +18,6 @@ public class JPropertyCompass extends JProperty {
 
     public static JPropertyCompass of(String target, boolean wobble) {
         return new JPropertyCompass().wobble(wobble).target(target);
-    }
-
-    @Override
-    public JsonObject toJson() {
-        JsonObject json = super.toJson();
-        json.addProperty("target", target);
-        json.addProperty("wobble", wobble);
-        return json;
     }
 
     // Getters and Setters
@@ -58,6 +49,6 @@ public class JPropertyCompass extends JProperty {
     ).apply(i, JPropertyCompass::of));
 
     static {
-        JProperty.register(TYPE, CODEC.xmap(x -> x, x -> x));
+        JProperty.register(TYPE, CODEC);
     }
 }

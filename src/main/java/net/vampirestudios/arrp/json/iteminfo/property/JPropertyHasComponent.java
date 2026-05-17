@@ -1,6 +1,5 @@
 package net.vampirestudios.arrp.json.iteminfo.property;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,7 +15,7 @@ public class JPropertyHasComponent extends JProperty {
 	).apply(i, JPropertyHasComponent::of));
 
 	static {
-		JProperty.register(TYPE, CODEC.xmap(x -> x, x -> x));
+		JProperty.register(TYPE, CODEC);
 	}
 
 	private final String component;
@@ -49,11 +48,4 @@ public class JPropertyHasComponent extends JProperty {
 		return this;
 	}
 
-	@Override
-	public JsonObject toJson() {
-		JsonObject json = super.toJson();
-		json.addProperty("component", component);
-		if (ignoreDefault) json.addProperty("ignore_default", ignoreDefault);
-		return super.toJson();
-	}
 }

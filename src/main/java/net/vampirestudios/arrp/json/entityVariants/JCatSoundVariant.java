@@ -70,15 +70,15 @@ public class JCatSoundVariant {
 		private Identifier purrSound;
 		private Identifier purreowSound;
 
-		public SoundSet ambientSound(Identifier id) { this.ambientSound = id; return this; }
-		public SoundSet strayAmbientSound(Identifier id) { this.strayAmbientSound = id; return this; }
-		public SoundSet hissSound(Identifier id) { this.hissSound = id; return this; }
-		public SoundSet hurtSound(Identifier id) { this.hurtSound = id; return this; }
-		public SoundSet deathSound(Identifier id) { this.deathSound = id; return this; }
-		public SoundSet eatSound(Identifier id) { this.eatSound = id; return this; }
-		public SoundSet begForFoodSound(Identifier id) { this.begForFoodSound = id; return this; }
-		public SoundSet purrSound(Identifier id) { this.purrSound = id; return this; }
-		public SoundSet purreowSound(Identifier id) { this.purreowSound = id; return this; }
+		public SoundSet ambientSound(Identifier id)      { this.ambientSound      = java.util.Objects.requireNonNull(id, "ambientSound");      return this; }
+		public SoundSet strayAmbientSound(Identifier id) { this.strayAmbientSound = java.util.Objects.requireNonNull(id, "strayAmbientSound"); return this; }
+		public SoundSet hissSound(Identifier id)         { this.hissSound         = java.util.Objects.requireNonNull(id, "hissSound");         return this; }
+		public SoundSet hurtSound(Identifier id)         { this.hurtSound         = java.util.Objects.requireNonNull(id, "hurtSound");         return this; }
+		public SoundSet deathSound(Identifier id)        { this.deathSound        = java.util.Objects.requireNonNull(id, "deathSound");        return this; }
+		public SoundSet eatSound(Identifier id)          { this.eatSound          = java.util.Objects.requireNonNull(id, "eatSound");          return this; }
+		public SoundSet begForFoodSound(Identifier id)   { this.begForFoodSound   = java.util.Objects.requireNonNull(id, "begForFoodSound");   return this; }
+		public SoundSet purrSound(Identifier id)         { this.purrSound         = java.util.Objects.requireNonNull(id, "purrSound");         return this; }
+		public SoundSet purreowSound(Identifier id)      { this.purreowSound      = java.util.Objects.requireNonNull(id, "purreowSound");      return this; }
 
 		public Identifier getAmbientSound() { return ambientSound; }
 		public Identifier getStrayAmbientSound() { return strayAmbientSound; }

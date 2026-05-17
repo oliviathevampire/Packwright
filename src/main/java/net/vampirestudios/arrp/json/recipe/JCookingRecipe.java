@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
+import java.util.function.BiFunction;
+
 public abstract class JCookingRecipe extends JRecipe {
 	private final JIngredient ingredient;
 	private final JResult result;
@@ -18,22 +20,37 @@ public abstract class JCookingRecipe extends JRecipe {
 		this.result = result;
 	}
 
-	protected static <T extends JCookingRecipe> RecordCodecBuilder<T, JIngredient> ingredientCodec() {
+	/** Builds a codec for any cooking recipe subtype, given its two-arg constructor. */
+	protected static <T extends JCookingRecipe> Codec<T> buildCodec(BiFunction<JIngredient, JResult, T> ctor) {
+		return RecordCodecBuilder.create(instance -> instance.group(
+				ingredientCodec(),
+				resultCodec(),
+				experienceCodec(),
+				cookingTimeCodec()
+		).apply(instance, (ingredient, result, xp, time) -> {
+			T obj = ctor.apply(ingredient, result);
+			obj.experience(xp);
+			obj.cookingTime(time);
+			return obj;
+		}));
+	}
+
+	private static <T extends JCookingRecipe> RecordCodecBuilder<T, JIngredient> ingredientCodec() {
 		return JIngredient.CODEC.fieldOf("ingredient")
 				.forGetter(JCookingRecipe::getIngredient);
 	}
 
-	protected static <T extends JCookingRecipe> RecordCodecBuilder<T, JResult> resultCodec() {
+	private static <T extends JCookingRecipe> RecordCodecBuilder<T, JResult> resultCodec() {
 		return JResult.CODEC.fieldOf("result")
 				.forGetter(JCookingRecipe::getResult);
 	}
 
-	protected static <T extends JCookingRecipe> RecordCodecBuilder<T, Float> experienceCodec() {
+	private static <T extends JCookingRecipe> RecordCodecBuilder<T, Float> experienceCodec() {
 		return Codec.FLOAT.optionalFieldOf("experience", 0.0f)
 				.forGetter(recipe -> recipe.getExperience() == null ? 0.0f : recipe.getExperience());
 	}
 
-	protected static <T extends JCookingRecipe> RecordCodecBuilder<T, Integer> cookingTimeCodec() {
+	private static <T extends JCookingRecipe> RecordCodecBuilder<T, Integer> cookingTimeCodec() {
 		return Codec.INT.optionalFieldOf("cookingtime", 200)
 				.forGetter(recipe -> recipe.getCookingtime() == null ? 200 : recipe.getCookingtime());
 	}

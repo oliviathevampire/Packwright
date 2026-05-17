@@ -57,11 +57,11 @@ public class JPigSoundVariant {
 		private Identifier stepSound;
 		private Identifier eatSound;
 
-		public SoundSet ambientSound(Identifier id) { this.ambientSound = id; return this; }
-		public SoundSet hurtSound(Identifier id) { this.hurtSound = id; return this; }
-		public SoundSet deathSound(Identifier id) { this.deathSound = id; return this; }
-		public SoundSet stepSound(Identifier id) { this.stepSound = id; return this; }
-		public SoundSet eatSound(Identifier id) { this.eatSound = id; return this; }
+		public SoundSet ambientSound(Identifier id) { this.ambientSound = java.util.Objects.requireNonNull(id, "ambientSound"); return this; }
+		public SoundSet hurtSound(Identifier id)    { this.hurtSound    = java.util.Objects.requireNonNull(id, "hurtSound");    return this; }
+		public SoundSet deathSound(Identifier id)   { this.deathSound   = java.util.Objects.requireNonNull(id, "deathSound");   return this; }
+		public SoundSet stepSound(Identifier id)    { this.stepSound    = java.util.Objects.requireNonNull(id, "stepSound");    return this; }
+		public SoundSet eatSound(Identifier id)     { this.eatSound     = java.util.Objects.requireNonNull(id, "eatSound");     return this; }
 
 		public Identifier getAmbientSound() { return ambientSound; }
 		public Identifier getHurtSound() { return hurtSound; }

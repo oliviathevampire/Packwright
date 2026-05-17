@@ -42,6 +42,10 @@ public class JMultipart implements Cloneable {
 	private final List<JBlockModel> apply = new ArrayList<>();
 	private JWhen when;
 
+	public static JMultipart multipart() {
+		return new JMultipart();
+	}
+
 	/**
 	 * @see JState#multipart(JBlockModel...)
 	 */

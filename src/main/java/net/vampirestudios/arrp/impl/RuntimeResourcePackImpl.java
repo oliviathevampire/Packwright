@@ -8,6 +8,7 @@ import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
+import net.vampirestudios.arrp.ARRPException;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.json.JsonBytes;
 import net.vampirestudios.arrp.json.advancement.JAdvancement;
@@ -161,7 +162,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 				return baos.getBytes();
 			} catch (Throwable e) {
 				e.printStackTrace();
-				throw new RuntimeException(e);
+				throw new ARRPException("Failed to recolor texture", e);
 			}
 		});
 	}
@@ -268,7 +269,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 			try {
 				return future.get();
 			} catch (InterruptedException | ExecutionException e) {
-				throw new RuntimeException(e);
+				throw new ARRPException("Async resource generation failed", e);
 			}
 		});
 		return future;
@@ -293,7 +294,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 			try {
 				return future.get();
 			} catch (InterruptedException | ExecutionException e) {
-				throw new RuntimeException(e);
+				throw new ARRPException("Async resource generation failed", e);
 			}
 		});
 		return future;
@@ -372,6 +373,11 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	}
 
 	@Override
+	public byte[] addEnchantment(Identifier id, JEnchantment enchantment) {
+		return this.addCodecData(id, "enchantment", JEnchantment.CODEC, enchantment);
+	}
+
+	@Override
 	public byte[] addDamageType(Identifier id, JDamageType damageType) {
 		return this.addCodecData(id, "damage_type", JDamageType.CODEC, damageType);
 	}
@@ -442,7 +448,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 		try {
 			ImageIO.write(image, "png", ubaos);
 		} catch (IOException e) {
-			throw new RuntimeException("impossible.", e);
+			throw new AssertionError("ImageIO.write to in-memory buffer should never fail", e);
 		}
 		return this.addAsset(fix(id, "textures", "png"), ubaos.getBytes());
 	}
@@ -566,7 +572,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 				this.write(data, entry.getKey(), entry.getValue().get());
 			}
 		} catch (IOException exception) {
-			throw new RuntimeException(exception);
+			throw new ARRPException("Failed to dump pack to directory", exception);
 		}
 	}
 
@@ -742,7 +748,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 		try {
 			writer.close();
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new ARRPException("Failed to serialize resource to JSON bytes", e);
 		}
 		return ubaos.getBytes();
 	}
@@ -793,7 +799,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 			}
 
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new ARRPException("Failed to write resource file: " + namespace + "/" + path, e);
 		}
 	}
 

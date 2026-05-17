@@ -130,6 +130,8 @@ public interface RuntimeResourcePack extends PackResources {
 	 */
 	byte[] addLootTable(Identifier identifier, JLootTable table);
 
+	byte[] addEnchantment(Identifier id, JEnchantment enchantment);
+
 	byte[] addWolfVariant(Identifier id, JWolfVariant variant);
 
 	byte[] addZombieNautilusVariant(Identifier id, JZombieNautilusVariant variant);
@@ -312,6 +314,14 @@ public interface RuntimeResourcePack extends PackResources {
 	byte[] addRecipe(Identifier id, JRecipe recipe);
 
 	byte[] addRecipe(Identifier id, RecipeBuilder recipe);
+
+	default void addRecipes(java.util.Map<Identifier, JRecipe> recipes) {
+		recipes.forEach(this::addRecipe);
+	}
+
+	default void addTags(java.util.Map<Identifier, JTag> tags) {
+		tags.forEach(this::addTag);
+	}
 
 	byte[] addTimeline(Identifier id, JTimeline timeline);
 

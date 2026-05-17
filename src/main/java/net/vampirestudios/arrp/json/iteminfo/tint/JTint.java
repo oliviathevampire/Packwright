@@ -1,6 +1,5 @@
 package net.vampirestudios.arrp.json.iteminfo.tint;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import net.vampirestudios.arrp.json.codec.Codecs;
 
@@ -33,12 +32,6 @@ public abstract class JTint implements Cloneable {
     // Getter
     public String getType() {
         return type;
-    }
-
-    public JsonObject toJson() {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", type);
-        return json;
     }
 
     // Clone method to be implemented by subclasses

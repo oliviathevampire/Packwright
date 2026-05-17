@@ -5,13 +5,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.StringRepresentable;
 
-import java.util.Optional;
-
-public final class JZombieNautilusVariant {
+public final class JZombieNautilusVariant extends JModelVariant {
     public static final Codec<JZombieNautilusVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
             ModelType.CODEC.optionalFieldOf("model", ModelType.NORMAL).forGetter(x -> x.model),
-            Identifier.CODEC.fieldOf("asset_id").forGetter(x -> x.assetId),
-            JSpawnPrioritySelectors.CODEC.optionalFieldOf("spawn_conditions").forGetter(x -> Optional.ofNullable(x.spawnConditions))
+            assetIdCodec(),
+            spawnCodec()
     ).apply(i, (model, assetId, spawns) -> {
         JZombieNautilusVariant out = new JZombieNautilusVariant();
         out.model = model;
@@ -21,8 +19,6 @@ public final class JZombieNautilusVariant {
     }));
 
     private ModelType model = ModelType.NORMAL;
-    private Identifier assetId;
-    private JSpawnPrioritySelectors spawnConditions; // optional
 
     public JZombieNautilusVariant() {}
 
@@ -33,8 +29,6 @@ public final class JZombieNautilusVariant {
     public JZombieNautilusVariant spawnConditions(JSpawnPrioritySelectors spawns) { this.spawnConditions = spawns; return this; }
 
     public ModelType getModel() { return model; }
-    public Identifier getAssetId() { return assetId; }
-    public JSpawnPrioritySelectors getSpawnConditions() { return spawnConditions; }
 
     public enum ModelType implements StringRepresentable {
         NORMAL("normal"),

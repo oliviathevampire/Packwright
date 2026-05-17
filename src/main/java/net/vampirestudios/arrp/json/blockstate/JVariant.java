@@ -14,6 +14,10 @@ public final class JVariant implements Cloneable {
 
 	private final Map<String, List<JBlockModel>> models = new HashMap<>();
 
+	public static JVariant variant() {
+		return new JVariant();
+	}
+
 	/**
 	 * @see JState#variant()
 	 */

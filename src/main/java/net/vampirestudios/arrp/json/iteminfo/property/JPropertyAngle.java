@@ -42,6 +42,6 @@ public class JPropertyAngle extends JProperty {
     ).apply(i, JPropertyAngle::new));
 
     static {
-        JProperty.register(TYPE, CODEC.xmap(x -> x, x -> x));
+        JProperty.register(TYPE, CODEC);
     }
 }

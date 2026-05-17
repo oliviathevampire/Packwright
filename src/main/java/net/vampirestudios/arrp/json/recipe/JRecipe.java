@@ -14,11 +14,19 @@ public abstract class JRecipe {
 	protected String group;
 	protected String category;
 
-	JRecipe(final Identifier type) {
+	protected JRecipe(final Identifier type) {
 		this.type = type;
 	}
 
-	public static <R extends JRecipe> void register(Identifier type, Codec<R> codec) {
+	static <R extends JRecipe> void register(Identifier type, Codec<R> codec) {
+		REGISTRY.put(type, codec);
+	}
+
+	/**
+	 * Register a custom recipe type so it participates in {@link #CODEC} dispatching.
+	 * Call this once at mod init before any serialization occurs.
+	 */
+	public static <R extends JRecipe> void registerCustom(Identifier type, Codec<R> codec) {
 		REGISTRY.put(type, codec);
 	}
 
@@ -89,6 +97,10 @@ public abstract class JRecipe {
 	public JRecipe category(String category) {
 		this.category = category;
 		return this;
+	}
+
+	public JRecipe category(SmeltingTypes category) {
+		return this.category(category.getTypeId());
 	}
 
 	public Identifier getType() {

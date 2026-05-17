@@ -36,6 +36,12 @@ public class JTag {
 		return new JTag();
 	}
 
+	public static JTag of(Identifier... identifiers) {
+		JTag tag = new JTag();
+		for (Identifier id : identifiers) tag.add(id);
+		return tag;
+	}
+
 	public JTag replace() {
 		return replace(true);
 	}
@@ -75,6 +81,6 @@ public class JTag {
 	}
 
 	public List<String> getValues() {
-		return values;
+		return List.copyOf(values);
 	}
 }

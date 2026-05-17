@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
+import java.util.Objects;
+
 public class JCowSoundVariant {
 	public static final Codec<JCowSoundVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Identifier.CODEC.fieldOf("ambient_sound").forGetter(x -> x.ambientSound),
@@ -30,10 +32,10 @@ public class JCowSoundVariant {
 		return new JCowSoundVariant();
 	}
 
-	public JCowSoundVariant ambientSound(Identifier id) { this.ambientSound = id; return this; }
-	public JCowSoundVariant hurtSound(Identifier id) { this.hurtSound = id; return this; }
-	public JCowSoundVariant deathSound(Identifier id) { this.deathSound = id; return this; }
-	public JCowSoundVariant stepSound(Identifier id) { this.stepSound = id; return this; }
+	public JCowSoundVariant ambientSound(Identifier id) { this.ambientSound = Objects.requireNonNull(id, "ambientSound"); return this; }
+	public JCowSoundVariant hurtSound(Identifier id)    { this.hurtSound    = Objects.requireNonNull(id, "hurtSound");    return this; }
+	public JCowSoundVariant deathSound(Identifier id)   { this.deathSound   = Objects.requireNonNull(id, "deathSound");   return this; }
+	public JCowSoundVariant stepSound(Identifier id)    { this.stepSound    = Objects.requireNonNull(id, "stepSound");    return this; }
 
 	public Identifier getAmbientSound() { return ambientSound; }
 	public Identifier getHurtSound() { return hurtSound; }

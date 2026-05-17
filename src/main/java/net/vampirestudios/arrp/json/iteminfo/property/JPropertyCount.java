@@ -45,6 +45,6 @@ public class JPropertyCount extends JProperty {
     ).apply(i, JPropertyCount::new));
 
     static {
-        JProperty.register(TYPE, CODEC.xmap(x -> x, x -> x));
+        JProperty.register(TYPE, CODEC);
     }
 }

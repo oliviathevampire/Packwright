@@ -1,6 +1,5 @@
 package net.vampirestudios.arrp.json.iteminfo.tint;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.ExtraCodecs;
@@ -25,10 +24,4 @@ public final class JTintFirework extends JTint {
     static { JTint.register(TYPE, CODEC); }
 
     @Override public JTintFirework clone() { return new JTintFirework(def); }
-
-    @Override public JsonObject toJson() {
-        JsonObject json = super.toJson();
-        json.addProperty("default", def);
-        return json;
-    }
 }
