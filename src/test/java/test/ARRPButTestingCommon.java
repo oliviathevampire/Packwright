@@ -7,7 +7,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.component.ItemLore;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
 import net.vampirestudios.arrp.data.advancement.*;
-import net.vampirestudios.arrp.assets.blockstates.BlockModel;
+import net.vampirestudios.arrp.assets.blockstates.SimpleModel;
 import net.vampirestudios.arrp.assets.blockstates.BlockState;
 import net.vampirestudios.arrp.assets.blockstates.Variant;
 import net.vampirestudios.arrp.assets.lang.Lang;
@@ -34,7 +34,7 @@ public class ARRPButTestingCommon {
 		pack.addBlockState(new BlockState().add(
 				new Variant()
 						.put(Map.of("facing", "east", "half", "lower", "hinge", "left", "open", "false"),
-								new BlockModel(Identifier.withDefaultNamespace("block/spruce_door_bottom_left")))
+								new SimpleModel(Identifier.withDefaultNamespace("block/spruce_door_bottom_left")))
 		), Identifier.withDefaultNamespace("acacia_door"));
 		pack.addRecipe(Identifier.fromNamespaceAndPath(MOD_ID, "pumpkin"),
 				Recipe.shaped(
@@ -133,7 +133,7 @@ public class ARRPButTestingCommon {
 		// Replace cobblestone block state
 		pack.addBlockState(
 				new BlockState()
-						.add(new Variant().put("", new BlockModel(Identifier.fromNamespaceAndPath(MOD_ID, "block/test_model")))),
+						.add(new Variant().put("", new SimpleModel(Identifier.fromNamespaceAndPath(MOD_ID, "block/test_model")))),
 				Identifier.withDefaultNamespace("cobblestone")
 		);
 		pack.addTag(Identifier.withDefaultNamespace("block/mineable/pickaxe"), new Tag().add(Identifier.withDefaultNamespace("oak_log")));

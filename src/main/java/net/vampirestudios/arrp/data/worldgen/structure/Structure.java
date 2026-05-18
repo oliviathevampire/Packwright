@@ -3,6 +3,9 @@ package net.vampirestudios.arrp.data.worldgen.structure;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
+import net.minecraft.resources.Identifier;
+
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
 public class Structure implements Cloneable {
 
@@ -76,24 +79,23 @@ public class Structure implements Cloneable {
 
 	// Core setters
 
-	public Structure type(String type) { this.type = type; return this; }
+	public Structure type(Identifier type) { this.type = type == null ? null : type.toString(); return this; }
 
 	public Structure biomes(JsonElement biomes) {
 		this.biomes = biomes == null ? null : biomes.deepCopy();
 		return this;
 	}
 
-	public Structure biomesId(String id) {
-		this.biomes = id == null ? null : new JsonPrimitive(id);
+	public Structure biomesId(Identifier id) {
+		this.biomes = id == null ? null : new JsonPrimitive(id.toString());
 		return this;
 	}
 
-	public Structure biomesTag(String tag) {
+	public Structure biomesTag(Identifier tag) {
 		if (tag == null) {
 			this.biomes = null;
 		} else {
-			if (!tag.startsWith("#")) tag = "#" + tag;
-			this.biomes = new JsonPrimitive(tag);
+			this.biomes = new JsonPrimitive("#" + tag);
 		}
 		return this;
 	}
@@ -120,7 +122,7 @@ public class Structure implements Cloneable {
 	// Convenience helpers for jigsaw-like structures
 
 	public static Structure jigsaw(String startPool) {
-		Structure s = Structure.structure().type("minecraft:jigsaw");
+		Structure s = Structure.structure().type(vanillaId("jigsaw"));
 		JsonObject settings = new JsonObject();
 		settings.addProperty("start_pool", startPool);
 		s.settings(settings);

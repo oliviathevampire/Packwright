@@ -27,7 +27,7 @@ public class ConfiguredCarver {
 	public ConfiguredCarver type(String type) { return type(Identifier.tryParse(type)); }
 	public ConfiguredCarver config(Config config) { this.config = config; return this; }
 	public ConfiguredCarver probability(float probability) { this.config.probability(probability); return this; }
-	public ConfiguredCarver replaceable(String blockOrTag) { this.config.replaceable(blockOrTag); return this; }
+	public ConfiguredCarver replaceable(Identifier blockOrTag) { this.config.replaceable(blockOrTag); return this; }
 
 	public Identifier getType() { return type; }
 	public Config getConfig() { return config; }
@@ -39,7 +39,7 @@ public class ConfiguredCarver {
 				HeightProvider.CODEC.fieldOf("y").forGetter(x -> x.y),
 				FloatProvider.CODEC.fieldOf("yScale").forGetter(x -> x.yScale),
 				VerticalAnchor.CODEC.fieldOf("lava_level").forGetter(x -> x.lavaLevel),
-				Codec.STRING.fieldOf("replaceable").forGetter(x -> x.replaceable),
+				Identifier.CODEC.fieldOf("replaceable").forGetter(x -> x.replaceable),
 				FloatProvider.CODEC.optionalFieldOf("horizontal_radius_multiplier").forGetter(x -> Optional.ofNullable(x.horizontalRadiusMultiplier)),
 				FloatProvider.CODEC.optionalFieldOf("vertical_radius_multiplier").forGetter(x -> Optional.ofNullable(x.verticalRadiusMultiplier)),
 				FloatProvider.CODEC.optionalFieldOf("floor_level").forGetter(x -> Optional.ofNullable(x.floorLevel)),
@@ -66,7 +66,7 @@ public class ConfiguredCarver {
 		private HeightProvider y = HeightProvider.uniform(VerticalAnchor.absolute(8), VerticalAnchor.absolute(180));
 		private FloatProvider yScale = FloatProvider.constant(1.0F);
 		private VerticalAnchor lavaLevel = VerticalAnchor.aboveBottom(8);
-		private String replaceable = "#minecraft:overworld_carver_replaceables";
+		private Identifier replaceable = Identifier.tryParse("minecraft:overworld_carver_replaceables");
 		private FloatProvider horizontalRadiusMultiplier;
 		private FloatProvider verticalRadiusMultiplier;
 		private FloatProvider floorLevel;
@@ -80,7 +80,7 @@ public class ConfiguredCarver {
 		public Config yScale(float yScale) { this.yScale = FloatProvider.constant(yScale); return this; }
 		public Config yScale(FloatProvider yScale) { this.yScale = yScale; return this; }
 		public Config lavaLevel(VerticalAnchor lavaLevel) { this.lavaLevel = lavaLevel; return this; }
-		public Config replaceable(String blockOrTag) { this.replaceable = blockOrTag; return this; }
+		public Config replaceable(Identifier blockOrTag) { this.replaceable = blockOrTag; return this; }
 		public Config horizontalRadiusMultiplier(FloatProvider value) { this.horizontalRadiusMultiplier = value; return this; }
 		public Config verticalRadiusMultiplier(FloatProvider value) { this.verticalRadiusMultiplier = value; return this; }
 		public Config floorLevel(FloatProvider value) { this.floorLevel = value; return this; }
@@ -91,10 +91,10 @@ public class ConfiguredCarver {
 	public static class DebugSettings {
 		public static final Codec<DebugSettings> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Codec.BOOL.optionalFieldOf("debug_mode").forGetter(x -> Optional.ofNullable(x.debugMode)),
-				BlockState.CODEC.optionalFieldOf("air_state").forGetter(x -> Optional.ofNullable(x.airState)),
-				BlockState.CODEC.optionalFieldOf("water_state").forGetter(x -> Optional.ofNullable(x.waterState)),
-				BlockState.CODEC.optionalFieldOf("lava_state").forGetter(x -> Optional.ofNullable(x.lavaState)),
-				BlockState.CODEC.optionalFieldOf("barrier_state").forGetter(x -> Optional.ofNullable(x.barrierState))
+				WorldgenBlockState.CODEC.optionalFieldOf("air_state").forGetter(x -> Optional.ofNullable(x.airState)),
+				WorldgenBlockState.CODEC.optionalFieldOf("water_state").forGetter(x -> Optional.ofNullable(x.waterState)),
+				WorldgenBlockState.CODEC.optionalFieldOf("lava_state").forGetter(x -> Optional.ofNullable(x.lavaState)),
+				WorldgenBlockState.CODEC.optionalFieldOf("barrier_state").forGetter(x -> Optional.ofNullable(x.barrierState))
 		).apply(i, (debugMode, air, water, lava, barrier) -> new DebugSettings()
 				.debugMode(debugMode.orElse(null))
 				.airState(air.orElse(null))
@@ -103,17 +103,17 @@ public class ConfiguredCarver {
 				.barrierState(barrier.orElse(null))));
 
 		private Boolean debugMode;
-		private BlockState airState;
-		private BlockState waterState;
-		private BlockState lavaState;
-		private BlockState barrierState;
+		private WorldgenBlockState airState;
+		private WorldgenBlockState waterState;
+		private WorldgenBlockState lavaState;
+		private WorldgenBlockState barrierState;
 
 		public static DebugSettings debugSettings() { return new DebugSettings(); }
 		public DebugSettings debugMode(Boolean debugMode) { this.debugMode = debugMode; return this; }
-		public DebugSettings airState(BlockState state) { this.airState = state; return this; }
-		public DebugSettings waterState(BlockState state) { this.waterState = state; return this; }
-		public DebugSettings lavaState(BlockState state) { this.lavaState = state; return this; }
-		public DebugSettings barrierState(BlockState state) { this.barrierState = state; return this; }
+		public DebugSettings airState(WorldgenBlockState state) { this.airState = state; return this; }
+		public DebugSettings waterState(WorldgenBlockState state) { this.waterState = state; return this; }
+		public DebugSettings lavaState(WorldgenBlockState state) { this.lavaState = state; return this; }
+		public DebugSettings barrierState(WorldgenBlockState state) { this.barrierState = state; return this; }
 	}
 
 	public static class CanyonShape {

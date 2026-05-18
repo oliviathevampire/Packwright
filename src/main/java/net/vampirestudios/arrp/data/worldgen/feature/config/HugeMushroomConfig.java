@@ -2,7 +2,9 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.arrp.util.VanillaIds;
 
 public class HugeMushroomConfig implements FeatureConfig {
 	public static final Codec<HugeMushroomConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -16,12 +18,12 @@ public class HugeMushroomConfig implements FeatureConfig {
 			.foliageRadius(foliageRadius)
 			.canPlaceOn(canPlaceOn)));
 
-	private BlockStateProvider capProvider = BlockStateProvider.simple("minecraft:red_mushroom_block");
-	private BlockStateProvider stemProvider = BlockStateProvider.simple("minecraft:mushroom_stem");
+	private BlockStateProvider capProvider = BlockStateProvider.simple(VanillaIds.RED_MUSHROOM_BLOCK);
+	private BlockStateProvider stemProvider = BlockStateProvider.simple(VanillaIds.MUSHROOM_STEM);
 	private int foliageRadius = 2;
-	private PlacedFeature.BlockPredicate canPlaceOn = PlacedFeature.BlockPredicate.matchingBlocks("minecraft:mycelium", "minecraft:podzol");
+	private PlacedFeature.BlockPredicate canPlaceOn = PlacedFeature.BlockPredicate.matchingBlocks(VanillaIds.MYCELIUM, VanillaIds.PODZOL);
 
-	public static HugeMushroomConfig hugeMushroom(String capBlock, String stemBlock) {
+	public static HugeMushroomConfig hugeMushroom(Identifier capBlock, Identifier stemBlock) {
 		return new HugeMushroomConfig()
 				.capProvider(BlockStateProvider.simple(capBlock))
 				.stemProvider(BlockStateProvider.simple(stemBlock));

@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import net.minecraft.resources.Identifier;
 
 public interface RuleTest {
 	Codec<RuleTest> CODEC = new Codec<>() {
@@ -27,11 +28,11 @@ public interface RuleTest {
 		}
 	};
 
-	static RuleTest tag(String tag) {
+	static RuleTest tag(Identifier tag) {
 		return new TagMatchRuleTest(FeatureConfigUtil.stripTagPrefix(tag));
 	}
 
-	static RuleTest block(String block) {
+	static RuleTest block(Identifier block) {
 		return new BlockMatchRuleTest(block);
 	}
 }

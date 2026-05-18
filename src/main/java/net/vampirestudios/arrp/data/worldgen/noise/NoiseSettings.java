@@ -3,6 +3,7 @@ package net.vampirestudios.arrp.data.worldgen.noise;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
+import net.minecraft.resources.Identifier;
 
 public class NoiseSettings implements Cloneable {
 
@@ -103,23 +104,23 @@ public class NoiseSettings implements Cloneable {
 
 	// Convenience helpers
 
-	public NoiseSettings defaultBlockId(String id) {
+	public NoiseSettings defaultBlockId(Identifier id) {
 		if (id == null) {
 			this.defaultBlock = null;
 			return this;
 		}
 		JsonObject obj = new JsonObject();
-		obj.addProperty("Name", id);
+		obj.addProperty("Name", id.toString());
 		return defaultBlock(obj);
 	}
 
-	public NoiseSettings defaultFluidId(String id) {
+	public NoiseSettings defaultFluidId(Identifier id) {
 		if (id == null) {
 			this.defaultFluid = null;
 			return this;
 		}
 		JsonObject obj = new JsonObject();
-		obj.addProperty("Name", id);
+		obj.addProperty("Name", id.toString());
 		return defaultFluid(obj);
 	}
 

@@ -1,12 +1,9 @@
 package net.vampirestudios.arrp.data.worldgen.feature;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.MapLike;
+import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.data.worldgen.HeightProvider;
 import net.vampirestudios.arrp.data.worldgen.IntProvider;
 import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
@@ -16,22 +13,22 @@ import java.util.List;
 
 public class PlacedFeature implements Cloneable {
 	public static final Codec<PlacedFeature> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Codec.STRING.fieldOf("feature").forGetter(x -> x.feature),
+			Identifier.CODEC.fieldOf("feature").forGetter(x -> x.feature),
 			PlacementModifier.CODEC.listOf().fieldOf("placement").forGetter(x -> x.placement)
 	).apply(i, (feature, placement) -> new PlacedFeature().featureId(feature).placement(placement)));
 
-	private String feature;
+	private Identifier feature;
 	private List<PlacementModifier> placement = new ArrayList<>();
 
 	public static PlacedFeature placed() {
 		return new PlacedFeature();
 	}
 
-	public static PlacedFeature placed(String featureId) {
+	public static PlacedFeature placed(Identifier featureId) {
 		return new PlacedFeature().featureId(featureId);
 	}
 
-	public PlacedFeature featureId(String id) {
+	public PlacedFeature featureId(Identifier id) {
 		this.feature = id;
 		return this;
 	}
@@ -47,31 +44,31 @@ public class PlacedFeature implements Cloneable {
 	}
 
 	public PlacedFeature count(int count) {
-		return modifier(PlacementModifier.count(count));
+		return count(IntProvider.constant(count));
 	}
 
 	public PlacedFeature count(IntProvider count) {
-		return modifier(PlacementModifier.count(count));
+		return modifier(new CountPlacement(count));
 	}
 
 	public PlacedFeature countOnEveryLayer(int count) {
-		return modifier(PlacementModifier.countOnEveryLayer(count));
+		return modifier(new CountOnEveryLayerPlacement(count));
 	}
 
 	public PlacedFeature rarityFilter(int chance) {
-		return modifier(PlacementModifier.rarityFilter(chance));
+		return modifier(new RarityFilterPlacement(chance));
 	}
 
 	public PlacedFeature inSquare() {
-		return modifier(PlacementModifier.inSquare());
+		return modifier(new InSquarePlacement());
 	}
 
 	public PlacedFeature heightmap(String heightmap) {
-		return modifier(PlacementModifier.heightmap(heightmap));
+		return modifier(new HeightmapPlacement(heightmap));
 	}
 
 	public PlacedFeature heightRange(HeightProvider height) {
-		return modifier(PlacementModifier.heightRange(height));
+		return modifier(new HeightRangePlacement(height));
 	}
 
 	public PlacedFeature uniformHeight(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
@@ -79,30 +76,30 @@ public class PlacedFeature implements Cloneable {
 	}
 
 	public PlacedFeature randomOffset(int xzSpread, int ySpread) {
-		return modifier(PlacementModifier.randomOffset(xzSpread, ySpread));
+		return randomOffset(IntProvider.constant(xzSpread), IntProvider.constant(ySpread));
 	}
 
 	public PlacedFeature randomOffset(IntProvider xzSpread, IntProvider ySpread) {
-		return modifier(PlacementModifier.randomOffset(xzSpread, ySpread));
+		return modifier(new RandomOffsetPlacement(xzSpread, ySpread));
 	}
 
 	public PlacedFeature surfaceWaterDepthFilter(int maxWaterDepth) {
-		return modifier(PlacementModifier.surfaceWaterDepthFilter(maxWaterDepth));
+		return modifier(new SurfaceWaterDepthFilterPlacement(maxWaterDepth));
 	}
 
 	public PlacedFeature blockPredicateFilter(BlockPredicate predicate) {
-		return modifier(PlacementModifier.blockPredicateFilter(predicate));
+		return modifier(new BlockPredicateFilterPlacement(predicate));
 	}
 
 	public PlacedFeature environmentScan(String direction, BlockPredicate targetCondition, int maxSteps) {
-		return modifier(PlacementModifier.environmentScan(direction, targetCondition, maxSteps));
+		return modifier(new EnvironmentScanPlacement(direction, targetCondition, null, maxSteps));
 	}
 
 	public PlacedFeature biomeFilter() {
-		return modifier(PlacementModifier.biome());
+		return modifier(new BiomeFilterPlacement());
 	}
 
-	public String getFeature() {
+	public Identifier getFeature() {
 		return feature;
 	}
 
@@ -160,22 +157,6 @@ public class PlacedFeature implements Cloneable {
 				return DataResult.error(() -> "Unsupported placement modifier: " + input.getClass().getSimpleName());
 			}
 		};
-
-		static PlacementModifier count(int count) { return count(IntProvider.constant(count)); }
-		static PlacementModifier count(IntProvider count) { return new CountPlacement(count); }
-		static PlacementModifier countOnEveryLayer(int count) { return new CountOnEveryLayerPlacement(count); }
-		static PlacementModifier rarityFilter(int chance) { return new RarityFilterPlacement(chance); }
-		static PlacementModifier inSquare() { return new InSquarePlacement(); }
-		static PlacementModifier heightmap(String heightmap) { return new HeightmapPlacement(heightmap); }
-		static PlacementModifier heightRange(HeightProvider height) { return new HeightRangePlacement(height); }
-		static PlacementModifier randomOffset(int xzSpread, int ySpread) { return randomOffset(IntProvider.constant(xzSpread), IntProvider.constant(ySpread)); }
-		static PlacementModifier randomOffset(IntProvider xzSpread, IntProvider ySpread) { return new RandomOffsetPlacement(xzSpread, ySpread); }
-		static PlacementModifier surfaceWaterDepthFilter(int maxWaterDepth) { return new SurfaceWaterDepthFilterPlacement(maxWaterDepth); }
-		static PlacementModifier blockPredicateFilter(BlockPredicate predicate) { return new BlockPredicateFilterPlacement(predicate); }
-		static PlacementModifier environmentScan(String direction, BlockPredicate targetCondition, int maxSteps) {
-			return new EnvironmentScanPlacement(direction, targetCondition, null, maxSteps);
-		}
-		static PlacementModifier biome() { return new BiomeFilterPlacement(); }
 	}
 
 	public record CountPlacement(IntProvider count) implements PlacementModifier {
@@ -290,7 +271,7 @@ public class PlacedFeature implements Cloneable {
 			}
 		};
 
-		static BlockPredicate matchingBlocks(String... blocks) { return new MatchingBlocksPredicate(List.of(blocks), Offset.ZERO); }
+		static BlockPredicate matchingBlocks(Identifier... blocks) { return new MatchingBlocksPredicate(List.of(blocks), Offset.ZERO); }
 		static BlockPredicate matchingBlockTag(String tag) { return new MatchingBlockTagPredicate(stripTagPrefix(tag), Offset.ZERO); }
 		static BlockPredicate wouldSurvive(String state) { return new WouldSurvivePredicate(state, Offset.ZERO); }
 		static BlockPredicate replaceable() { return new ReplaceablePredicate(Offset.ZERO); }
@@ -307,10 +288,10 @@ public class PlacedFeature implements Cloneable {
 		}, offset -> List.of(offset.x, offset.y, offset.z));
 	}
 
-	public record MatchingBlocksPredicate(List<String> blocks, Offset offset) implements BlockPredicate {
+	public record MatchingBlocksPredicate(List<Identifier> blocks, Offset offset) implements BlockPredicate {
 		public static final MapCodec<MatchingBlocksPredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:matching_blocks"),
-				Codec.STRING.listOf().fieldOf("blocks").forGetter(MatchingBlocksPredicate::blocks),
+				Identifier.CODEC.listOf().fieldOf("blocks").forGetter(MatchingBlocksPredicate::blocks),
 				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(MatchingBlocksPredicate::offset)
 		).apply(i, (type, blocks, offset) -> new MatchingBlocksPredicate(blocks, offset)));
 	}

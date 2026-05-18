@@ -2,7 +2,9 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.data.worldgen.IntProvider;
+import net.vampirestudios.arrp.util.VanillaIds;
 
 public class DiskConfig implements FeatureConfig {
 	public static final Codec<DiskConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -16,12 +18,12 @@ public class DiskConfig implements FeatureConfig {
 			.radius(radius)
 			.halfHeight(halfHeight)));
 
-	private BlockStateProvider stateProvider = BlockStateProvider.simple("minecraft:clay");
-	private RuleTest target = RuleTest.block("minecraft:dirt");
+	private BlockStateProvider stateProvider = BlockStateProvider.simple(VanillaIds.CLAY);
+	private RuleTest target = RuleTest.block(VanillaIds.DIRT);
 	private IntProvider radius = IntProvider.constant(2);
 	private int halfHeight = 1;
 
-	public static DiskConfig disk(String block, String targetBlock, int radius) {
+	public static DiskConfig disk(Identifier block, Identifier targetBlock, int radius) {
 		return new DiskConfig().stateProvider(BlockStateProvider.simple(block)).target(RuleTest.block(targetBlock)).radius(IntProvider.constant(radius));
 	}
 

@@ -29,9 +29,9 @@ public final class BlockstateTemplates {
 	 */
 	public static void addSlab(Variant into,
 							   Map<String, ?> base,
-							   BlockModel bottom,
-							   BlockModel top,
-							   BlockModel full) {
+							   SimpleModel bottom,
+							   SimpleModel top,
+							   SimpleModel full) {
 		into.put(plus(base, "type", "bottom"), bottom);
 		into.put(plus(base, "type", "top"), top);
 		into.put(plus(base, "type", "double"), full);
@@ -55,9 +55,9 @@ public final class BlockstateTemplates {
 	 */
 	public static void addStairs(Variant into,
 								 Map<String, ?> base,
-								 BlockModel straight,
-								 BlockModel inner,
-								 BlockModel outer) {
+								 SimpleModel straight,
+								 SimpleModel inner,
+								 SimpleModel outer) {
 		final String[] FAC = {"north", "south", "west", "east"};
 		final String[] HAL = {"top", "bottom"};
 		final String[] SHP = {"straight", "inner_left", "inner_right", "outer_left", "outer_right"};
@@ -65,7 +65,7 @@ public final class BlockstateTemplates {
 		for (String f : FAC) {
 			for (String h : HAL) {
 				for (String s : SHP) {
-					BlockModel ref = switch (s) {
+					SimpleModel ref = switch (s) {
 						case "inner_left", "inner_right" -> inner;
 						case "outer_left", "outer_right" -> outer;
 						default -> straight;
@@ -94,9 +94,9 @@ public final class BlockstateTemplates {
 	 */
 	public static void addWall(Multipart multipart,
 							   Map<String, ?> base,
-							   BlockModel post,
-							   BlockModel side,
-							   BlockModel sideTall) {
+							   SimpleModel post,
+							   SimpleModel side,
+							   SimpleModel sideTall) {
 		// post (always)
 		multipart.when(base).addModel(post);
 
@@ -143,17 +143,17 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 
 	/** One composite-variant entry using a single model. */
-	public static void addSingle(Variant into, Map<String, ?> base, BlockModel model) {
+	public static void addSingle(Variant into, Map<String, ?> base, SimpleModel model) {
 		into.put(base, model);
 	}
 
 	/** One composite-variant with multiple models (uniform random). */
-	public static void addSingle(Variant into, Map<String, ?> base, BlockModel... models) {
+	public static void addSingle(Variant into, Map<String, ?> base, SimpleModel... models) {
 		into.put(base, models);
 	}
 
 	/** One composite-variant with weighted randomness via duplication. */
-	public static void addSingleWeighted(Variant into, Map<String, ?> base, BlockModel model, int weight) {
+	public static void addSingleWeighted(Variant into, Map<String, ?> base, SimpleModel model, int weight) {
 		into.putWeighted(base, model, weight); // uses your Variant helper
 	}
 
@@ -163,7 +163,7 @@ public final class BlockstateTemplates {
 	 *   - use when the block has no rotated/oriented states.
 	 *   - model should already be cube-all with a single texture.
 	 */
-	public static void cubeAll(Variant into, Map<String, ?> base, BlockModel cubeModel) {
+	public static void cubeAll(Variant into, Map<String, ?> base, SimpleModel cubeModel) {
 		into.put(base, cubeModel);
 	}
 
@@ -171,12 +171,12 @@ public final class BlockstateTemplates {
 	 * Multipart “always on” part for cube-all or decorations.
 	 * Useful for walls/posts that always render regardless of other props.
 	 */
-	public static void cubeAll(Multipart multipart, Map<String, ?> base, BlockModel cubeModel) {
+	public static void cubeAll(Multipart multipart, Map<String, ?> base, SimpleModel cubeModel) {
 		multipart.when(base).addModel(cubeModel);
 	}
 
 	/** Negated convenience for multipart: emit when NOT prop=value. */
-	/*public static void whenNot(Multipart multipart, Map<String, ?> base, String prop, String value, BlockModel model) {
+	/*public static void whenNot(Multipart multipart, Map<String, ?> base, String prop, String value, SimpleModel model) {
 		Map<String, ?> cond = new HashMap<>(base);
 		cond.put(prop, "!" + value);
 		multipart.when(cond).addModel(model);
@@ -189,9 +189,9 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 	public static void addStairsRotated(Variant into,
 										Map<String, ?> base,
-										BlockModel straight,
-										BlockModel inner,
-										BlockModel outer) {
+										SimpleModel straight,
+										SimpleModel inner,
+										SimpleModel outer) {
 		final String[] FAC = {"east","south","west","north"};
 		final String[] HAL = {"bottom","top"};
 		final String[] SHP = {"straight","inner_left","inner_right","outer_left","outer_right"};
@@ -201,7 +201,7 @@ public final class BlockstateTemplates {
 			for (String h : HAL) {
 				int x = StairsRot.xForHalf(h);
 				for (String s : SHP) {
-					BlockModel ref = switch (s) {
+					SimpleModel ref = switch (s) {
 						case "inner_left","inner_right" -> inner;
 						case "outer_left","outer_right" -> outer;
 						default -> straight;
@@ -226,7 +226,7 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 	public static void addPillarAxis(Variant into,
 									 Map<String, ?> base,
-									 BlockModel upright /* axis=y */) {
+									 SimpleModel upright /* axis=y */) {
 		// y (upright)
 		into.put(plus(base, "axis", "y"), upright);
 
@@ -243,7 +243,7 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 	public static void addHorizontalFacing(Variant into,
 										   Map<String, ?> base,
-										   BlockModel frontModel,
+										   SimpleModel frontModel,
 										   AuthoredFacing authored) {
 		// y-rotations for a model authored toward NORTH or EAST
 		int yNorth = (authored == AuthoredFacing.NORTH) ? 0  : 270;
@@ -263,10 +263,10 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 	public static void addDirectionalFacing(Variant into,
 											Map<String, ?> base,
-											BlockModel model,
+											SimpleModel model,
 											AuthoredFacing authored) {
 		// Normalize to "authored == NORTH" by pre-rotating once if authored EAST.
-		BlockModel baseModel = (authored == AuthoredFacing.EAST) ? model.y(270) : model;
+		SimpleModel baseModel = (authored == AuthoredFacing.EAST) ? model.y(270) : model;
 
 		// Horizontal
 		into.put(plus(base, "facing", "north"), baseModel.y(0).uvlock());
@@ -286,7 +286,7 @@ public final class BlockstateTemplates {
 	 * ----------------------------------------------------------- */
 	public static void addEveryDirection(Variant into,
 										 Map<String, ?> base,
-										 BlockModel model,
+										 SimpleModel model,
 										 AuthoredFacing authored) {
 		addDirectionalFacing(into, base, model, authored);
 	}

@@ -3,6 +3,7 @@ package net.vampirestudios.arrp.data.worldgen.structure;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
+import net.minecraft.resources.Identifier;
 
 public class StructureSet implements Cloneable {
 
@@ -85,15 +86,15 @@ public class StructureSet implements Cloneable {
 		return this.structures;
 	}
 
-	public StructureSet addStructure(String id, int weight) {
+	public StructureSet addStructure(Identifier id, int weight) {
 		JsonObject obj = new JsonObject();
-		obj.addProperty("structure", id);
+		obj.addProperty("structure", id == null ? null : id.toString());
 		obj.addProperty("weight", weight);
 		ensureStructures().add(obj);
 		return this;
 	}
 
-	public static StructureSet randomSpread(String structureId, int weight, int salt, int spacing, int separation) {
+	public static StructureSet randomSpread(Identifier structureId, int weight, int salt, int spacing, int separation) {
 		StructureSet set = StructureSet.set();
 		set.addStructure(structureId, weight);
 

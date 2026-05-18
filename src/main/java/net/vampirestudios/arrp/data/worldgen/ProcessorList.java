@@ -18,24 +18,24 @@ public class ProcessorList {
 	public static ProcessorList processorList() { return new ProcessorList(); }
 	public ProcessorList processors(List<Processor> processors) { this.processors = new ArrayList<>(processors); return this; }
 	public ProcessorList processor(Processor processor) { this.processors.add(processor); return this; }
-	public ProcessorList blockIgnore(List<String> blocks) { return processor(Processor.blockIgnore(blocks)); }
+	public ProcessorList blockIgnore(List<Identifier> blocks) { return processor(Processor.blockIgnore(blocks)); }
 	public ProcessorList rule(Rule rule) { return processor(Processor.ruleProcessor(rule)); }
 	public List<Processor> getProcessors() { return processors; }
 
 	public static class Processor {
 		public static final Codec<Processor> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("processor_type").forGetter(x -> x.processorType),
-				Codec.STRING.listOf().optionalFieldOf("blocks", List.of()).forGetter(x -> x.blocks),
+				Identifier.CODEC.listOf().optionalFieldOf("blocks", List.of()).forGetter(x -> x.blocks),
 				Rule.CODEC.listOf().optionalFieldOf("rules", List.of()).forGetter(x -> x.rules),
 				Codec.INT.optionalFieldOf("limit").forGetter(x -> x.limit)
 		).apply(i, (type, blocks, rules, limit) -> new Processor().processorType(type).blocks(blocks).rules(rules).limit(limit)));
 
 		private Identifier processorType;
-		private List<String> blocks = new ArrayList<>();
+		private List<Identifier> blocks = new ArrayList<>();
 		private List<Rule> rules = new ArrayList<>();
 		private Optional<Integer> limit = Optional.empty();
 
-		public static Processor blockIgnore(List<String> blocks) {
+		public static Processor blockIgnore(List<Identifier> blocks) {
 			return new Processor().processorType("minecraft:block_ignore").blocks(blocks);
 		}
 
@@ -45,8 +45,9 @@ public class ProcessorList {
 
 		public Processor processorType(String processorType) { return processorType(Identifier.tryParse(processorType)); }
 		public Processor processorType(Identifier processorType) { this.processorType = processorType; return this; }
-		public Processor blocks(List<String> blocks) { this.blocks = new ArrayList<>(blocks); return this; }
-		public Processor block(String block) { this.blocks.add(block); return this; }
+		public Processor blocks(List<Identifier> blocks) { this.blocks = new ArrayList<>(blocks); return this; }
+		public Processor block(Identifier block) { this.blocks.add(block); return this; }
+		public Processor block(String block) { return block(Identifier.tryParse(block)); }
 		public Processor rules(List<Rule> rules) { this.rules = new ArrayList<>(rules); return this; }
 		public Processor rule(Rule rule) { this.rules.add(rule); return this; }
 		public Processor limit(Optional<Integer> limit) { this.limit = limit; return this; }
@@ -64,8 +65,12 @@ public class ProcessorList {
 		private Test locationPredicate = Test.alwaysTrue();
 		private State outputState;
 
-		public static Rule replace(String inputBlock, String outputBlock) {
+		public static Rule replace(Identifier inputBlock, Identifier outputBlock) {
 			return new Rule().inputPredicate(Test.matchBlock(inputBlock)).outputState(State.state(outputBlock));
+		}
+
+		public static Rule replace(String inputBlock, String outputBlock) {
+			return replace(Identifier.tryParse(inputBlock), Identifier.tryParse(outputBlock));
 		}
 
 		public Rule inputPredicate(Test inputPredicate) { this.inputPredicate = inputPredicate; return this; }
@@ -73,21 +78,23 @@ public class ProcessorList {
 		public Rule outputState(State outputState) { this.outputState = outputState; return this; }
 	}
 
-	public record Test(Identifier predicateType, Optional<String> block, Optional<Float> probability) {
+	public record Test(Identifier predicateType, Optional<Identifier> block, Optional<Float> probability) {
 		public static final Codec<Test> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("predicate_type").forGetter(Test::predicateType),
-				Codec.STRING.optionalFieldOf("block").forGetter(Test::block),
+				Identifier.CODEC.optionalFieldOf("block").forGetter(Test::block),
 				Codec.FLOAT.optionalFieldOf("probability").forGetter(Test::probability)
 		).apply(i, Test::new));
 		public static Test alwaysTrue() { return new Test(Identifier.withDefaultNamespace("always_true"), Optional.empty(), Optional.empty()); }
-		public static Test matchBlock(String block) { return new Test(Identifier.withDefaultNamespace("block_match"), Optional.of(block), Optional.empty()); }
+		public static Test matchBlock(Identifier block) { return new Test(Identifier.withDefaultNamespace("block_match"), Optional.of(block), Optional.empty()); }
+		public static Test matchBlock(String block) { return matchBlock(Identifier.tryParse(block)); }
 		public static Test random(float probability) { return new Test(Identifier.withDefaultNamespace("random_block_match"), Optional.empty(), Optional.of(probability)); }
 	}
 
-	public record State(String Name) {
+	public record State(Identifier Name) {
 		public static final Codec<State> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Codec.STRING.fieldOf("Name").forGetter(State::Name)
+				Identifier.CODEC.fieldOf("Name").forGetter(State::Name)
 		).apply(i, State::new));
-		public static State state(String blockId) { return new State(blockId); }
+		public static State state(Identifier blockId) { return new State(blockId); }
+		public static State state(String blockId) { return state(Identifier.tryParse(blockId)); }
 	}
 }

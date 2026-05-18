@@ -2,7 +2,8 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.data.worldgen.BlockState;
+import net.minecraft.resources.Identifier;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +19,11 @@ public class OreConfig implements FeatureConfig {
 	private int size = 9;
 	private float discardChanceOnAirExposure = 0.0F;
 
-	public static OreConfig ore(String replaceableTag, String block, int size) {
-		return new OreConfig().target(RuleTest.tag(replaceableTag), BlockState.blockState(block)).size(size);
+	public static OreConfig ore(Identifier replaceableTag, Identifier block, int size) {
+		return new OreConfig().target(RuleTest.tag(replaceableTag), WorldgenBlockState.blockState(block)).size(size);
 	}
 
-	public OreConfig target(RuleTest target, BlockState state) {
+	public OreConfig target(RuleTest target, WorldgenBlockState state) {
 		this.targets.add(new OreTarget(target, state));
 		return this;
 	}

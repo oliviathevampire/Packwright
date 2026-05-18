@@ -2,7 +2,8 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.data.worldgen.BlockState;
+import net.minecraft.resources.Identifier;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +15,11 @@ public class ReplaceBlockConfig implements FeatureConfig {
 
 	private List<OreTarget> targets = new ArrayList<>();
 
-	public static ReplaceBlockConfig replace(String targetBlock, String replaceWith) {
-		return new ReplaceBlockConfig().target(RuleTest.block(targetBlock), BlockState.blockState(replaceWith));
+	public static ReplaceBlockConfig replace(Identifier targetBlock, Identifier replaceWith) {
+		return new ReplaceBlockConfig().target(RuleTest.block(targetBlock), WorldgenBlockState.blockState(replaceWith));
 	}
 
-	public ReplaceBlockConfig target(RuleTest target, BlockState state) {
+	public ReplaceBlockConfig target(RuleTest target, WorldgenBlockState state) {
 		this.targets.add(new OreTarget(target, state));
 		return this;
 	}

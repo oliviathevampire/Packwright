@@ -84,7 +84,7 @@ public final class Connectables {
         return BlockState.state(parts);
     }
 
-    private static Multipart part(When when, BlockModel model, int yRot, boolean uvlock) {
+    private static Multipart part(When when, SimpleModel model, int yRot, boolean uvlock) {
         if (yRot != 0) model = model.y(yRot);
         if (uvlock) model = model.uvlock();
         return BlockState.multipart(model).when(when);

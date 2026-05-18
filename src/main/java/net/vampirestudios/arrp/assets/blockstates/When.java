@@ -6,7 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.*;
 import net.minecraft.world.level.block.state.properties.Property;
 
-public class When implements Cloneable {// AND-shape: { "prop": "a|b|c", ... }
+public class When {// AND-shape: { "prop": "a|b|c", ... }
 	private static final Codec<Map<String, String>> AND_OBJECT =
 			Codec.unboundedMap(Codec.STRING, Codec.STRING);
 
@@ -153,7 +153,7 @@ public class When implements Cloneable {// AND-shape: { "prop": "a|b|c", ... }
 	/**
 	 * @see BlockState#whenStateBuilder()
 	 */
-	public static class StateBuilder implements Cloneable {
+	public static class StateBuilder {
 		final List<Pair<String, String[]>> state = new ArrayList<>();
 
 		@SafeVarargs
@@ -184,22 +184,5 @@ public class When implements Cloneable {// AND-shape: { "prop": "a|b|c", ... }
 		public StateBuilder isFalse(String prop) { return this.add(prop, "false"); }
 		public StateBuilder whenProp(String prop, String... states) { return this.add(prop, states); }
 
-		@Override
-		protected StateBuilder clone() {
-			try {
-				return (StateBuilder) super.clone();
-			} catch (CloneNotSupportedException e) {
-				throw new InternalError(e);
-			}
-		}
-	}
-
-	@Override
-	public When clone() {
-		try {
-			return (When) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 }

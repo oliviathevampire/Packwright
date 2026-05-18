@@ -2,6 +2,7 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
+import net.minecraft.resources.Identifier;
 
 final class FeatureConfigUtil {
 	private FeatureConfigUtil() {
@@ -12,8 +13,9 @@ final class FeatureConfigUtil {
 		return separator >= 0 ? type.substring(separator + 1) : type;
 	}
 
-	static String stripTagPrefix(String tag) {
-		return tag != null && tag.startsWith("#") ? tag.substring(1) : tag;
+	static String stripTagPrefix(Identifier tag) {
+		var stringTag = tag.toString();
+		return stringTag.startsWith("#") ? stringTag.substring(1) : stringTag;
 	}
 
 	static <T> String string(MapLike<T> map, DynamicOps<T> ops, String key, String fallback) {

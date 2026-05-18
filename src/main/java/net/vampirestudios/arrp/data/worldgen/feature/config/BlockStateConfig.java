@@ -1,25 +1,27 @@
 package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
-import net.vampirestudios.arrp.data.worldgen.BlockState;
+import net.minecraft.resources.Identifier;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
+import net.vampirestudios.arrp.util.VanillaIds;
 
 public class BlockStateConfig implements FeatureConfig {
-	public static final Codec<BlockStateConfig> CODEC = BlockState.CODEC.fieldOf("state").xmap(BlockStateConfig::new, x -> x.state).codec();
+	public static final Codec<BlockStateConfig> CODEC = WorldgenBlockState.CODEC.fieldOf("state").xmap(BlockStateConfig::new, x -> x.state).codec();
 
-	private BlockState state = BlockState.blockState("minecraft:packed_ice");
+	private WorldgenBlockState state = WorldgenBlockState.blockState(VanillaIds.PACKED_ICE);
 
 	public BlockStateConfig() {
 	}
 
-	public BlockStateConfig(BlockState state) {
+	public BlockStateConfig(WorldgenBlockState state) {
 		this.state = state;
 	}
 
-	public static BlockStateConfig state(String block) {
-		return new BlockStateConfig(BlockState.blockState(block));
+	public static BlockStateConfig state(Identifier block) {
+		return new BlockStateConfig(WorldgenBlockState.blockState(block));
 	}
 
-	public BlockStateConfig state(BlockState state) {
+	public BlockStateConfig state(WorldgenBlockState state) {
 		this.state = state;
 		return this;
 	}

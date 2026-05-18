@@ -6,29 +6,25 @@ import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.timeline.Timelines;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
-import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
-import net.vampirestudios.arrp.util.JsonBytes;
-import net.vampirestudios.arrp.util.ResourceLocationTypeAdapter;
-import net.vampirestudios.arrp.assets.blockstates.Connectables;
 import net.vampirestudios.arrp.assets.blockstates.BlockState;
+import net.vampirestudios.arrp.assets.blockstates.Connectables;
 import net.vampirestudios.arrp.assets.blockstates.Variant;
-import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.assets.equipment.*;
-import net.vampirestudios.arrp.assets.item.ItemInfo;
 import net.vampirestudios.arrp.assets.item.*;
-import net.vampirestudios.arrp.assets.item.*;
-import net.vampirestudios.arrp.assets.item.Tint;
-import net.vampirestudios.arrp.assets.item.TintConstant;
-import net.vampirestudios.arrp.assets.item.TintDye;
-import net.vampirestudios.arrp.assets.item.TintTeam;
 import net.vampirestudios.arrp.assets.lang.Lang;
 import net.vampirestudios.arrp.assets.models.Model;
 import net.vampirestudios.arrp.assets.models.Textures;
+import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.data.recipe.*;
 import net.vampirestudios.arrp.data.registry.*;
 import net.vampirestudios.arrp.data.worldgen.*;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
+import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
+import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.arrp.util.ResourceLocationTypeAdapter;
+import net.vampirestudios.arrp.util.VanillaIds;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,74 +32,72 @@ import java.util.List;
 import java.util.Optional;
 
 import static net.vampirestudios.arrp.assets.blockstates.BlockState.*;
-import static net.vampirestudios.arrp.data.loot.LootTable.*;
 import static net.vampirestudios.arrp.assets.models.Model.*;
+import static net.vampirestudios.arrp.data.loot.LootTable.*;
+import static net.vampirestudios.arrp.util.ResourceHelpers.customId;
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
 public class RRPPreTest {
 
-	private static Identifier id(String path) {
-		return Identifier.withDefaultNamespace(path);
+	private static Identifier myModId(String path) {
+		return customId("mymod", path);
 	}
 
-	private static Identifier id(String namespace, String path) {
-		return Identifier.fromNamespaceAndPath(namespace, path);
-	}
-
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		RuntimeResourcePack pack = RuntimeResourcePack.create("test:test");
 		pack.addLang(Identifier.tryParse("aaaa:aaaa"), new Lang().entry("aaaa", "bbbbb"));
 		pack.addLang(Identifier.tryParse("modid:en_us"), new Lang().entry("item.custom", "Custom Item"));
 		pack.addLang(Identifier.tryParse("modid:es_es"), new Lang().entry("item.custom", "Artículo Personalizado"));
 		pack.addLang(Identifier.tryParse("minecraft:en_us"), new Lang()
-				.effect(Identifier.withDefaultNamespace("fire_walking"), "Fire Walking")
-				.allPotionOf(Identifier.withDefaultNamespace("fire_walking"), "Fire Walking")
+				.effect(vanillaId("fire_walking"), "Fire Walking")
+				.allPotionOf(vanillaId("fire_walking"), "Fire Walking")
 		);
 		pack.addItemModelInfo(ItemInfo.item().model(ItemModel.select()
 				.property(PropertyComponent.component("minecraft:item_name"))
-				.addCase(SelectCase.of("Diamond", ModelBasic.of("minecraft:item/diamond")))
-				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of("minecraft:item/netherite_ingot")))
-				.addCase(SelectCase.of("Dirt", ModelBasic.of("minecraft:block/dirt")))
+				.addCase(SelectCase.of("Diamond", ModelBasic.of(vanillaId("item/diamond"))))
+				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of(vanillaId("item/netherite_ingot"))))
+				.addCase(SelectCase.of("Dirt", ModelBasic.of(vanillaId("block/dirt"))))
 				.addCase(SelectCase.of("Coal", ItemModel.rangeDispatch()
 						.property(PropertyCount.count())
 						.property(PropertyCount.count())
-						.entry(RangeEntry.of(10, ModelBasic.of("minecraft:item/charcoal")))
-						.fallback(ModelBasic.of("minecraft:item/coal"))
+						.entry(RangeEntry.of(10, ModelBasic.of(vanillaId("item/charcoal"))))
+						.fallback(ModelBasic.of(vanillaId("item/coal")))
 				))
-				.fallback(ModelBasic.of("minecraft:block/stone"))), Identifier.fromNamespaceAndPath("test", "test_item"));
+				.fallback(ModelBasic.of(vanillaId("block/stone")))), customId("test", "test_item"));
 		pack.addEquipmentModel(EquipmentModel.model()
-				.addLayer(LayerType.HUMANOID, Layer.layer().texture(Identifier.fromNamespaceAndPath("test", "a/test"))),
-				Identifier.fromNamespaceAndPath("test", "test_armor")
+				.addLayer(LayerType.HUMANOID, Layer.layer().texture(customId("test", "a/test"))),
+				customId("test", "test_armor")
 		);
 		pack.addWolfVariant(
-				Identifier.fromNamespaceAndPath("mymod", "golden"),
+				myModId("golden"),
 				WolfVariant.wolfVariant()
 						.assets(
-								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden"),
-								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden_tame"),
-								Identifier.fromNamespaceAndPath("mymod", "entity/wolf/wolf_golden_angry")
+								myModId("entity/wolf/wolf_golden"),
+								myModId("entity/wolf/wolf_golden_tame"),
+								myModId("entity/wolf/wolf_golden_angry")
 						)
 						.spawnConditions(SpawnPrioritySelectors.single(BiomeSpawnCondition.biomeCondition()
-								.biome(Identifier.fromNamespaceAndPath("minecraft", "forest")),
+								.biome(vanillaId("forest")),
 								1
 						))
 		);
 		pack.addZombieNautilusVariant(
-				Identifier.fromNamespaceAndPath("mymod", "warm_reef"),
+				myModId("warm_reef"),
 				ZombieNautilusVariant.zombieNautilusVariant()
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/zombie_nautilus/warm_reef"))
+						.assetId(myModId("entity/zombie_nautilus/warm_reef"))
 						.model(ZombieNautilusVariant.ModelType.WARM)
 						.spawnConditions(SpawnPrioritySelectors.single(BiomeSpawnCondition.biomeCondition()
-								.biomeTag(Identifier.fromNamespaceAndPath("minecraft", "is_ocean")),
+								.biomeTag(vanillaId("is_ocean")),
 								1
 						))
 		);
 		pack.addSimpleMobVariant(
-				Identifier.fromNamespaceAndPath("minecraft","frog_variant"),
-				Identifier.fromNamespaceAndPath("mymod","toxic"),
+				vanillaId("frog_variant"),
+				myModId("toxic"),
 				SimpleMobVariant.mobVariant()
-						.assetId(Identifier.fromNamespaceAndPath("mymod","entity/frog/toxic"))
+						.assetId(myModId("entity/frog/toxic"))
 						.spawnConditions(SpawnPrioritySelectors.single(BiomeSpawnCondition.biomeCondition()
-								.biome(Identifier.fromNamespaceAndPath("minecraft", "forest")),
+								.biome(vanillaId("forest")),
 								1
 						))
 		);
@@ -112,110 +106,110 @@ public class RRPPreTest {
 				.freeze();
 
 		pack.addChickenVariant(
-				Identifier.fromNamespaceAndPath("mymod", "frost_chicken"),
+				myModId("frost_chicken"),
 				ChickenVariant.chickenVariant()
 						.model(ChickenVariant.ModelType.COLD)
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/chicken/frost"))
+						.assetId(myModId("entity/chicken/frost"))
 						.spawnConditions(spawns)
 		);
 		pack.addCowVariant(
-				Identifier.fromNamespaceAndPath("mymod", "savanna"),
+				myModId("savanna"),
 				CowVariant.cowVariant()
 						.model(CowVariant.ModelType.WARM)
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "entity/cow/savanna"))
+						.assetId(myModId("entity/cow/savanna"))
 		);
 		pack.addWolfSoundVariant(
-				Identifier.fromNamespaceAndPath("mymod", "angryish"),
+				myModId("angryish"),
 				WolfSoundVariant.wolfSoundVariant()
-						.ambientSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.ambient"))
-						.deathSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.death"))
-						.growlSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.growl"))
-						.hurtSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.hurt"))
-						.pantSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.pant"))
-						.whineSound(Identifier.fromNamespaceAndPath("minecraft","entity.wolf_angry.whine"))
+						.ambientSound(vanillaId("entity.wolf_angry.ambient"))
+						.deathSound(vanillaId("entity.wolf_angry.death"))
+						.growlSound(vanillaId("entity.wolf_angry.growl"))
+						.hurtSound(vanillaId("entity.wolf_angry.hurt"))
+						.pantSound(vanillaId("entity.wolf_angry.pant"))
+						.whineSound(vanillaId("entity.wolf_angry.whine"))
 		);
 		var catSounds = CatSoundVariant.sounds()
-				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.ambient"))
-				.strayAmbientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.stray_ambient"))
-				.hissSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.hiss"))
-				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.hurt"))
-				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.death"))
-				.eatSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.eat"))
-				.begForFoodSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.beg_for_food"))
-				.purrSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.purr"))
-				.purreowSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cat.purreow"));
+				.ambientSound(vanillaId("entity.cat.ambient"))
+				.strayAmbientSound(vanillaId("entity.cat.stray_ambient"))
+				.hissSound(vanillaId("entity.cat.hiss"))
+				.hurtSound(vanillaId("entity.cat.hurt"))
+				.deathSound(vanillaId("entity.cat.death"))
+				.eatSound(vanillaId("entity.cat.eat"))
+				.begForFoodSound(vanillaId("entity.cat.beg_for_food"))
+				.purrSound(vanillaId("entity.cat.purr"))
+				.purreowSound(vanillaId("entity.cat.purreow"));
 		pack.addCatSoundVariant(
-				Identifier.fromNamespaceAndPath("mymod", "bright"),
+				myModId("bright"),
 				CatSoundVariant.catSoundVariant()
 						.adultSounds(catSounds)
 						.babySounds(catSounds)
 		);
 		var chickenSounds = ChickenSoundVariant.sounds()
-				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.ambient"))
-				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.hurt"))
-				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.death"))
-				.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.chicken.step"));
+				.ambientSound(vanillaId("entity.chicken.ambient"))
+				.hurtSound(vanillaId("entity.chicken.hurt"))
+				.deathSound(vanillaId("entity.chicken.death"))
+				.stepSound(vanillaId("entity.chicken.step"));
 		pack.addChickenSoundVariant(
-				Identifier.fromNamespaceAndPath("mymod", "clucky"),
+				myModId("clucky"),
 				ChickenSoundVariant.chickenSoundVariant()
 						.adultSounds(chickenSounds)
 						.babySounds(chickenSounds)
 		);
 		pack.addCowSoundVariant(
-				Identifier.fromNamespaceAndPath("mymod", "soft"),
+				myModId("soft"),
 				CowSoundVariant.cowSoundVariant()
-						.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.ambient"))
-						.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.hurt"))
-						.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.death"))
-						.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.cow.step"))
+						.ambientSound(vanillaId("entity.cow.ambient"))
+						.hurtSound(vanillaId("entity.cow.hurt"))
+						.deathSound(vanillaId("entity.cow.death"))
+						.stepSound(vanillaId("entity.cow.step"))
 		);
 		var pigSounds = PigSoundVariant.sounds()
-				.ambientSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.ambient"))
-				.hurtSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.hurt"))
-				.deathSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.death"))
-				.stepSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.step"))
-				.eatSound(Identifier.fromNamespaceAndPath("minecraft", "entity.pig.ambient"));
+				.ambientSound(vanillaId("entity.pig.ambient"))
+				.hurtSound(vanillaId("entity.pig.hurt"))
+				.deathSound(vanillaId("entity.pig.death"))
+				.stepSound(vanillaId("entity.pig.step"))
+				.eatSound(vanillaId("entity.pig.ambient"));
 		pack.addPigSoundVariant(
-				Identifier.fromNamespaceAndPath("mymod", "snuffly"),
+				myModId("snuffly"),
 				PigSoundVariant.pigSoundVariant()
 						.adultSounds(pigSounds)
 						.babySounds(pigSounds)
 		);
 		pack.addPaintingVariant(
-				Identifier.fromNamespaceAndPath("mymod", "tiny_sky"),
+				myModId("tiny_sky"),
 				PaintingVariant.paintingVariant()
 						.size(2, 1)
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "tiny_sky"))
+						.assetId(myModId("tiny_sky"))
 						.title("Tiny Sky")
 						.author("ARRP")
 		);
 		pack.addTrimMaterial(
-				Identifier.fromNamespaceAndPath("mymod", "copper"),
+				myModId("copper"),
 				TrimMaterial.trimMaterial()
 						.assets(TrimMaterial.AssetGroup.assetGroup("copper")
-								.overrideArmorAsset(Identifier.fromNamespaceAndPath("mymod", "test_armor"), "copper_test"))
+								.overrideArmorAsset(myModId("test_armor"), "copper_test"))
 						.description("Copper")
 		);
 		pack.addTrimPattern(
-				Identifier.fromNamespaceAndPath("mymod", "sunburst"),
+				myModId("sunburst"),
 				TrimPattern.trimPattern()
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "sunburst"))
+						.assetId(myModId("sunburst"))
 						.description("Sunburst Armor Trim")
 						.decal(false)
 		);
 		pack.addBannerPattern(
-				Identifier.fromNamespaceAndPath("mymod", "spark"),
+				myModId("spark"),
 				BannerPattern.bannerPattern()
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "spark"))
+						.assetId(myModId("spark"))
 						.translationKey("block.mymod.banner.spark")
 		);
 		pack.addDecoratedPotPattern(
-				Identifier.fromNamespaceAndPath("mymod", "spiral"),
+				myModId("spiral"),
 				DecoratedPotPattern.decoratedPotPattern()
-						.assetId(Identifier.fromNamespaceAndPath("mymod", "spiral_pottery_pattern"))
+						.assetId(myModId("spiral_pottery_pattern"))
 		);
 		pack.addDamageType(
-				Identifier.fromNamespaceAndPath("mymod", "spark"),
+				myModId("spark"),
 				DamageType.damageType()
 						.messageId("spark")
 						.scaling(DamageType.Scaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER)
@@ -223,46 +217,46 @@ public class RRPPreTest {
 						.effects(DamageType.Effects.HURT)
 		);
 		pack.addInstrument(
-				Identifier.fromNamespaceAndPath("mymod", "small_horn"),
+				myModId("small_horn"),
 				Instrument.instrument()
-						.soundEvent(Identifier.fromNamespaceAndPath("minecraft", "item.goat_horn.sound.0"))
+						.soundEvent(vanillaId("item.goat_horn.sound.0"))
 						.useDuration(7.0F)
 						.range(64.0F)
 						.description("Small Horn")
 		);
 		pack.addJukeboxSong(
-				Identifier.fromNamespaceAndPath("mymod", "test_song"),
+				myModId("test_song"),
 				JukeboxSong.jukeboxSong()
-						.soundEvent(Identifier.fromNamespaceAndPath("mymod", "music.test_song"))
+						.soundEvent(myModId("music.test_song"))
 						.description("Test Song")
 						.lengthInSeconds(120.0F)
 						.comparatorOutput(7)
 		);
 		pack.addConfiguredCarver(
-				Identifier.fromNamespaceAndPath("mymod", "small_cave"),
+				myModId("small_cave"),
 				ConfiguredCarver.carver()
 						.type("minecraft:cave")
 						.probability(0.05F)
-						.replaceable("#minecraft:overworld_carver_replaceables")
+						.replaceable(Identifier.tryParse("minecraft:overworld_carver_replaceables"))
 		);
 		pack.addConfiguredCarver(
-				Identifier.fromNamespaceAndPath("mymod", "canyon"),
+				myModId("canyon"),
 				ConfiguredCarver.canyon()
 						.config(ConfiguredCarver.Config.config()
 								.debugSettings(ConfiguredCarver.DebugSettings.debugSettings()
-										.airState(BlockState.blockState("minecraft:warped_button")
+										.airState(WorldgenBlockState.blockState(vanillaId("warped_button"))
 												.property("face", "wall")
 												.property("facing", "north")
 												.property("powered", false))
-										.barrierState(BlockState.blockState("minecraft:glass"))
-										.lavaState(BlockState.blockState("minecraft:orange_stained_glass"))
-										.waterState(BlockState.blockState("minecraft:candle")
+										.barrierState(WorldgenBlockState.blockState(vanillaId("glass")))
+										.lavaState(WorldgenBlockState.blockState(vanillaId("orange_stained_glass")))
+										.waterState(WorldgenBlockState.blockState(vanillaId("candle"))
 												.property("candles", 1)
 												.property("lit", false)
 												.property("waterlogged", false)))
 								.lavaLevel(VerticalAnchor.aboveBottom(8))
 								.probability(0.01F)
-								.replaceable("#minecraft:overworld_carver_replaceables")
+								.replaceable(vanillaId("overworld_carver_replaceables"))
 								.shape(ConfiguredCarver.CanyonShape.canyonShape()
 										.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
 										.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
@@ -275,34 +269,34 @@ public class RRPPreTest {
 								.yScale(3.0F))
 		);
 		pack.addProcessorList(
-				Identifier.fromNamespaceAndPath("mymod", "mossy_replace"),
+				myModId("mossy_replace"),
 				ProcessorList.processorList()
 						.rule(ProcessorList.Rule.replace("minecraft:cobblestone", "minecraft:mossy_cobblestone"))
 		);
 		pack.addTemplatePool(
-				Identifier.fromNamespaceAndPath("mymod", "test_pool"),
+				myModId("test_pool"),
 				TemplatePool.pool()
-						.fallback("minecraft:empty")
-						.single("mymod:test/start", "mymod:mossy_replace", TemplatePool.Projection.RIGID, 1)
+						.fallback(vanillaId("empty"))
+						.single(myModId("test/start"), myModId("mossy_replace"), TemplatePool.Projection.RIGID, 1)
 		);
 		pack.addWorldPreset(
-				Identifier.fromNamespaceAndPath("mymod", "single_biome"),
+				myModId("single_biome"),
 				WorldPreset.preset()
 						.overworld(WorldPreset.Dimension.dimension()
-								.type("minecraft:overworld")
-								.noiseGenerator("minecraft:overworld", WorldPreset.Generator.BiomeSource.fixed("minecraft:plains")))
+								.type(vanillaId("overworld"))
+								.noiseGenerator(vanillaId("overworld"), WorldPreset.Generator.BiomeSource.fixed(vanillaId("plains"))))
 		);
 		pack.addFlatLevelGeneratorPreset(
-				Identifier.fromNamespaceAndPath("mymod", "copper_flat"),
+				myModId("copper_flat"),
 				FlatLevelGeneratorPreset.preset()
-						.display("minecraft:copper_block")
-						.biome("minecraft:plains")
-						.layer("minecraft:bedrock", 1)
-						.layer("minecraft:stone", 3)
-						.layer("minecraft:grass_block", 1)
+						.display(vanillaId("copper_block"))
+						.biome(vanillaId("plains"))
+						.layer(vanillaId("bedrock"), 1)
+						.layer(VanillaIds.STONE, 3)
+						.layer(vanillaId("grass_block"), 1)
 		);
 		pack.addVillagerTrade(
-				Identifier.fromNamespaceAndPath("mymod", "toolsmith/1/copper_for_emeralds"),
+				myModId("toolsmith/1/copper_for_emeralds"),
 				VillagerTrade.trade()
 						.wants("minecraft:emerald", 3)
 						.gives("minecraft:copper_ingot", 8)
@@ -310,53 +304,53 @@ public class RRPPreTest {
 						.xp(2)
 		);
 		pack.addTradeSet(
-				Identifier.fromNamespaceAndPath("mymod", "toolsmith_copper"),
+				myModId("toolsmith_copper"),
 				TradeSet.tradeSet()
 						.trade("mymod:toolsmith/1/copper_for_emeralds")
 						.amount(TradeSet.NumberProvider.uniform(1, 2))
 						.allowDuplicates(false)
 		);
 		pack.addDialog(
-				Identifier.fromNamespaceAndPath("mymod", "welcome"),
+				myModId("welcome"),
 				Dialog.notice("Welcome", "Continue")
 						.plainMessage("This dialog was generated by ARRP.")
 						.input(Dialog.Input.text("name", "Name"))
 		);
 		pack.addWorldClock(
-				Identifier.fromNamespaceAndPath("mymod", "example_clock"),
+				myModId("example_clock"),
 				WorldClock.worldClock()
 		);
 		pack.addItemModelInfo(
-				ItemInfo.item().model(ItemModel.model("test:block/model").tint(Tint.dye(0xFFFFFF))),
-				Identifier.fromNamespaceAndPath("mymod", "test_block")
+				ItemInfo.item().model(ItemModel.model(customId("test", "block/model")).tint(Tint.dye(0xFFFFFF))),
+				myModId("test_block")
 		);
 
 		pack.addRecipe(
-				Identifier.fromNamespaceAndPath("example", "diamond_pickaxe_to_block"),
+				customId("example", "diamond_pickaxe_to_block"),
 				Recipe.shapeless(
 						Ingredients.ingredients().addFabricCustom(
-								Identifier.withDefaultNamespace("diamond_pickaxe"),
+								vanillaId("diamond_pickaxe"),
 								components -> components.addProperty("minecraft:damage", 0)
 						),
-						Result.result(Identifier.withDefaultNamespace("diamond_block"))
+						Result.result(vanillaId("diamond_block"))
 				).group("test").category("misc")
 		);
-		pack.addRecipe(Identifier.fromNamespaceAndPath("example", "pumpkin"),
+		pack.addRecipe(customId("example", "pumpkin"),
 				Recipe.shaped(
 						Pattern.pattern("PPP", "P P", "PPP"),
-						Keys.keys().item("P", Identifier.withDefaultNamespace("pumpkin_pie")),
-						Result.stackedResult(Identifier.withDefaultNamespace("pumpkin"), 3)
+						Keys.keys().item("P", vanillaId("pumpkin_pie")),
+						Result.stackedResult(vanillaId("pumpkin"), 3)
 				)
 		);
 		pack.addRecipe(
-				Identifier.fromNamespaceAndPath("example", "golden_sword"),
+				customId("example", "golden_sword"),
 				Recipe.shapeless(
 						Ingredients.ingredients()
-								.addItem(Identifier.withDefaultNamespace("stick"))
-								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
-								.addItem(Identifier.withDefaultNamespace("gold_ingot"))
-								.addItem(Identifier.withDefaultNamespace("gold_ingot")),
-						Result.result(Identifier.withDefaultNamespace("golden_sword"))
+								.addItem(vanillaId("stick"))
+								.addItem(vanillaId("gold_ingot"))
+								.addItem(vanillaId("gold_ingot"))
+								.addItem(vanillaId("gold_ingot")),
+						Result.result(vanillaId("golden_sword"))
 								.components(builder -> {
 									builder.addProperty("minecraft:damage", 3);
 									builder.addProperty("minecraft:rarity", "RARE");
@@ -365,12 +359,12 @@ public class RRPPreTest {
 		);
 		pack.dumpDirect(Path.of("aaaa"));
 
-		BlockState iron_block = state(variant(BlockState.model(id("block/iron_block"))));
-		BlockState oak_fence = state(multipart(BlockState.model(id("block/oak_fence_post"))),
-				multipart(BlockState.model(id("block/oak_fence_side")).uvlock()).when(when().isTrue("north")),
-				multipart(BlockState.model(id("block/oak_fence_side")).y(90).uvlock()).when(when().isTrue("east")),
-				multipart(BlockState.model(id("block/oak_fence_side")).y(180).uvlock()).when(when().isTrue("south")),
-				multipart(BlockState.model(id("block/oak_fence_side")).y(270).uvlock()).when(when().isTrue("west")));
+		BlockState iron_block = state(variant(BlockState.model(vanillaId("block/iron_block"))));
+		BlockState oak_fence = state(multipart(BlockState.model(vanillaId("block/oak_fence_post"))),
+				multipart(BlockState.model(vanillaId("block/oak_fence_side")).uvlock()).when(when().isTrue("north")),
+				multipart(BlockState.model(vanillaId("block/oak_fence_side")).y(90).uvlock()).when(when().isTrue("east")),
+				multipart(BlockState.model(vanillaId("block/oak_fence_side")).y(180).uvlock()).when(when().isTrue("south")),
+				multipart(BlockState.model(vanillaId("block/oak_fence_side")).y(270).uvlock()).when(when().isTrue("west")));
 
 		Model model = Model.model().textures(Model.textures().var("all", "block/bamboo_stalk").particle("block/bamboo_stalk"))
 				.element(element().bounds(7, 0, 7, 9, 16, 9)
@@ -390,7 +384,7 @@ public class RRPPreTest {
 				.setPrettyPrinting()
 				.create();
 
-		Lang lang = Lang.lang().allPotionOf(Identifier.fromNamespaceAndPath("mod_id", "potion_id"), "Example");
+		Lang lang = Lang.lang().allPotionOf(customId("mod_id", "potion_id"), "Example");
 
 		System.out.println(RuntimeResourcePackImpl.GSON.toJson(loot("minecraft:block").pool(pool().rolls(1)
 				.entry(entry().type("minecraft:item").name("minecraft:diamond"))
@@ -401,46 +395,46 @@ public class RRPPreTest {
 
 		System.out.println(gson.toJson(lang));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelBasic.of("minecraft:item/template_spawn_egg")
+		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelBasic.of(vanillaId("item/template_spawn_egg"))
 				.tint(new TintConstant(-278045))
 				.tint(new TintConstant(-5886604))
 		)));
 
 
 		ItemInfo itemInfo = ItemInfo.item().model(
-				ItemModel.model("minecraft:item/template_spawn_egg")
+				ItemModel.model(vanillaId("item/template_spawn_egg"))
 						.tints(Tint.constant(-278045), Tint.constant(-5886604))
 		).handAnimationOnSwap(true);
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, itemInfo));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.model("minecraft:item/bamboo"))));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.model(vanillaId("item/bamboo")))));
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.rangeDispatch()
 				.property(PropertyUseCycle.useCycle().period(10f))
 				.scale(0.1)
-				.entry(RangeEntry.of(0.25, ModelBasic.of("minecraft:item/brush_brushing_0")))
-				.entry(RangeEntry.of(0.5, ModelBasic.of("minecraft:item/brush_brushing_1")))
-				.entry(RangeEntry.of(0.75, ModelBasic.of("minecraft:item/brush_brushing_2")))
-				.fallback(ModelBasic.of("minecraft:item/brush"))
+				.entry(RangeEntry.of(0.25, ModelBasic.of(vanillaId("item/brush_brushing_0"))))
+				.entry(RangeEntry.of(0.5, ModelBasic.of(vanillaId("item/brush_brushing_1"))))
+				.entry(RangeEntry.of(0.75, ModelBasic.of(vanillaId("item/brush_brushing_2"))))
+				.fallback(ModelBasic.of(vanillaId("item/brush")))
 		)));
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.condition()
 				.property(new PropertyUsingItem())
-				.onTrue(ModelBasic.of("minecraft:item/using_model"))
-				.onFalse(ModelBasic.of("minecraft:item/default_model"))
+				.onTrue(ModelBasic.of(vanillaId("item/using_model")))
+				.onFalse(ModelBasic.of(vanillaId("item/default_model")))
 		)));
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.composite()
-				.model(ModelBasic.of("minecraft:item/part1"))
-				.model(ModelBasic.of("minecraft:item/part2"))
+				.model(ModelBasic.of(vanillaId("item/part1")))
+				.model(ModelBasic.of(vanillaId("item/part2")))
 		)));
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.rangeDispatch()
 				.property(PropertyDamage.of(true))
-				.entry(RangeEntry.of(0.25, ModelBasic.of("minecraft:item/damage_low")))
-				.entry(RangeEntry.of(0.5, ModelBasic.of("minecraft:item/damage_medium")))
-				.entry(RangeEntry.of(0.75, ModelBasic.of("minecraft:item/damage_high")))
-				.fallback(ModelBasic.of("minecraft:item/damage_full"))
+				.entry(RangeEntry.of(0.25, ModelBasic.of(vanillaId("item/damage_low"))))
+				.entry(RangeEntry.of(0.5, ModelBasic.of(vanillaId("item/damage_medium"))))
+				.entry(RangeEntry.of(0.75, ModelBasic.of(vanillaId("item/damage_high"))))
+				.fallback(ModelBasic.of(vanillaId("item/damage_full")))
 		)));
 
 //		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelSpecial.head()
@@ -450,12 +444,12 @@ public class RRPPreTest {
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.condition()
 				.property(new PropertyKeybindDown("key.sneak"))
-				.onTrue(ModelBasic.of("minecraft:item/sneaking_model"))
-				.onFalse(ModelBasic.of("minecraft:item/normal_model"))
+				.onTrue(ModelBasic.of(vanillaId("item/sneaking_model")))
+				.onFalse(ModelBasic.of(vanillaId("item/normal_model")))
 		)));
 
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelBasic
-				.of("minecraft:item/team_colored_item")
+				.of(vanillaId("item/team_colored_item"))
 				.tint(TintTeam.of(-1))
 		)));
 
@@ -465,7 +459,7 @@ public class RRPPreTest {
 		for (int i = 0; i <= 31; i++) {
 			entries.add(new RangeEntry(
 					i / 32.0, // normalized threshold
-					ItemModel.model("minecraft:item/compass_" + (i < 10 ? "0" : "") + i)
+					ItemModel.model(vanillaId("item/compass_" + (i < 10 ? "0" : "") + i))
 			));
 		}
 
@@ -484,7 +478,7 @@ public class RRPPreTest {
 		// Create select model for "on_false"
 		ItemModel onFalseSelect = ItemModel.select()
 				.property(new PropertyContextDimension())
-				.addCase(SelectCase.of("minecraft:overworld", ItemModel.rangeDispatch()
+				.addCase(SelectCase.of("overworld", ItemModel.rangeDispatch()
 						.property(new PropertyCompass().target("spawn"))
 						.scale(32.0)
 						.entries(entries)
@@ -523,34 +517,34 @@ public class RRPPreTest {
 		// Build the select model with cases
 		ItemModel selectModel = ItemModel.select()
 				.property(componentProperty)
-				.addCase(SelectCase.of("Diamond", ModelBasic.of("minecraft:item/diamond")))
-				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of("minecraft:item/netherite_ingot")))
-				.addCase(SelectCase.of("Dirt", ModelBasic.of("minecraft:block/dirt")))
+				.addCase(SelectCase.of("Diamond", ModelBasic.of(vanillaId("item/diamond"))))
+				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of(vanillaId("item/netherite_ingot"))))
+				.addCase(SelectCase.of("Dirt", ModelBasic.of(vanillaId("block/dirt"))))
 				.addCase(SelectCase.of("Coal", ItemModel.rangeDispatch()
 						.property(PropertyCount.count())
-						.entry(RangeEntry.of(10, ModelBasic.of("minecraft:item/charcoal")))
-						.fallback(ModelBasic.of("minecraft:item/coal"))
+						.entry(RangeEntry.of(10, ModelBasic.of(vanillaId("item/charcoal"))))
+						.fallback(ModelBasic.of(vanillaId("item/coal")))
 				))
-				.fallback(ModelBasic.of("minecraft:block/stone"));
+				.fallback(ModelBasic.of(vanillaId("block/stone")));
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(selectModel)));
 
 		selectModel = ItemModel.select()
 				.property(componentProperty)
-				.addCase(SelectCase.of("Diamond", ModelBasic.of("minecraft:item/diamond")))
-				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of("minecraft:item/netherite_ingot")))
-				.addCase(SelectCase.of("Dirt", ModelBasic.of("minecraft:block/dirt")))
+				.addCase(SelectCase.of("Diamond", ModelBasic.of(vanillaId("item/diamond"))))
+				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of(vanillaId("item/netherite_ingot"))))
+				.addCase(SelectCase.of("Dirt", ModelBasic.of(vanillaId("block/dirt"))))
 				.addCase(SelectCase.of("Coal", ItemModel.rangeDispatch()
 						.property(PropertyCount.count())
-						.entry(RangeEntry.of(10, ModelBasic.of("minecraft:item/charcoal")))
-						.fallback(ModelBasic.of("minecraft:item/coal"))
+						.entry(RangeEntry.of(10, ModelBasic.of(vanillaId("item/charcoal"))))
+						.fallback(ModelBasic.of(vanillaId("item/coal")))
 				))
-				.fallback(ModelBasic.of("minecraft:block/stone").tint(new TintDye(0xFF00FF)));
+				.fallback(ModelBasic.of(vanillaId("block/stone")).tint(new TintDye(0xFF00FF)));
 		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(selectModel)));
 
 		EquipmentModel eq = EquipmentModel.model()
 				.addLayer("wings",
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("minecraft", "elytra"))
+								.texture(vanillaId("elytra"))
 								.usePlayerTexture(true)
 				);
 		System.out.println(JsonBytes.encodeToPrettyString(EquipmentModel.CODEC, eq));
@@ -559,19 +553,19 @@ public class RRPPreTest {
 				// leather leggings, dyeable with default color
 				.addLayer(LayerType.HUMANOID_LEGGINGS,
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather_leggings"))
+								.texture(vanillaId("leather_leggings"))
 								.dyeable(Optional.of(0xA06540))   // default brown if undyed
 				)
 				// main body layer, dyeable
 				.addLayer(LayerType.HUMANOID,
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather"))
+								.texture(vanillaId("leather"))
 								.dyeable(Optional.empty())        // no default color
 				)
 				// overlay (non-dyeable)
 				.addLayer(LayerType.HUMANOID,
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("minecraft", "leather_overlay"))
+								.texture(vanillaId("leather_overlay"))
 								.usePlayerTexture(false)
 				);
 		System.out.println(JsonBytes.encodeToPrettyString(EquipmentModel.CODEC, armorModel));
@@ -579,23 +573,23 @@ public class RRPPreTest {
 		EquipmentModel saddleModel = EquipmentModel.model()
 				.addLayer(LayerType.HORSE_BODY,
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("minecraft", "saddle"))
+								.texture(vanillaId("saddle"))
 				);
 		System.out.println(JsonBytes.encodeToPrettyString(EquipmentModel.CODEC, saddleModel));
 
 		EquipmentModel backpack = EquipmentModel.model()
 				.addLayerCustom("backpack",
 						Layer.layer()
-								.texture(Identifier.fromNamespaceAndPath("mymod", "backpack"))
+								.texture(myModId("backpack"))
 				);
 		System.out.println(JsonBytes.encodeToPrettyString(EquipmentModel.CODEC, backpack));
 
 		Layer wolfLayer = Layer.layer()
-				.texture(Identifier.fromNamespaceAndPath("mymod", "wolf_tag"))
+				.texture(myModId("wolf_tag"))
 				.usePlayerTexture(false);
 
 		Layer bodyLayer = Layer.layer()
-				.texture(Identifier.fromNamespaceAndPath("mymod", "wolf_body"))
+				.texture(myModId("wolf_body"))
 				.dyeable(Optional.of(0xCCCCCC));
 
 		EquipmentModel wolfWithTag = EquipmentModel.model()
@@ -605,17 +599,17 @@ public class RRPPreTest {
 
 		EquipmentModel model1 = EquipmentModel.model()
 				.addLayer(LayerType.HORSE_BODY,
-						Layer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
+						Layer.layer().texture(vanillaId("diamond"))
 				)
 				.addLayer(LayerType.HUMANOID,
-						Layer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
+						Layer.layer().texture(vanillaId("diamond"))
 				)
 				.addLayer(LayerType.HUMANOID_LEGGINGS,
-						Layer.layer().texture(Identifier.fromNamespaceAndPath("minecraft", "diamond"))
+						Layer.layer().texture(vanillaId("diamond"))
 				);
 		System.out.println(JsonBytes.encodeToPrettyString(EquipmentModel.CODEC, model1));
 
-		var baseModel = id("test", "furniture/aaaaaaaaa");
+		var baseModel = customId("test", "furniture/aaaaaaaaa");
 
 		Variant variant = new Variant()
 				// north
@@ -696,6 +690,21 @@ public class RRPPreTest {
 					.netherPortalSpawnsPiglins(true)
 					.monstersBurn(true)
 					.villagerActivity("minecraft:work");
+			EnvironmentAttributes environmentAttributes1 = new EnvironmentAttributes()
+					.set(EnvironmentAttributes.FOG_START_DISTANCE, 10.0F)
+					.set(EnvironmentAttributes.FOG_END_DISTANCE, 96.0F)
+					.set(EnvironmentAttributes.SKY_LIGHT_COLOR, Timelines.NIGHT_SKY_LIGHT_COLOR)
+					.set(EnvironmentAttributes.SKY_LIGHT_LEVEL, 4.0F)
+					.set(EnvironmentAttributes.SKY_LIGHT_FACTOR, 0.0F)
+					.set(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, -13621215)
+					.set(EnvironmentAttributes.DEFAULT_DRIPSTONE_PARTICLE, vanillaId("pointed_dripstone_lava"))
+					.set(EnvironmentAttributes.BED_RULE, "explodes")
+					.set(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, true)
+					.set(EnvironmentAttributes.WATER_EVAPORATES, true)
+					.set(EnvironmentAttributes.FAST_LAVA, true)
+					.set(EnvironmentAttributes.PIGLINS_ZOMBIFY, false)
+					.set(EnvironmentAttributes.CAN_START_RAID, false)
+					.set(EnvironmentAttributes.SNOW_GOLEM_MELTS, true);
 			System.out.println(JsonBytes.encodeToPrettyString(EnvironmentAttributes.CODEC, environmentAttributes));
 			System.out.println(JsonBytes.encodeToPrettyString(WorldClock.CODEC, WorldClock.worldClock()));
 
@@ -714,9 +723,6 @@ public class RRPPreTest {
 					.skybox(DimensionType.Skybox.OVERWORLD)
 					.cardinalLight(DimensionType.CardinalLightType.DEFAULT)
 					.attributes(environmentAttributes)
-//					.attribute("minecraft:gameplay/bed_rule", BedRule.CODEC, BedRule.CAN_SLEEP_WHEN_DARK)
-//					.attribute("minecraft:audio/background_music", BackgroundMusic.CODEC, BackgroundMusic.OVERWORLD)
-//					.attribute("minecraft:audio/ambient_sounds", AmbientSounds.CODEC, AmbientSounds.LEGACY_CAVE_SETTINGS)
 			));
 		}
 	}

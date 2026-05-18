@@ -1,9 +1,8 @@
 package net.vampirestudios.arrp.assets.item;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.assets.item.Tint;
+import net.minecraft.resources.Identifier;
 
 /**
  * Represents a basic model type "minecraft:model".
@@ -14,7 +13,7 @@ public class ModelBasic extends ItemModel {
 			// base fields first
 			Tint.CODEC.listOf().optionalFieldOf("tints").forGetter(ModelBasic::codecGetTints),
 			LAZY_SELF.optionalFieldOf("fallback").forGetter(ModelBasic::codecGetFallback),
-			Codec.STRING.fieldOf("model").forGetter(ModelBasic::getModel)
+			Identifier.CODEC.fieldOf("model").forGetter(ModelBasic::getModel)
 	).apply(i, (tint, fallback, model) -> {
 		ModelBasic m = new ModelBasic(model);
 		ItemModel.applyBase(m, tint, fallback);
@@ -28,20 +27,20 @@ public class ModelBasic extends ItemModel {
 		}, m -> m));
 	}
 
-	private final String model;
+	private final Identifier model;
 
-	public ModelBasic(String model) {
+	public ModelBasic(Identifier model) {
 		super(TYPE);
 		this.model = model;
 	}
 
 	// factories (unchanged)
-	public static ModelBasic of(String model) {
+	public static ModelBasic of(Identifier model) {
 		return new ModelBasic(model);
 	}
 
 	// Getters and Setters
-	public String getModel() {
+	public Identifier getModel() {
 		return model;
 	}
 }

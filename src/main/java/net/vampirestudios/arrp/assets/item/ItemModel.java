@@ -3,8 +3,8 @@ package net.vampirestudios.arrp.assets.item;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.impl.Codecs;
-import net.vampirestudios.arrp.assets.item.Tint;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +52,7 @@ public abstract class ItemModel {
 
 
     // Static factory methods for different model types
-    public static ModelBasic model(String model) {
+    public static ModelBasic model(Identifier model) {
         return new ModelBasic(model);
     }
 

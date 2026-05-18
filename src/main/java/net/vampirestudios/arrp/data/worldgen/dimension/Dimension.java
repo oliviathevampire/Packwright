@@ -8,6 +8,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
+import net.minecraft.resources.Identifier;
 
 /**
  * Simple builder for dimension datapack JSON that round-trips through codecs.
@@ -78,8 +79,8 @@ public class Dimension implements Cloneable {
 
 	// Core setters
 
-	public Dimension type(String type) {
-		this.type = type;
+	public Dimension type(Identifier type) {
+		this.type = type == null ? null : type.toString();
 		return this;
 	}
 
@@ -100,10 +101,10 @@ public class Dimension implements Cloneable {
 	/**
 	 * Sets a noise generator with the given settings id.
 	 */
-	public Dimension noiseGenerator(String settingsId) {
+	public Dimension noiseGenerator(Identifier settingsId) {
 		JsonObject gen = this.generator == null ? new JsonObject() : this.generator.deepCopy();
 		gen.addProperty("type", "minecraft:noise");
-		gen.addProperty("settings", settingsId);
+		gen.addProperty("settings", settingsId == null ? null : settingsId.toString());
 		this.generator = gen;
 		return this;
 	}
@@ -111,10 +112,10 @@ public class Dimension implements Cloneable {
 	/**
 	 * Sets biome_source to a fixed biome.
 	 */
-	public Dimension fixedBiome(String biomeId) {
+	public Dimension fixedBiome(Identifier biomeId) {
 		JsonObject biomeSource = new JsonObject();
 		biomeSource.addProperty("type", "minecraft:fixed");
-		biomeSource.addProperty("biome", biomeId);
+		biomeSource.addProperty("biome", biomeId == null ? null : biomeId.toString());
 
 		JsonObject gen = this.generator == null ? new JsonObject() : this.generator.deepCopy();
 		gen.add("biome_source", biomeSource);

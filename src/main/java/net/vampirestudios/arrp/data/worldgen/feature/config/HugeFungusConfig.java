@@ -2,14 +2,16 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.data.worldgen.BlockState;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
+
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
 public class HugeFungusConfig implements FeatureConfig {
 	public static final Codec<HugeFungusConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
-			BlockState.CODEC.fieldOf("valid_base_block").forGetter(x -> x.validBaseBlock),
-			BlockState.CODEC.fieldOf("stem_state").forGetter(x -> x.stemState),
-			BlockState.CODEC.fieldOf("hat_state").forGetter(x -> x.hatState),
-			BlockState.CODEC.fieldOf("decor_state").forGetter(x -> x.decorState),
+			WorldgenBlockState.CODEC.fieldOf("valid_base_block").forGetter(x -> x.validBaseBlock),
+			WorldgenBlockState.CODEC.fieldOf("stem_state").forGetter(x -> x.stemState),
+			WorldgenBlockState.CODEC.fieldOf("hat_state").forGetter(x -> x.hatState),
+			WorldgenBlockState.CODEC.fieldOf("decor_state").forGetter(x -> x.decorState),
 			Codec.BOOL.fieldOf("planted").forGetter(x -> x.planted)
 	).apply(i, (validBaseBlock, stemState, hatState, decorState, planted) -> new HugeFungusConfig()
 			.validBaseBlock(validBaseBlock)
@@ -18,28 +20,28 @@ public class HugeFungusConfig implements FeatureConfig {
 			.decorState(decorState)
 			.planted(planted)));
 
-	private BlockState validBaseBlock = BlockState.blockState("minecraft:crimson_nylium");
-	private BlockState stemState = BlockState.blockState("minecraft:crimson_stem");
-	private BlockState hatState = BlockState.blockState("minecraft:nether_wart_block");
-	private BlockState decorState = BlockState.blockState("minecraft:shroomlight");
+	private WorldgenBlockState validBaseBlock = WorldgenBlockState.blockState(vanillaId("crimson_nylium"));
+	private WorldgenBlockState stemState = WorldgenBlockState.blockState(vanillaId("crimson_stem"));
+	private WorldgenBlockState hatState = WorldgenBlockState.blockState(vanillaId("nether_wart_block"));
+	private WorldgenBlockState decorState = WorldgenBlockState.blockState(vanillaId("shroomlight"));
 	private boolean planted = false;
 
-	public HugeFungusConfig validBaseBlock(BlockState validBaseBlock) {
+	public HugeFungusConfig validBaseBlock(WorldgenBlockState validBaseBlock) {
 		this.validBaseBlock = validBaseBlock;
 		return this;
 	}
 
-	public HugeFungusConfig stemState(BlockState stemState) {
+	public HugeFungusConfig stemState(WorldgenBlockState stemState) {
 		this.stemState = stemState;
 		return this;
 	}
 
-	public HugeFungusConfig hatState(BlockState hatState) {
+	public HugeFungusConfig hatState(WorldgenBlockState hatState) {
 		this.hatState = hatState;
 		return this;
 	}
 
-	public HugeFungusConfig decorState(BlockState decorState) {
+	public HugeFungusConfig decorState(WorldgenBlockState decorState) {
 		this.decorState = decorState;
 		return this;
 	}

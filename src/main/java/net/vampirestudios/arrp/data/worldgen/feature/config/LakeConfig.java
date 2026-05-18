@@ -2,6 +2,7 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 
 public class LakeConfig implements FeatureConfig {
 	public static final Codec<LakeConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -9,10 +10,10 @@ public class LakeConfig implements FeatureConfig {
 			BlockStateProvider.CODEC.fieldOf("barrier").forGetter(x -> x.barrier)
 	).apply(i, (fluid, barrier) -> new LakeConfig().fluid(fluid).barrier(barrier)));
 
-	private BlockStateProvider fluid = BlockStateProvider.simple("minecraft:water");
-	private BlockStateProvider barrier = BlockStateProvider.simple("minecraft:stone");
+	private BlockStateProvider fluid = BlockStateProvider.simple(Identifier.withDefaultNamespace("water"));
+	private BlockStateProvider barrier = BlockStateProvider.simple(Identifier.withDefaultNamespace("stone"));
 
-	public static LakeConfig lake(String fluid, String barrier) {
+	public static LakeConfig lake(Identifier fluid, Identifier barrier) {
 		return new LakeConfig().fluid(BlockStateProvider.simple(fluid)).barrier(BlockStateProvider.simple(barrier));
 	}
 

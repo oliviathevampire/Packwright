@@ -55,19 +55,19 @@ public final class BlockState {
 		return new Variant();
 	}
 
-	public static Variant variant(BlockModel model) {
+	public static Variant variant(SimpleModel model) {
 		Variant variant = new Variant();
 		variant.put("", model);
 		return variant;
 	}
 
-	public static BlockModel model(Identifier id) {
-		return new BlockModel(id);
+	public static SimpleModel model(Identifier id) {
+		return new SimpleModel(id);
 	}
 
-	public static Multipart multipart(BlockModel... models) {
+	public static Multipart multipart(SimpleModel... models) {
 		Multipart multipart = new Multipart();
-		for (BlockModel model : models) {
+		for (SimpleModel model : models) {
 			multipart.addModel(model);
 		}
 		return multipart;
@@ -97,12 +97,4 @@ public final class BlockState {
 		return this;
 	}
 
-	@Override
-	public BlockState clone() {
-		try {
-			return (BlockState) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
-	}
 }

@@ -3,12 +3,16 @@ package net.vampirestudios.arrp.data.worldgen.dimension;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.vampirestudios.arrp.data.worldgen.AttributeValue;
-import net.vampirestudios.arrp.data.worldgen.EnvironmentAttributes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
+import net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue;
+import net.vampirestudios.arrp.data.worldgen.EnvironmentAttributes;
+
 import java.util.*;
+
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaTagId;
 
 public class DimensionType {
 	public static final Codec<DimensionType> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -28,11 +32,11 @@ public class DimensionType {
 					.forGetter(dt -> dt.height),
 			Codec.INT.fieldOf("logical_height").orElse(384)
 					.forGetter(dt -> dt.logicalHeight),
-			Codec.STRING.fieldOf("infiniburn").orElse("#minecraft:infiniburn_overworld")
+			Codec.STRING.fieldOf("infiniburn").orElse(vanillaTagId("infiniburn_overworld"))
 					.forGetter(dt -> dt.infiniburn),
 			Codec.FLOAT.fieldOf("ambient_light").orElse(0.0F)
 					.forGetter(dt -> dt.ambientLight),
-			Codec.unboundedMap(Codec.STRING, AttributeValue.CODEC)
+			Codec.unboundedMap(Identifier.CODEC, EnvironmentAttributeValue.CODEC)
 					.optionalFieldOf("attributes", Collections.emptyMap())
 					.forGetter(dt -> dt.attributes == null ? Collections.emptyMap() : dt.attributes),
 			TimelinesRef.CODEC.optionalFieldOf("timelines")
@@ -82,10 +86,10 @@ public class DimensionType {
 	private int height = 384;
 	private int logicalHeight = 384;
 
-	private String infiniburn = "#minecraft:infiniburn_overworld";
+	private String infiniburn = vanillaTagId("infiniburn_overworld");
 	private float ambientLight = 0.0F;
 
-	private Map<String, AttributeValue> attributes = new LinkedHashMap<>();
+	private Map<Identifier, EnvironmentAttributeValue> attributes = new LinkedHashMap<>();
 	private TimelinesRef timelines;
 	private Skybox skybox;
 	private CardinalLightType cardinalLight;
@@ -156,38 +160,31 @@ public class DimensionType {
 
 	// ---- attributes ----
 
-	public DimensionType attribute(String key, boolean value) {
+	public DimensionType attribute(Identifier key, boolean value) {
 		if (key != null) {
-			this.attributes.put(key, AttributeValue.ofBoolean(value));
+			this.attributes.put(key, EnvironmentAttributeValue.ofBoolean(value));
 		}
 		return this;
 	}
 
-	public DimensionType attribute(String key, double value) {
+	public DimensionType attribute(Identifier key, double value) {
 		if (key != null) {
-			this.attributes.put(key, AttributeValue.ofDouble(value));
+			this.attributes.put(key, EnvironmentAttributeValue.ofNumber(value));
 		}
 		return this;
 	}
 
-	public DimensionType attribute(String key, String value) {
+	public DimensionType attribute(Identifier key, String value) {
 		if (key != null && value != null) {
-			this.attributes.put(key, AttributeValue.ofString(value));
-		}
-		return this;
-	}
-
-	public <T> DimensionType attribute(String key, Codec<T> codec, T value) {
-		if (key != null && value != null) {
-			this.attributes.put(key, AttributeValue.ofEncoded(codec, value));
+			this.attributes.put(key, EnvironmentAttributeValue.ofString(value));
 		}
 		return this;
 	}
 
 	public DimensionType attributes(EnvironmentAttributes attributes) {
 		if (attributes != null) {
-			for (Map.Entry<String, net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue> entry : attributes.getValues().entrySet()) {
-				EnvironmentAttributeValueBridge.put(this.attributes, entry.getKey(), entry.getValue());
+			for (Map.Entry<Identifier, EnvironmentAttributeValue> entry : attributes.getValues().entrySet()) {
+				this.attributes.put(entry.getKey(), entry.getValue());
 			}
 		}
 		return this;
@@ -214,45 +211,33 @@ public class DimensionType {
 	public DimensionType snowGolemMelts(boolean value) { return attribute(EnvironmentAttributes.SNOW_GOLEM_MELTS, value); }
 	public DimensionType creakingActive(boolean value) { return attribute(EnvironmentAttributes.CREAKING_ACTIVE, value); }
 
-	public Map<String, AttributeValue> attributes() {
+	public Map<Identifier, EnvironmentAttributeValue> attributes() {
 		return Collections.unmodifiableMap(this.attributes);
 	}
-
-	private static final class EnvironmentAttributeValueBridge {
-		private static void put(Map<String, AttributeValue> attributes, String key, net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue value) {
-			if (value instanceof net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue.BoolValue boolValue) {
-				attributes.put(key, AttributeValue.ofBoolean(boolValue.value));
-			} else if (value instanceof net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue.NumberValue numberValue) {
-				attributes.put(key, AttributeValue.ofDouble(numberValue.value));
-			} else if (value instanceof net.vampirestudios.arrp.data.worldgen.EnvironmentAttributeValue.StringValue stringValue) {
-				attributes.put(key, AttributeValue.ofString(stringValue.value));
-			}
-		}
-	}
-
-	// ---- timelines / skybox / cardinal light ----
 
 	/**
 	 * Single timeline ID.
 	 */
-	public DimensionType timeline(String id) {
-		this.timelines = TimelinesRef.single(id);
+	public DimensionType timeline(Identifier id) {
+		this.timelines = TimelinesRef.single(id == null ? null : id.toString());
 		return this;
 	}
 
 	/**
 	 * Multiple timeline IDs.
 	 */
-	public DimensionType timelines(List<String> ids) {
-		this.timelines = TimelinesRef.list(ids);
+	public DimensionType timelines(List<Identifier> ids) {
+		List<String> strIds = new ArrayList<>();
+		if (ids != null) for (Identifier id : ids) strIds.add(id == null ? null : id.toString());
+		this.timelines = TimelinesRef.list(strIds);
 		return this;
 	}
 
 	/**
 	 * Timeline tag, e.g. "#minecraft:day_cycle".
 	 */
-	public DimensionType timelinesTag(String tag) {
-		this.timelines = TimelinesRef.tag(tag);
+	public DimensionType timelinesTag(Identifier tag) {
+		this.timelines = TimelinesRef.tag(tag == null ? null : "#" + tag);
 		return this;
 	}
 
@@ -375,63 +360,6 @@ public class DimensionType {
 		}
 
 		public enum Kind {CONSTANT, UNIFORM}
-	}
-
-	/**
-	 * Same AttributeValue union as in Biome, duplicated here
-	 * so the class stays self-contained.
-	 */
-	public record AttributeValue(Kind kind, boolean boolValue, double numberValue, String stringValue) {
-		public static final Codec<AttributeValue> CODEC =
-				Codec.either(Codec.BOOL, Codec.either(Codec.DOUBLE, Codec.STRING))
-						.xmap(
-								either -> {
-									if (either.left().isPresent()) {
-										return AttributeValue.of(either.left().get());
-									}
-									Either<Double, String> right = either.right().get();
-									if (right.left().isPresent()) {
-										return AttributeValue.of(right.left().get());
-									}
-									return AttributeValue.of(right.right().get());
-								},
-								value -> switch (value.kind) {
-									case BOOLEAN -> Either.left(value.boolValue);
-									case NUMBER -> Either.right(Either.left(value.numberValue));
-									case STRING -> Either.right(Either.right(value.stringValue));
-								}
-						);
-
-		public static AttributeValue of(boolean value) {
-			return new AttributeValue(Kind.BOOLEAN, value, 0.0D, null);
-		}
-
-		public static AttributeValue of(double value) {
-			return new AttributeValue(Kind.NUMBER, false, value, null);
-		}
-
-		public static AttributeValue of(String value) {
-			if (value == null) throw new NullPointerException("value");
-			return new AttributeValue(Kind.STRING, false, 0.0D, value);
-		}
-
-
-		public boolean asBoolean() {
-			if (kind != Kind.BOOLEAN) throw new IllegalStateException("Not a boolean");
-			return boolValue;
-		}
-
-		public double asNumber() {
-			if (kind != Kind.NUMBER) throw new IllegalStateException("Not a number");
-			return numberValue;
-		}
-
-		public String asString() {
-			if (kind != Kind.STRING) throw new IllegalStateException("Not a string");
-			return stringValue;
-		}
-
-		public enum Kind {BOOLEAN, NUMBER, STRING}
 	}
 
 	/**

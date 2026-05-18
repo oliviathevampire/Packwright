@@ -2,6 +2,9 @@ package net.vampirestudios.arrp.data.worldgen.feature.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
+
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
 public class NetherForestVegetationConfig implements FeatureConfig {
 	public static final Codec<NetherForestVegetationConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -13,11 +16,11 @@ public class NetherForestVegetationConfig implements FeatureConfig {
 			.spreadWidth(spreadWidth)
 			.spreadHeight(spreadHeight)));
 
-	private BlockStateProvider stateProvider = BlockStateProvider.simple("minecraft:warped_roots");
+	private BlockStateProvider stateProvider = BlockStateProvider.simple(vanillaId("warped_roots"));
 	private int spreadWidth = 8;
 	private int spreadHeight = 4;
 
-	public static NetherForestVegetationConfig vegetation(String block) {
+	public static NetherForestVegetationConfig vegetation(Identifier block) {
 		return new NetherForestVegetationConfig().stateProvider(BlockStateProvider.simple(block));
 	}
 

@@ -31,6 +31,7 @@ import net.vampirestudios.arrp.data.worldgen.feature.config.SimpleRandomSelector
 import net.vampirestudios.arrp.data.worldgen.feature.config.SimpleTreeConfig;
 import net.vampirestudios.arrp.data.worldgen.feature.config.SpringConfig;
 import net.vampirestudios.arrp.data.worldgen.feature.config.UnderwaterMagmaConfig;
+import net.minecraft.resources.Identifier;
 
 public class ConfiguredFeature {
 	public static final Codec<ConfiguredFeature> CODEC = new Codec<>() {
@@ -56,7 +57,7 @@ public class ConfiguredFeature {
 	};
 
 	private String type = "minecraft:simple_block";
-	private FeatureConfig config = SimpleBlockConfig.simpleBlock("minecraft:stone");
+	private FeatureConfig config = SimpleBlockConfig.simpleBlock(Identifier.tryParse("minecraft:stone"));
 
 	public static ConfiguredFeature feature() {
 		return new ConfiguredFeature();

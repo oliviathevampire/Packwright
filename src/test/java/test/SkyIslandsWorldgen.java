@@ -1,12 +1,13 @@
 package test;
 
 import com.google.gson.JsonPrimitive;
-import net.vampirestudios.arrp.util.JsonBytes;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
 import net.vampirestudios.arrp.assets.timeline.Timeline;
-import net.vampirestudios.arrp.data.worldgen.BlockState;
-import net.vampirestudios.arrp.data.worldgen.IntProvider;
 import net.vampirestudios.arrp.data.worldgen.AttributeValue;
+import net.vampirestudios.arrp.data.worldgen.IntProvider;
 import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
 import net.vampirestudios.arrp.data.worldgen.biome.Biome;
 import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
@@ -16,12 +17,20 @@ import net.vampirestudios.arrp.data.worldgen.feature.config.*;
 import net.vampirestudios.arrp.data.worldgen.noise.NoiseSettings;
 import net.vampirestudios.arrp.data.worldgen.structure.Structure;
 import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
-import net.minecraft.tags.BlockTags;
+import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.arrp.util.VanillaIds;
 
 import java.util.HashMap;
 import java.util.List;
 
+import static net.vampirestudios.arrp.util.ResourceHelpers.customId;
+import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
+
 public class SkyIslandsWorldgen {
+
+	private static Identifier myModId(String path) {
+		return customId("mymod", path);
+	}
 
 	/* ----------------------------------------------------------
 	 * 1) Timeline: my_mod:sky_islands_sky_cycle
@@ -59,12 +68,12 @@ public class SkyIslandsWorldgen {
 	 * ---------------------------------------------------------- */
 
 	public static Biome buildSkyIslandsBiome() {
-		var attribMap = new HashMap<String, AttributeValue>();
-		attribMap.put("minecraft:visual/sky_color", AttributeValue.ofString("#6eb1ff"));
-		attribMap.put("minecraft:visual/fog_color", AttributeValue.ofString("#c0d8ff"));
-		attribMap.put("minecraft:visual/water_fog_start_distance", AttributeValue.ofFloat(0.0f));
-		attribMap.put("minecraft:visual/water_fog_end_distance", AttributeValue.ofFloat(96.0f));
-		attribMap.put("my_mod:gameplay/low_gravity_factor", AttributeValue.ofFloat(0.7f));
+		var attribMap = new HashMap<Identifier, AttributeValue>();
+		attribMap.put(vanillaId("visual/sky_color"), AttributeValue.ofString("#6eb1ff"));
+		attribMap.put(vanillaId("visual/fog_color"), AttributeValue.ofString("#c0d8ff"));
+		attribMap.put(vanillaId("visual/water_fog_start_distance"), AttributeValue.ofFloat(0.0f));
+		attribMap.put(vanillaId("visual/water_fog_end_distance"), AttributeValue.ofFloat(96.0f));
+		attribMap.put(myModId("gameplay/low_gravity_factor"), AttributeValue.ofFloat(0.7f));
 
 		return Biome.biome()
 				.hasPrecipitation(true)
@@ -74,9 +83,9 @@ public class SkyIslandsWorldgen {
 				.attributes(attribMap)
 				.spawnSettings(new Biome.SpawnSettings().setCreatureSpawnProbability(0.07F))
 				.generation(new Biome.Generation()
-						.addFeature(7, "my_mod:sky_islands_trees")
-						.addFeature(8, "my_mod:sky_islands_copper_ore")
-						.addFeature(9, "my_mod:sky_islands_flowers"));
+						.addFeature(7, myModId("sky_islands_trees"))
+						.addFeature(8, myModId("sky_islands_copper_ore"))
+						.addFeature(9, myModId("sky_islands_flowers")));
 	}
 
 	public static int hex(String hex) {
@@ -110,12 +119,12 @@ public class SkyIslandsWorldgen {
 				.ambientLight(0.1f)
 				.monsterSpawnLightUniform(0, 7)
 				.monsterSpawnBlockLightLimit(0)
-				.attribute("minecraft:visual/sky_color", "#6eb1ff")
-				.attribute("minecraft:visual/fog_color", "#c0d8ff")
-				.attribute("minecraft:visual/sky_light_color", "#ffffff")
-				.attribute("minecraft:gameplay/sky_light_level", 15.0f)
-				.attribute("my_mod:visual/cloud_density", 0.4f)
-				.timelinesTag("my_mod:sky_islands_sky_cycle")
+				.attribute(vanillaId("visual/sky_color"), "#6eb1ff")
+				.attribute(vanillaId("visual/fog_color"), "#c0d8ff")
+				.attribute(vanillaId("visual/sky_light_color"), "#ffffff")
+				.attribute(vanillaId("gameplay/sky_light_level"), 15.0f)
+				.attribute(myModId("visual/cloud_density"), 0.4f)
+				.timelinesTag(myModId("sky_islands_sky_cycle"))
 				.skybox(DimensionType.Skybox.OVERWORLD)
 				.cardinalLight(DimensionType.CardinalLightType.DEFAULT)
 				.hasFixedTime(false);
@@ -135,8 +144,8 @@ public class SkyIslandsWorldgen {
 		return NoiseSettings.settings()
 				.seaLevel(32)
 				.legacyRandomSource(false)
-				.defaultBlockId("minecraft:stone")
-				.defaultFluidId("minecraft:water")
+				.defaultBlockId(VanillaIds.STONE)
+				.defaultFluidId(VanillaIds.WATER)
 				.noiseSimple(-64, 384, 2, 1);
 	}
 
@@ -152,9 +161,9 @@ public class SkyIslandsWorldgen {
 
 	public static Dimension buildSkyIslandsDimension() {
 		return Dimension.dimension()
-				.type("my_mod:sky_islands_type")
-				.noiseGenerator("my_mod:sky_islands")         // settings id
-				.fixedBiome("my_mod:sky_islands_biome");      // fixed biome source
+				.type(myModId("sky_islands_type"))
+				.noiseGenerator(myModId("sky_islands"))         // settings id
+				.fixedBiome(myModId("sky_islands_biome"));      // fixed biome source
 	}
 
 	public static void dumpSkyIslandsDimensionJson() {
@@ -169,7 +178,7 @@ public class SkyIslandsWorldgen {
 
 	public static ConfiguredFeature buildSkyIslandsTreesConfigured() {
 		return ConfiguredFeature.tree(SimpleTreeConfig
-				.tree("minecraft:oak_log", "minecraft:oak_leaves")
+				.tree(vanillaId("oak_log"), vanillaId("oak_leaves"))
 				.ignoreVines(true)
 		);
 	}
@@ -185,7 +194,7 @@ public class SkyIslandsWorldgen {
 	 * ---------------------------------------------------------- */
 
 	public static PlacedFeature buildSkyIslandsTreesPlaced() {
-		return PlacedFeature.placed("my_mod:sky_islands_trees")
+		return PlacedFeature.placed(myModId("sky_islands_trees"))
 				.count(3)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
@@ -203,11 +212,11 @@ public class SkyIslandsWorldgen {
 	 * ---------------------------------------------------------- */
 
 	public static ConfiguredFeature buildSkyIslandsCopperOreConfigured() {
-		return ConfiguredFeature.ore(OreConfig.ore("#minecraft:stone_ore_replaceables", "minecraft:copper_ore", 16));
+		return ConfiguredFeature.ore(OreConfig.ore(vanillaId("stone_ore_replaceables"), vanillaId("copper_ore"), 16));
 	}
 
 	public static PlacedFeature buildSkyIslandsCopperOrePlaced() {
-		return PlacedFeature.placed("my_mod:sky_islands_copper_ore")
+		return PlacedFeature.placed(myModId("sky_islands_copper_ore"))
 				.count(IntProvider.uniform(8, 16))
 				.inSquare()
 				.uniformHeight(VerticalAnchor.absolute(-16), VerticalAnchor.absolute(96))
@@ -216,11 +225,11 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static ConfiguredFeature buildSkyIslandsFlowerConfigured() {
-		return ConfiguredFeature.simpleBlock(SimpleBlockConfig.simpleBlock("minecraft:dandelion"));
+		return ConfiguredFeature.simpleBlock(SimpleBlockConfig.simpleBlock(vanillaId("dandelion")));
 	}
 
 	public static PlacedFeature buildSkyIslandsFlowerPlaced() {
-		return PlacedFeature.placed("my_mod:sky_islands_flower")
+		return PlacedFeature.placed(myModId("sky_islands_flower"))
 				.rarityFilter(3)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
@@ -230,7 +239,7 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static ConfiguredFeature buildSkyIslandsFlowerPatchConfigured() {
-		return ConfiguredFeature.randomPatch(RandomPatchConfig.randomPatch("my_mod:sky_islands_flower")
+		return ConfiguredFeature.randomPatch(RandomPatchConfig.randomPatch(myModId("sky_islands_flower"))
 				.tries(48)
 				.xzSpread(6)
 				.ySpread(2));
@@ -284,76 +293,76 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static ConfiguredFeature buildSkyIslandsClayDiskConfigured() {
-		return ConfiguredFeature.disk(DiskConfig.disk("minecraft:clay", "minecraft:dirt", 3)
+		return ConfiguredFeature.disk(DiskConfig.disk(VanillaIds.CLAY, VanillaIds.DIRT, 3)
 				.radius(IntProvider.uniform(2, 4))
 				.halfHeight(1));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsWaterSpringConfigured() {
-		return ConfiguredFeature.spring(SpringConfig.spring("minecraft:water")
+		return ConfiguredFeature.spring(SpringConfig.spring(VanillaIds.WATER)
 				.requiresBlockBelow(true)
 				.rockCount(4)
 				.holeCount(1)
-				.validBlocks(List.of("minecraft:stone", "minecraft:deepslate")));
+				.validBlocks(List.of(VanillaIds.STONE, VanillaIds.DEEPSLATE)));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsRandomTreeConfigured() {
 		return ConfiguredFeature.randomSelector(new RandomSelectorConfig()
-				.feature("my_mod:sky_islands_trees", 0.35F)
-				.feature("minecraft:fancy_oak", 0.15F)
-				.defaultFeature("minecraft:oak"));
+				.feature(myModId("sky_islands_trees"), 0.35F)
+				.feature(vanillaId("fancy_oak"), 0.15F)
+				.defaultFeature(vanillaId("oak")));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsLeafPileConfigured() {
-		return ConfiguredFeature.blockPile(BlockPileConfig.blockPile("minecraft:oak_leaves"));
+		return ConfiguredFeature.blockPile(BlockPileConfig.blockPile(vanillaId("oak_leaves")));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsLakeConfigured() {
-		return ConfiguredFeature.lake(LakeConfig.lake("minecraft:water", "minecraft:stone"));
+		return ConfiguredFeature.lake(LakeConfig.lake(VanillaIds.WATER, VanillaIds.STONE));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsHugeFungusConfigured() {
 		return ConfiguredFeature.hugeFungus(new HugeFungusConfig()
-				.validBaseBlock(BlockState.blockState("minecraft:warped_nylium"))
-				.stemState(BlockState.blockState("minecraft:warped_stem"))
-				.hatState(BlockState.blockState("minecraft:warped_wart_block"))
-				.decorState(BlockState.blockState("minecraft:shroomlight"))
+				.validBaseBlock(WorldgenBlockState.blockState(VanillaIds.WARPED_NYLIUM))
+				.stemState(WorldgenBlockState.blockState(VanillaIds.WARPED_STEM))
+				.hatState(WorldgenBlockState.blockState(vanillaId("warped_wart_block")))
+				.decorState(WorldgenBlockState.blockState(VanillaIds.SHROOMLIGHT))
 				.planted(false));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsIcebergConfigured() {
-		return ConfiguredFeature.iceberg(BlockStateConfig.state("minecraft:packed_ice"));
+		return ConfiguredFeature.iceberg(BlockStateConfig.state(vanillaId("packed_ice")));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsReplaceSingleBlockConfigured() {
 		return ConfiguredFeature.replaceSingleBlock(ReplaceBlockConfig
-				.replace("minecraft:stone", "minecraft:mossy_cobblestone")
-				.target(RuleTest.tag("minecraft:dirt"), BlockState.blockState("minecraft:rooted_dirt")));
+				.replace(VanillaIds.STONE, VanillaIds.MOSSY_COBBLESTONE)
+				.target(RuleTest.tag(VanillaIds.DIRT), WorldgenBlockState.blockState(VanillaIds.ROOTED_DIRT)));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsBlackstoneBlobsConfigured() {
 		return ConfiguredFeature.replaceBlobs(ReplaceSphereConfig
-				.replaceSphere("minecraft:netherrack", "minecraft:blackstone", 3)
+				.replaceSphere(vanillaId("netherrack"), vanillaId("blackstone"), 3)
 				.radius(IntProvider.uniform(2, 5)));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsHugeRedMushroomConfigured() {
 		return ConfiguredFeature.hugeRedMushroom(HugeMushroomConfig
-				.hugeMushroom("minecraft:red_mushroom_block", "minecraft:mushroom_stem")
+				.hugeMushroom(vanillaId("red_mushroom_block"), vanillaId("mushroom_stem"))
 				.foliageRadius(2)
-				.canPlaceOn(PlacedFeature.BlockPredicate.matchingBlocks("minecraft:mycelium", "minecraft:podzol")));
+				.canPlaceOn(PlacedFeature.BlockPredicate.matchingBlocks(VanillaIds.MYCELIUM, VanillaIds.PODZOL)));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsNetherVegetationConfigured() {
 		return ConfiguredFeature.netherForestVegetation(NetherForestVegetationConfig
-				.vegetation("minecraft:warped_roots")
+				.vegetation(vanillaId("warped_roots"))
 				.spreadWidth(8)
 				.spreadHeight(4));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsDeltaConfigured() {
 		return ConfiguredFeature.deltaFeature(DeltaConfig
-				.delta("minecraft:lava", "minecraft:magma_block")
+				.delta(vanillaId("lava"), vanillaId("magma_block"))
 				.size(IntProvider.uniform(3, 5))
 				.rimSize(IntProvider.uniform(1, 2)));
 	}
@@ -366,7 +375,7 @@ public class SkyIslandsWorldgen {
 	}
 
 	public static ConfiguredFeature buildSkyIslandsFillLayerConfigured() {
-		return ConfiguredFeature.fillLayer(LayerConfig.layer(2, "minecraft:deepslate"));
+		return ConfiguredFeature.fillLayer(LayerConfig.layer(2, vanillaId("deepslate")));
 	}
 
 	public static ConfiguredFeature buildSkyIslandsSeaPickleConfigured() {
@@ -387,7 +396,7 @@ public class SkyIslandsWorldgen {
 
 	public static Structure buildSkyRuinStructure() {
 		return Structure.jigsaw("my_mod:sky_ruin/start_pool")
-				.biomesId("my_mod:sky_islands_biome")
+				.biomesId(myModId("sky_islands_biome"))
 				.step("surface_structures")
 				.size(1)
 				.maxDistanceFromCenter(80)
@@ -407,7 +416,7 @@ public class SkyIslandsWorldgen {
 
 	public static StructureSet buildSkyRuinStructureSet() {
 		return StructureSet
-				.randomSpread("my_mod:sky_ruin", 1, 1234567, 40, 8);
+				.randomSpread(myModId("sky_ruin"), 1, 1234567, 40, 8);
 	}
 
 	public static void dumpSkyRuinStructureSetJson() {

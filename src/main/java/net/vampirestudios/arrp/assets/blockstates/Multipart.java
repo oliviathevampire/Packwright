@@ -15,12 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class Multipart implements Cloneable {
+public class Multipart {
 
 	// ---------- CODEC ----------
 
-	/** Accept either a single BlockModel or a list of them. */
-	private static final Codec<List<BlockModel>> APPLY_CODEC = Codecs.oneOrList(BlockModel.CODEC);
+	/** Accept either a single SimpleModel or a list of them. */
+	private static final Codec<List<SimpleModel>> APPLY_CODEC = Codecs.oneOrList(SimpleModel.CODEC);
 
 	public static final Codec<Multipart> CODEC =
 			RecordCodecBuilder.<Multipart>create(inst -> inst.group(
@@ -39,7 +39,7 @@ public class Multipart implements Cloneable {
 			);
 
 	// one or list
-	private final List<BlockModel> apply = new ArrayList<>();
+	private final List<SimpleModel> apply = new ArrayList<>();
 	private When when;
 
 	public static Multipart multipart() {
@@ -47,18 +47,9 @@ public class Multipart implements Cloneable {
 	}
 
 	/**
-	 * @see BlockState#multipart(BlockModel...)
+	 * @see BlockState#multipart(SimpleModel...)
 	 */
 	public Multipart() {}
-
-	@Override
-	public Multipart clone() {
-		try {
-			return (Multipart) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
-	}
 
 	public Multipart when(When when) {
 		this.when = when;
@@ -71,7 +62,7 @@ public class Multipart implements Cloneable {
 		return this;
 	}
 	
-	public Multipart addModel(BlockModel model) {
+	public Multipart addModel(SimpleModel model) {
 		this.apply.add(model);
 		return this;
 	}

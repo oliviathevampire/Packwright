@@ -3,6 +3,7 @@ package net.vampirestudios.arrp.data.worldgen.biome;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.data.worldgen.AttributeValue;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import java.util.*;
 
@@ -32,7 +33,7 @@ public class Biome {
 							.forGetter(Biome::downfall),
 					Effects.CODEC.fieldOf("effects")
 							.forGetter(Biome::effects),
-					Codec.unboundedMap(Codec.STRING, AttributeValue.CODEC)
+					Codec.unboundedMap(Identifier.CODEC, AttributeValue.CODEC)
 							.optionalFieldOf("attributes", Collections.emptyMap())
 							.forGetter(b -> b.attributes == null ? Collections.emptyMap() : b.attributes),
 					Codec.FLOAT.optionalFieldOf("creature_spawn_probability")
@@ -41,7 +42,7 @@ public class Biome {
 								Float prob = b.spawnSettings.getCreatureSpawnProbability();
 								return prob == null ? Optional.empty() : Optional.of(prob);
 							}),
-					Codec.unboundedMap(Codec.STRING, SpawnSettings.SpawnCost.CODEC)
+					Codec.unboundedMap(Identifier.CODEC, SpawnSettings.SpawnCost.CODEC)
 							.optionalFieldOf("spawn_costs")
 							.forGetter(b -> Optional.of(
 									b.spawnSettings == null
@@ -55,14 +56,14 @@ public class Biome {
 											? Collections.emptyMap()
 											: b.spawnSettings.getSpawners()
 							)),
-					Codec.STRING.listOf()
+					Identifier.CODEC.listOf()
 							.optionalFieldOf("carvers", Collections.emptyList())
 							.forGetter(b -> {
 								if (b.generation == null) return Collections.emptyList();
 								return b.generation.getCarvers();
 							}),
 
-					Codec.STRING.listOf().listOf()
+					Identifier.CODEC.listOf().listOf()
 							.optionalFieldOf("features", Collections.emptyList())
 							.forGetter(b -> {
 								if (b.generation == null) return Collections.emptyList();
@@ -88,7 +89,7 @@ public class Biome {
 					SpawnSettings s = new SpawnSettings();
 					spawnProbOpt.ifPresent(s::setCreatureSpawnProbability);
 
-					Map<String, SpawnSettings.SpawnCost> spawnCosts =
+					Map<Identifier, SpawnSettings.SpawnCost> spawnCosts =
 							spawnCostsOpt.orElseGet(Collections::emptyMap);
 					if (!spawnCosts.isEmpty()) {
 						s.spawnCosts.putAll(spawnCosts);
@@ -106,11 +107,11 @@ public class Biome {
 				// ---- generation ----
 				if (!carvers.isEmpty() || !featuresSteps.isEmpty()) {
 					Generation g = new Generation();
-					for (String c : carvers) {
+					for (Identifier c : carvers) {
 						g.addCarver(c);
 					}
 					for (int step = 0; step < featuresSteps.size(); step++) {
-						for (String feat : featuresSteps.get(step)) {
+						for (Identifier feat : featuresSteps.get(step)) {
 							g.addFeature(step, feat);
 						}
 					}
@@ -130,7 +131,7 @@ public class Biome {
 	private Float downfall;
 
 	private Effects effects;           // remaining legacy effect fields
-	private Map<String, AttributeValue> attributes;     // Environment Attributes
+	private Map<Identifier, AttributeValue> attributes;     // Environment Attributes
 	private SpawnSettings spawnSettings;
 	private Generation generation;
 
@@ -180,7 +181,7 @@ public class Biome {
 		return this.effects;
 	}
 
-	private Optional<Map<String, AttributeValue>> attributesOptional() {
+	private Optional<Map<Identifier, AttributeValue>> attributesOptional() {
 		return Optional.ofNullable(this.attributes);
 	}
 
@@ -225,7 +226,7 @@ public class Biome {
 		return this;
 	}
 
-	public Biome attributes(Map<String, AttributeValue> attributes) {
+	public Biome attributes(Map<Identifier, AttributeValue> attributes) {
 		this.attributes = attributes;
 		return this;
 	}
@@ -263,7 +264,7 @@ public class Biome {
 
 	// ---- Attributes helpers: raw map access ----
 
-	private Map<String, AttributeValue> ensureAttributes() {
+	private Map<Identifier, AttributeValue> ensureAttributes() {
 		if (this.attributes == null) {
 			this.attributes = new HashMap<>();
 		}
@@ -271,19 +272,19 @@ public class Biome {
 	}
 
 	/** Generic attribute setter for string values. */
-	public Biome attribute(String id, String value) {
+	public Biome attribute(Identifier id, String value) {
 		ensureAttributes().put(id, AttributeValue.ofString(value));
 		return this;
 	}
 
 	/** Generic attribute setter for numeric values. */
-	public Biome attribute(String id, Number value) {
+	public Biome attribute(Identifier id, Number value) {
 		ensureAttributes().put(id, AttributeValue.ofFloat(value.floatValue()));
 		return this;
 	}
 
 	/** Generic attribute setter for boolean values. */
-	public Biome attribute(String id, boolean value) {
+	public Biome attribute(Identifier id, boolean value) {
 		ensureAttributes().put(id, AttributeValue.ofBoolean(value));
 		return this;
 	}
@@ -303,7 +304,7 @@ public class Biome {
 	}
 
 	/** Convenience for "spawn_costs" entry. */
-	public Biome spawnCost(String entityId, double energyBudget, double charge) {
+	public Biome spawnCost(Identifier entityId, double energyBudget, double charge) {
 		ensureSpawnSettings().addSpawnCost(entityId, energyBudget, charge);
 		return this;
 	}
@@ -312,7 +313,7 @@ public class Biome {
 	 * Convenience for "spawners" entry.
 	 * category examples: "monster", "creature", "ambient", "water_creature", "water_ambient", "misc".
 	 */
-	public Biome spawner(String category, String entityId, int weight, int minCount, int maxCount) {
+	public Biome spawner(String category, Identifier entityId, int weight, int minCount, int maxCount) {
 		ensureSpawnSettings().addSpawner(category, entityId, weight, minCount, maxCount);
 		return this;
 	}
@@ -383,7 +384,7 @@ public class Biome {
 				instance.group(
 						Codec.FLOAT.optionalFieldOf("creature_spawn_probability")
 								.forGetter(s -> Optional.ofNullable(s.creatureSpawnProbability)),
-						Codec.unboundedMap(Codec.STRING, SpawnCost.CODEC)
+						Codec.unboundedMap(Identifier.CODEC, SpawnCost.CODEC)
 								.optionalFieldOf("spawn_costs", Collections.emptyMap())
 								.forGetter(s -> s.spawnCosts == null ? Collections.emptyMap() : s.spawnCosts),
 						Codec.unboundedMap(Codec.STRING, SpawnerData.CODEC.listOf())
@@ -402,7 +403,7 @@ public class Biome {
 				})
 		);
 		private Float creatureSpawnProbability;
-		private Map<String, SpawnCost> spawnCosts = new LinkedHashMap<>();
+		private Map<Identifier, SpawnCost> spawnCosts = new LinkedHashMap<>();
 		private Map<String, List<SpawnerData>> spawners = new LinkedHashMap<>();
 
 		// ---------------- core setters / getters ----------------
@@ -416,7 +417,7 @@ public class Biome {
 			return this;
 		}
 
-		public Map<String, SpawnCost> getSpawnCosts() {
+		public Map<Identifier, SpawnCost> getSpawnCosts() {
 			return Collections.unmodifiableMap(spawnCosts);
 		}
 
@@ -427,7 +428,7 @@ public class Biome {
 		// ---------------- builder-style helpers ----------------
 
 		/** Add a spawn_cost entry: energy_budget + charge. */
-		public SpawnSettings addSpawnCost(String entityId, double energyBudget, double charge) {
+		public SpawnSettings addSpawnCost(Identifier entityId, double energyBudget, double charge) {
 			if (entityId != null) {
 				this.spawnCosts.put(entityId, new SpawnCost(energyBudget, charge));
 			}
@@ -438,7 +439,7 @@ public class Biome {
 		 * Add a spawner entry:
 		 * category examples: "monster", "creature", "ambient", "water_creature", "water_ambient", "misc".
 		 */
-		public SpawnSettings addSpawner(String category, String entityId, int weight, int minCount, int maxCount) {
+		public SpawnSettings addSpawner(String category, Identifier entityId, int weight, int minCount, int maxCount) {
 			if (category == null || entityId == null) return this;
 			this.spawners
 					.computeIfAbsent(category, k -> new ArrayList<>())
@@ -477,10 +478,10 @@ public class Biome {
 		 *   ]
 		 * }
 		 */
-		public record SpawnerData(String type, int weight, int minCount, int maxCount) {
+		public record SpawnerData(Identifier type, int weight, int minCount, int maxCount) {
 			public static final Codec<SpawnerData> CODEC = RecordCodecBuilder.create(instance ->
 					instance.group(
-							Codec.STRING.fieldOf("type").forGetter(d -> d.type),
+							Identifier.CODEC.fieldOf("type").forGetter(d -> d.type),
 							Codec.INT.fieldOf("weight").forGetter(d -> d.weight),
 							Codec.INT.fieldOf("minCount").forGetter(d -> d.minCount),
 							Codec.INT.fieldOf("maxCount").forGetter(d -> d.maxCount)
@@ -493,24 +494,24 @@ public class Biome {
 	public static class Generation {
 		public static final Codec<Generation> CODEC = RecordCodecBuilder.create(instance ->
 				instance.group(
-						Codec.STRING.listOf().optionalFieldOf("carvers", Collections.emptyList())
+						Identifier.CODEC.listOf().optionalFieldOf("carvers", Collections.emptyList())
 								.forGetter(g -> g.carvers == null ? Collections.emptyList() : g.carvers),
-						Codec.STRING.listOf().listOf().optionalFieldOf("features", Collections.emptyList())
+						Identifier.CODEC.listOf().listOf().optionalFieldOf("features", Collections.emptyList())
 								.forGetter(g -> g.features == null ? Collections.emptyList() : g.features)
 				).apply(instance, (carvers, features) -> {
 					Generation g = new Generation();
 					g.carvers = new ArrayList<>(carvers);
 					g.features = new ArrayList<>();
-					for (List<String> step : features) {
+					for (List<Identifier> step : features) {
 						g.features.add(new ArrayList<>(step));
 					}
 					return g;
 				})
 		);
-		private List<String> carvers = new ArrayList<>();
-		private List<List<String>> features = new ArrayList<>();
+		private List<Identifier> carvers = new ArrayList<>();
+		private List<List<Identifier>> features = new ArrayList<>();
 
-		public Generation addCarver(String id) {
+		public Generation addCarver(Identifier id) {
 			if (id != null) this.carvers.add(id);
 			return this;
 		}
@@ -523,23 +524,23 @@ public class Biome {
 		}
 
 		/** Add a feature at a specific generation step. */
-		public Generation addFeature(int step, String id) {
+		public Generation addFeature(int step, Identifier id) {
 			if (id == null) return this;
 			ensureStep(step);
 			features.get(step).add(id);
 			return this;
 		}
 
-		public List<String> getCarvers() {
+		public List<Identifier> getCarvers() {
 			return Collections.unmodifiableList(carvers);
 		}
 
 		/** Get features per step, as required by JSON. */
-		public List<List<String>> getFeaturesByStep() {
+		public List<List<Identifier>> getFeaturesByStep() {
 			// Return a read-only deep copy view
 			if (features != null) {
-				List<List<String>> copy = new ArrayList<>(features.size());
-				for (List<String> step : features) {
+				List<List<Identifier>> copy = new ArrayList<>(features.size());
+				for (List<Identifier> step : features) {
 					copy.add(Collections.unmodifiableList(step));
 				}
 				return Collections.unmodifiableList(copy);
