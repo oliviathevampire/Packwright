@@ -21,11 +21,10 @@ public final class Icon {
 		return ic;
 	}));
 
-	public Identifier item;
-	public Integer count;                 // optional
-	public DataComponentPatch components; // optional (1.20.5+)
+	private Identifier item;
+	private Integer count;
+	private DataComponentPatch components;
 
-	// builder sugar
 	public static Icon of(Identifier itemId) {
 		Icon ic = new Icon();
 		ic.item = itemId;
@@ -38,13 +37,10 @@ public final class Icon {
 		return ic;
 	}
 
-	public Icon count(int c) {
-		this.count = c;
-		return this;
-	}
+	public Icon count(int c) { this.count = c; return this; }
+	public Icon components(DataComponentPatch p) { this.components = p; return this; }
 
-	public Icon components(DataComponentPatch p) {
-		this.components = p;
-		return this;
-	}
+	public Identifier getItem() { return item; }
+	public Integer getCount() { return count; }
+	public DataComponentPatch getComponents() { return components; }
 }

@@ -412,9 +412,4 @@ public class DimensionType {
 			return Collections.unmodifiableList(timelineIds);
 		}
 	}
-
-	public record IdWrapper(String id) {
-		public static final Codec<IdWrapper> CODEC =
-				Codec.STRING.xmap(IdWrapper::new, IdWrapper::id);
-	}
 }

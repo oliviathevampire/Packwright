@@ -1,5 +1,6 @@
 package net.vampirestudios.arrp.assets.lang;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -14,6 +15,11 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Lang {
+    public static final Codec<Lang> CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING).xmap(
+            entries -> new Lang().entries(entries),
+            Lang::copyLang
+    );
+
     private final Map<String, String> lang = new HashMap<>();
 
     /**

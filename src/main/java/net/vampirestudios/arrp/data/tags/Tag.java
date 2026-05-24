@@ -2,9 +2,10 @@ package net.vampirestudios.arrp.data.tags;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
+
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.resources.Identifier;
 
 public class Tag {
 	public static final Codec<Tag> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -65,15 +66,6 @@ public class Tag {
 	public Tag tag(Identifier tag) {
 		this.values.add('#' + tag.getNamespace() + ':' + tag.getPath());
 		return this;
-	}
-
-	@Override
-	public Tag clone() {
-		try {
-			return (Tag) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	public boolean getReplace() {

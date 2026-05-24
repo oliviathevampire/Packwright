@@ -5,7 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
 import net.minecraft.resources.Identifier;
 
-public class NoiseSettings implements Cloneable {
+public class NoiseSettings {
 
 	public static final Codec<NoiseSettings> CODEC = new Codec<>() {
 		@Override
@@ -147,26 +147,6 @@ public class NoiseSettings implements Cloneable {
 			if (value != null) out.add(key, value.deepCopy());
 		}
 		return out;
-	}
-
-	@Override
-	public NoiseSettings clone() {
-		try {
-			NoiseSettings clone = (NoiseSettings) super.clone();
-			clone.defaultBlock = this.defaultBlock == null ? null : this.defaultBlock.deepCopy();
-			clone.defaultFluid = this.defaultFluid == null ? null : this.defaultFluid.deepCopy();
-			clone.noise = this.noise == null ? null : this.noise.deepCopy();
-			clone.spawnTarget = this.spawnTarget == null ? null : this.spawnTarget.deepCopy();
-			clone.spawnDensity = this.spawnDensity == null ? null : this.spawnDensity.deepCopy();
-			clone.extra.entrySet().clear();
-			for (String key : this.extra.keySet()) {
-				JsonElement value = this.extra.get(key);
-				if (value != null) clone.extra.add(key, value.deepCopy());
-			}
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	private static boolean isKnown(String key) {

@@ -5,7 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
 import net.minecraft.resources.Identifier;
 
-public class StructureSet implements Cloneable {
+public class StructureSet {
 
 	public static final Codec<StructureSet> CODEC = new Codec<>() {
 		@Override
@@ -117,23 +117,6 @@ public class StructureSet implements Cloneable {
 			if (val != null) out.add(key, val.deepCopy());
 		}
 		return out;
-	}
-
-	@Override
-	public StructureSet clone() {
-		try {
-			StructureSet clone = (StructureSet) super.clone();
-			clone.structures = this.structures == null ? null : this.structures.deepCopy();
-			clone.placement = this.placement == null ? null : this.placement.deepCopy();
-			clone.extra.entrySet().clear();
-			for (String key : this.extra.keySet()) {
-				JsonElement val = this.extra.get(key);
-				if (val != null) clone.extra.add(key, val.deepCopy());
-			}
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	private static boolean isKnown(String key) {

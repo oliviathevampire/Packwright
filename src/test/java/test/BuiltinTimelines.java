@@ -1,156 +1,156 @@
 package test;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import net.vampirestudios.arrp.util.JsonBytes;
+import net.minecraft.util.EasingType;
+import net.minecraft.world.attribute.modifier.BooleanModifier;
+import net.minecraft.world.attribute.modifier.ColorModifier;
+import net.minecraft.world.attribute.modifier.FloatModifier;
+import net.minecraft.world.level.MoonPhase;
 import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.worldgen.ClockTimeMarkers;
+import net.vampirestudios.arrp.data.worldgen.EnvironmentAttributes;
+import net.vampirestudios.arrp.util.JsonBytes;
+
+import static net.minecraft.world.timeline.Timelines.NIGHT_CLOUD_COLOR_MULTIPLIER;
 
 public final class BuiltinTimelines {
 
     public static Timeline buildDayTimelineLike() {
-        Timeline timeline = new Timeline()
-                .period(24000);
-
-        // gameplay: monsters burn in daylight
-        timeline.track("minecraft:gameplay/monsters_burn",
-                new Timeline.Track()
-                        .modifier("or")
-                        .addKeyframe(new Timeline.Keyframe(12542, new JsonPrimitive(false)))
-                        .addKeyframe(new Timeline.Keyframe(23460, new JsonPrimitive(true)))
-        );
-
-		timeline.track("minecraft:gameplay/monsters_burn",
-				Timeline.Track.boolToggle("or", 12542, 23460, false, true)
-		);
-
-        // gameplay: sky light factor (scaled)
-        timeline.track("minecraft:visual/sky_light_factor",
-                new Timeline.Track()
-                        .modifier("multiply")
-                        .addKeyframe(new Timeline.Keyframe(730,   new JsonPrimitive(1.0f)))
-                        .addKeyframe(new Timeline.Keyframe(11270, new JsonPrimitive(1.0f)))
-                        .addKeyframe(new Timeline.Keyframe(13140, new JsonPrimitive(0.24f)))
-                        .addKeyframe(new Timeline.Keyframe(22860, new JsonPrimitive(0.24f)))
-        );
-
-        // visual: fog color
-        timeline.track("minecraft:visual/fog_color",
-                new Timeline.Track()
-                        .modifier("multiply")
-                        .addKeyframe(new Timeline.Keyframe(133,   new JsonPrimitive("#ffffff")))
-                        .addKeyframe(new Timeline.Keyframe(11867, new JsonPrimitive("#ffffff")))
-                        .addKeyframe(new Timeline.Keyframe(13670, new JsonPrimitive("#0f0f16")))
-                        .addKeyframe(new Timeline.Keyframe(22330, new JsonPrimitive("#0f0f16")))
-        );
-
-        // visual: sunrise_sunset_color (lots of keyframes)
-        Timeline.Track sunrise = new Timeline.Track();
-        sunrise.addKeyframe(new Timeline.Keyframe(71,   new JsonPrimitive("#5fefa333")));
-        sunrise.addKeyframe(new Timeline.Keyframe(310,  new JsonPrimitive("#29f5ba33")));
-        sunrise.addKeyframe(new Timeline.Keyframe(565,  new JsonPrimitive("#06fbd433")));
-        // ... (you can add every one from day.json if you want)
-        timeline.track("minecraft:visual/sunrise_sunset_color", sunrise);
-
-        // visual: star_brightness, etc... same pattern
-
-
-		Timeline.Track sunAngleTrack = new Timeline.Track();
-
-		// cubic_bezier ease as object like Mojang:
-		JsonObject easeObj = new JsonObject();
-		JsonArray bezier = new JsonArray();
-		bezier.add(0.362);
-		bezier.add(0.241);
-		bezier.add(0.638);
-		bezier.add(0.759);
-		easeObj.add("cubic_bezier", bezier);
-
-		sunAngleTrack
-				.ease(easeObj)
-				.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive(360.0f)))
-				.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive(0.0f)));
-
-		timeline.track("minecraft:visual/sun_angle", sunAngleTrack);
-
-        return timeline;
+		return new Timeline()
+				.setPeriodTicks(24000)
+				.addTimerMarker(ClockTimeMarkers.DAY, 1000, true)
+				.addTimerMarker(ClockTimeMarkers.NOON, 6000, true)
+				.addTimerMarker(ClockTimeMarkers.NIGHT, 13000, true)
+				.addTimerMarker(ClockTimeMarkers.MIDNIGHT, 18000, true)
+				.addTimerMarker(ClockTimeMarkers.WAKE_UP_FROM_SLEEP, 0)
+				.addTimerMarker(ClockTimeMarkers.ROLL_VILLAGE_SIEGE, 18000)
+				.addModifierTrack(
+						EnvironmentAttributes.MONSTERS_BURN,
+						BooleanModifier.OR,
+						track -> track.addKeyframe(12542, false).addKeyframe(23460, true)
+				)
+				.addModifierTrack(
+						EnvironmentAttributes.SKY_LIGHT_LEVEL,
+						FloatModifier.MULTIPLY,
+						track -> track.addKeyframe(133, 1.0F).addKeyframe(11867, 1.0F).addKeyframe(13670, 0.26666668F).addKeyframe(22330, 0.26666668F)
+				)
+				.addModifierTrack(
+						EnvironmentAttributes.SKY_LIGHT_FACTOR,
+						FloatModifier.MULTIPLY,
+						track -> track.addKeyframe(730, 1.0F).addKeyframe(11270, 1.0F).addKeyframe(13140, 0.24F).addKeyframe(22860, 0.24F)
+				)
+				.addModifierTrack(EnvironmentAttributes.FOG_COLOR, ColorModifier.MULTIPLY_RGB, t -> t
+						.addKeyframe(133,   "#ffffff")
+						.addKeyframe(11867, "#ffffff")
+						.addKeyframe(13670, "#0f0f16")
+						.addKeyframe(22330, "#0f0f16")
+				)
+				.addModifierTrack(
+						EnvironmentAttributes.CLOUD_COLOR,
+						ColorModifier.MULTIPLY_ARGB,
+						track -> track.addKeyframe(133, -1)
+								.addKeyframe(11867, -1)
+								.addKeyframe(13670, NIGHT_CLOUD_COLOR_MULTIPLIER)
+								.addKeyframe(22330, NIGHT_CLOUD_COLOR_MULTIPLIER)
+				)
+				.addTrack(
+						EnvironmentAttributes.SUNRISE_SUNSET_COLOR,
+						track -> track.addKeyframe(71, "#5fefa333")
+								.addKeyframe(310, "#29f5ba33")
+								.addKeyframe(565, "#06fbd433")
+								.addKeyframe(730, "#00ffe533")
+								.addKeyframe(11270, "#00ffe533")
+								.addKeyframe(11397, "#04fcd833")
+								.addKeyframe(11522, "#0ff9cb33")
+								.addKeyframe(11690, "#29f5ba33")
+								.addKeyframe(11929, "#5fefa333")
+								.addKeyframe(12243, "#b1e78733")
+								.addKeyframe(12358, "#cce47e33")
+								.addKeyframe(12512, "#e9e07233")
+								.addKeyframe(12613, "#f6dd6b33")
+								.addKeyframe(12732, "#feda6333")
+								.addKeyframe(12841, "#fed75c33")
+								.addKeyframe(13035, "#ecd25133")
+								.addKeyframe(13252, "#c1cc4733")
+								.addKeyframe(13775, "#36be3733")
+								.addKeyframe(13888, "#1fbb3533")
+								.addKeyframe(14039, "#09b73333")
+								.addKeyframe(14192, "#00b33333")
+								.addKeyframe(21807, "#00b23333")
+								.addKeyframe(21961, "#09b73333")
+								.addKeyframe(22112, "#1fbb3533")
+								.addKeyframe(22225, "#36be3733")
+								.addKeyframe(22748, "#c1cc4733")
+								.addKeyframe(22965, "#ecd25133")
+								.addKeyframe(23159, "#fed75c33")
+								.addKeyframe(23272, "#feda6333")
+								.addKeyframe(23488, "#e9e07233")
+								.addKeyframe(23642, "#cce47e33")
+								.addKeyframe(23757, "#b1e78733")
+				)
+				.addTrack(EnvironmentAttributes.SUN_ANGLE, t -> t
+						.ease(EasingType.symmetricCubicBezier(0.362f, 0.241f))
+						.addKeyframe(6000, 360.0f)
+						.addKeyframe(6000, 0.0f)
+				);
     }
 
-	public static Timeline buildMoonTimelineLike() {
-		Timeline timeline = new Timeline()
-				.period(192000); // 8 Minecraft days
+    public static Timeline buildMoonTimelineLike() {
+		return new Timeline()
+				.setPeriodTicks(192000)
+				.addModifierTrack(EnvironmentAttributes.SURFACE_SLIME_SPAWN_CHANCE, FloatModifier.MAXIMUM, t -> t
+						.ease(EasingType.CONSTANT)
+						.addKeyframe(0,      0.5f)
+						.addKeyframe(24000,  0.375f)
+						.addKeyframe(48000,  0.25f)
+						.addKeyframe(72000,  0.125f)
+						.addKeyframe(96000,  0.0f)
+						.addKeyframe(120000, 0.125f)
+						.addKeyframe(144000, 0.25f)
+						.addKeyframe(168000, 0.375f)
+				).addTrack(EnvironmentAttributes.MOON_PHASE, t -> t
+						.addKeyframe(0, MoonPhase.FULL_MOON.getSerializedName())
+						.addKeyframe(24000,  MoonPhase.WANING_GIBBOUS.getSerializedName())
+						.addKeyframe(48000,  MoonPhase.THIRD_QUARTER.getSerializedName())
+						.addKeyframe(72000,  MoonPhase.WANING_CRESCENT.getSerializedName())
+						.addKeyframe(96000,  MoonPhase.NEW_MOON.getSerializedName())
+						.addKeyframe(120000, MoonPhase.WAXING_CRESCENT.getSerializedName())
+						.addKeyframe(144000, MoonPhase.FIRST_QUARTER.getSerializedName())
+						.addKeyframe(168000, MoonPhase.WAXING_GIBBOUS.getSerializedName())
+				);
+    }
 
-		timeline.track("minecraft:gameplay/surface_slime_spawn_chance",
-				Timeline.Track.numericCurve("maximum",
-						0,      0.5f,
-						24000,  0.375f,
-						48000,  0.25f,
-						72000,  0.125f,
-						96000,  0.0f,
-						120000, 0.125f,
-						144000, 0.25f,
-						168000, 0.375f
+    public static Timeline buildVillagerScheduleLike() {
+		return new Timeline()
+				.setPeriodTicks(24000)
+				.addTrack(
+						EnvironmentAttributes.VILLAGER_ACTIVITY,
+						track -> track.addKeyframe(10, VillagerActivity.IDLE)
+								.addKeyframe(2000, VillagerActivity.WORK)
+								.addKeyframe(9000, VillagerActivity.MEET)
+								.addKeyframe(11000, VillagerActivity.IDLE)
+								.addKeyframe(12000, VillagerActivity.REST)
 				)
-		);
+				.addTrack(
+						EnvironmentAttributes.BABY_VILLAGER_ACTIVITY,
+						track -> track.addKeyframe(10, VillagerActivity.IDLE)
+								.addKeyframe(3000, VillagerActivity.PLAY)
+								.addKeyframe(6000, VillagerActivity.IDLE)
+								.addKeyframe(10000, VillagerActivity.PLAY)
+								.addKeyframe(12000, VillagerActivity.REST)
+				);
+    }
 
-		// Moon phase as string enums
-		Timeline.Track phaseTrack = new Timeline.Track();
-		phaseTrack.addKeyframe(new Timeline.Keyframe(0,      new JsonPrimitive("full_moon")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(24000,  new JsonPrimitive("waning_gibbous")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(48000,  new JsonPrimitive("third_quarter")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(72000,  new JsonPrimitive("waning_crescent")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(96000,  new JsonPrimitive("new_moon")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(120000, new JsonPrimitive("waxing_crescent")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(144000, new JsonPrimitive("first_quarter")));
-		phaseTrack.addKeyframe(new Timeline.Keyframe(168000, new JsonPrimitive("waxing_gibbous")));
-
-		timeline.track("minecraft:visual/moon_phase", phaseTrack);
-
-		return timeline;
-	}
-
-	public static Timeline buildVillagerScheduleLike() {
-		Timeline timeline = new Timeline()
-				.period(24000);
-
-		// Adult villager schedule
-		Timeline.Track adult = new Timeline.Track();
-		adult.addKeyframe(new Timeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
-		adult.addKeyframe(new Timeline.Keyframe(2000,  new JsonPrimitive("minecraft:work")));
-		adult.addKeyframe(new Timeline.Keyframe(9000,  new JsonPrimitive("minecraft:meet")));
-		adult.addKeyframe(new Timeline.Keyframe(11000, new JsonPrimitive("minecraft:idle")));
-		adult.addKeyframe(new Timeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
-		timeline.track("minecraft:gameplay/villager_activity", adult);
-
-		// Baby villager schedule
-		Timeline.Track baby = new Timeline.Track();
-		baby.addKeyframe(new Timeline.Keyframe(10,    new JsonPrimitive("minecraft:idle")));
-		baby.addKeyframe(new Timeline.Keyframe(3000,  new JsonPrimitive("minecraft:play")));
-		baby.addKeyframe(new Timeline.Keyframe(6000,  new JsonPrimitive("minecraft:idle")));
-		baby.addKeyframe(new Timeline.Keyframe(10000, new JsonPrimitive("minecraft:play")));
-		baby.addKeyframe(new Timeline.Keyframe(12000, new JsonPrimitive("minecraft:rest")));
-		timeline.track("minecraft:gameplay/baby_villager_activity", baby);
-
-		return timeline;
-	}
-
-	public static Timeline buildEarlyGameLike() {
-		Timeline timeline = new Timeline();
-		// period_ticks omitted → one-shot style
-
-		Timeline.Track patrolTrack = new Timeline.Track()
-				.modifier("and"); // from json: "modifier": "and"
-
-		patrolTrack.addKeyframe(new Timeline.Keyframe(0,      new JsonPrimitive(false)));
-		patrolTrack.addKeyframe(new Timeline.Keyframe(120000, new JsonPrimitive(true)));
-
-		timeline.track("minecraft:gameplay/can_pillager_patrol_spawn", patrolTrack);
-		return timeline;
-	}
+    public static Timeline buildEarlyGameLike() {
+		return new Timeline()
+				.addModifierTrack(EnvironmentAttributes.CAN_PILLAGER_PATROL_SPAWN, BooleanModifier.AND, t -> t
+						.addKeyframe(0,      false)
+						.addKeyframe(120000, true)
+				);
+    }
 
     public static void dumpDayTimelineJson() {
         Timeline day = buildDayTimelineLike();
-		System.out.println("day timeline:");
-		System.out.println(JsonBytes.encodeToPrettyString(Timeline.CODEC, day));
+        System.out.println("day timeline:");
+        System.out.println(JsonBytes.encodeToPrettyString(Timeline.CODEC, day));
     }
 }

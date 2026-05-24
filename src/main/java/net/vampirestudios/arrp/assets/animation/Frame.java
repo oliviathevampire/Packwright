@@ -1,26 +1,30 @@
 package net.vampirestudios.arrp.assets.animation;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-public class Frame implements Cloneable {
+import java.util.Optional;
+
+public class Frame {
+	public static final Codec<Frame> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Codec.INT.fieldOf("index").forGetter(f -> f.index),
+			Codec.INT.optionalFieldOf("time").forGetter(f -> Optional.ofNullable(f.time))
+	).apply(i, (index, time) -> {
+		Frame frame = new Frame(index);
+		time.ifPresent(t -> frame.time = t);
+		return frame;
+	}));
+
 	private final int index;
 	private Integer time;
 
-	/**
-	 * @see Animation#frame(int)
-	 */
-	public Frame(int index) {this.index = index;}
+	public Frame(int index) { this.index = index; }
 
 	public Frame time(int time) {
 		this.time = time;
 		return this;
 	}
 
-	@Override
-	public Frame clone() {
-		try {
-			return (Frame) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
-	}
+	public int getIndex() { return index; }
+	public Integer getTime() { return time; }
 }

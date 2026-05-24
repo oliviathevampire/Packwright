@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.arrp.assets.item.models.*;
+import net.vampirestudios.arrp.assets.item.tints.Tint;
 import net.vampirestudios.arrp.impl.Codecs;
 
 import java.util.*;
@@ -90,7 +92,7 @@ public abstract class ItemModel {
     public static final Codec<ItemModel> CODEC = Codecs.tagged("type", ItemModel::getType, REGISTRY::get);
 
     // self-reference for fallback recursion
-    static final Codec<ItemModel> LAZY_SELF = Codec.lazyInitialized(() -> CODEC);
+    protected static final Codec<ItemModel> LAZY_SELF = Codec.lazyInitialized(() -> CODEC);
 
     /** null-safe Optional getter for tints */
     protected Optional<List<Tint>> codecGetTints() {

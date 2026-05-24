@@ -7,7 +7,7 @@ import net.minecraft.resources.Identifier;
 
 import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
-public class Structure implements Cloneable {
+public class Structure {
 
 	public static final Codec<Structure> CODEC = new Codec<>() {
 		@Override
@@ -166,24 +166,6 @@ public class Structure implements Cloneable {
 			if (val != null) out.add(key, val.deepCopy());
 		}
 		return out;
-	}
-
-	@Override
-	public Structure clone() {
-		try {
-			Structure clone = (Structure) super.clone();
-			clone.biomes = this.biomes == null ? null : this.biomes.deepCopy();
-			clone.spawnOverrides = this.spawnOverrides == null ? null : this.spawnOverrides.deepCopy();
-			clone.settings = this.settings == null ? null : this.settings.deepCopy();
-			clone.extra.entrySet().clear();
-			for (String key : this.extra.keySet()) {
-				JsonElement val = this.extra.get(key);
-				if (val != null) clone.extra.add(key, val.deepCopy());
-			}
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	private static boolean isKnown(String key) {

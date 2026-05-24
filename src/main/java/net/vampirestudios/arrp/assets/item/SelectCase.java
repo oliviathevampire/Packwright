@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Represents a case in a select model.
  */
-public class SelectCase implements Cloneable {
+public class SelectCase {
     private Object when; // Can be a single value or a list of values
     private ItemModel model;
 

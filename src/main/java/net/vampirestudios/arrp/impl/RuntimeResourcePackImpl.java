@@ -6,27 +6,32 @@ import com.google.gson.GsonBuilder;
 import com.mojang.serialization.Codec;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.AbstractPackResources;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.vampirestudios.arrp.ARRPException;
 import net.vampirestudios.arrp.api.RuntimeResourcePack;
-import net.vampirestudios.arrp.util.JsonBytes;
-import net.vampirestudios.arrp.data.advancement.Advancement;
 import net.vampirestudios.arrp.assets.animation.Animation;
 import net.vampirestudios.arrp.assets.blockstates.BlockState;
-import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.assets.equipment.EquipmentModel;
 import net.vampirestudios.arrp.assets.equipment.TrimMaterial;
 import net.vampirestudios.arrp.assets.equipment.TrimPattern;
-import net.vampirestudios.arrp.assets.item.ItemInfo;
+import net.vampirestudios.arrp.assets.item.ItemModelDefinition;
 import net.vampirestudios.arrp.assets.lang.Lang;
-import net.vampirestudios.arrp.data.loot.LootTable;
 import net.vampirestudios.arrp.assets.models.Model;
-import net.vampirestudios.arrp.assets.models.Textures;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.advancement.Advancement;
+import net.vampirestudios.arrp.data.entity.*;
+import net.vampirestudios.arrp.data.loot.LootTable;
 import net.vampirestudios.arrp.data.recipe.Recipe;
 import net.vampirestudios.arrp.data.registry.*;
 import net.vampirestudios.arrp.data.tags.Tag;
-import net.vampirestudios.arrp.assets.timeline.Timeline;
 import net.vampirestudios.arrp.data.worldgen.*;
 import net.vampirestudios.arrp.data.worldgen.biome.Biome;
 import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
@@ -39,14 +44,8 @@ import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
 import net.vampirestudios.arrp.mixin.ShapedRecipeBuilderAccessor;
 import net.vampirestudios.arrp.util.CallableFunction;
 import net.vampirestudios.arrp.util.CountingInputStream;
+import net.vampirestudios.arrp.util.JsonBytes;
 import net.vampirestudios.arrp.util.UnsafeByteArrayOutputStream;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.AbstractPackResources;
-import net.minecraft.server.packs.PackLocationInfo;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.repository.PackSource;
-import net.minecraft.server.packs.resources.IoSupplier;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -81,8 +80,6 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 	public static final Gson GSON = new GsonBuilder()
 									.setPrettyPrinting()
 									.disableHtmlEscaping()
-									.registerTypeAdapter(Textures.class, new Textures.Serializer())
-									.registerTypeAdapter(Animation.class, new Animation.Serializer())
 									.create();
 	// if it works, don't touch it
 	static final Set<String> KEY_WARNINGS = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -169,7 +166,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addLang(Identifier identifier, Lang lang) {
-		return this.addJsonAsset(identifier, "lang", lang.getLang());
+		return this.addCodecData(identifier, "lang", Lang.CODEC, lang);
 	}
 
 	@Override
@@ -339,12 +336,12 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addModel(Model model, Identifier path) {
-		return this.addJsonAsset(path, "models", model);
+		return this.addCodecData(path, "models", Model.CODEC, model);
 	}
 
 	@Override
-	public byte[] addItemModelInfo(ItemInfo model, Identifier path) {
-		return this.addCodecAsset(path, "items", ItemInfo.CODEC, model);
+	public byte[] addItemModelInfo(ItemModelDefinition model, Identifier path) {
+		return this.addCodecAsset(path, "items", ItemModelDefinition.CODEC, model);
 	}
 
 	@Override
@@ -727,10 +724,6 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 			// unlock
 			this.waiting.unlock();
 		}
-	}
-
-	private byte[] addJsonAsset(Identifier id, String prefix, Object value) {
-		return this.addAsset(fix(id, prefix, "json"), toJsonBytes(value));
 	}
 
 	private <T> byte[] addCodecAsset(Identifier id, String prefix, Codec<T> codec, T value) {

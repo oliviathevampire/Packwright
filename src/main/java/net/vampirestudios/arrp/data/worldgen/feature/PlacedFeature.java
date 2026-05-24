@@ -11,7 +11,7 @@ import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlacedFeature implements Cloneable {
+public class PlacedFeature {
 	public static final Codec<PlacedFeature> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Identifier.CODEC.fieldOf("feature").forGetter(x -> x.feature),
 			PlacementModifier.CODEC.listOf().fieldOf("placement").forGetter(x -> x.placement)
@@ -105,17 +105,6 @@ public class PlacedFeature implements Cloneable {
 
 	public List<PlacementModifier> getPlacement() {
 		return List.copyOf(placement);
-	}
-
-	@Override
-	public PlacedFeature clone() {
-		try {
-			PlacedFeature clone = (PlacedFeature) super.clone();
-			clone.placement = new ArrayList<>(this.placement);
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	public interface PlacementModifier {

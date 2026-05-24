@@ -30,11 +30,6 @@ public abstract class Recipe {
 		REGISTRY.put(type, codec);
 	}
 
-	@Deprecated
-	public static SmithingTransformRecipe smithing(final Ingredient base, final Ingredient addition, final Ingredient template, final Result result) {
-		return smithingTransform(base, addition, template, result);
-	}
-
 	public static SmithingTransformRecipe smithingTransform(
 			final Ingredient base, final Ingredient addition, final Ingredient template, final Result result) {
 		return new SmithingTransformRecipe(base, addition, template, result);

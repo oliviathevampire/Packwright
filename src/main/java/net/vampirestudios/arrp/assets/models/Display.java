@@ -1,6 +1,33 @@
 package net.vampirestudios.arrp.assets.models;
 
-public class Display implements Cloneable {
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import java.util.Optional;
+
+public class Display {
+	public static final Codec<Display> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Position.CODEC.optionalFieldOf("thirdperson_righthand").forGetter(d -> Optional.ofNullable(d.thirdperson_righthand)),
+			Position.CODEC.optionalFieldOf("thirdperson_lefthand").forGetter(d -> Optional.ofNullable(d.thirdperson_lefthand)),
+			Position.CODEC.optionalFieldOf("firstperson_righthand").forGetter(d -> Optional.ofNullable(d.firstperson_righthand)),
+			Position.CODEC.optionalFieldOf("firstperson_lefthand").forGetter(d -> Optional.ofNullable(d.firstperson_lefthand)),
+			Position.CODEC.optionalFieldOf("gui").forGetter(d -> Optional.ofNullable(d.gui)),
+			Position.CODEC.optionalFieldOf("head").forGetter(d -> Optional.ofNullable(d.head)),
+			Position.CODEC.optionalFieldOf("ground").forGetter(d -> Optional.ofNullable(d.ground)),
+			Position.CODEC.optionalFieldOf("fixed").forGetter(d -> Optional.ofNullable(d.fixed))
+	).apply(i, (tpr, tpl, fpr, fpl, gui, head, ground, fixed) -> {
+		Display d = new Display();
+		tpr.ifPresent(d::setThirdperson_righthand);
+		tpl.ifPresent(d::setThirdperson_lefthand);
+		fpr.ifPresent(d::setFirstperson_righthand);
+		fpl.ifPresent(d::setFirstperson_lefthand);
+		gui.ifPresent(d::setGui);
+		head.ifPresent(d::setHead);
+		ground.ifPresent(d::setGround);
+		fixed.ifPresent(d::setFixed);
+		return d;
+	}));
+
 	private Position thirdperson_righthand;
 	private Position thirdperson_lefthand;
 	private Position firstperson_righthand;
@@ -15,18 +42,18 @@ public class Display implements Cloneable {
 	 */
 	public Display() {}
 
-	public Display setThirdperson_righthand(Position thirdperson_righthand) {
-		this.thirdperson_righthand = thirdperson_righthand;
+	public Display setThirdperson_righthand(Position thirdPersonRightHand) {
+		this.thirdperson_righthand = thirdPersonRightHand;
 		return this;
 	}
 
-	public Display setThirdperson_lefthand(Position thirdperson_lefthand) {
-		this.thirdperson_lefthand = thirdperson_lefthand;
+	public Display setThirdperson_lefthand(Position thirdPersonLeftHand) {
+		this.thirdperson_lefthand = thirdPersonLeftHand;
 		return this;
 	}
 
-	public Display setFirstperson_righthand(Position firstperson_righthand) {
-		this.firstperson_righthand = firstperson_righthand;
+	public Display setFirstperson_righthand(Position firstPersonRightHand) {
+		this.firstperson_righthand = firstPersonRightHand;
 		return this;
 	}
 
@@ -53,14 +80,5 @@ public class Display implements Cloneable {
 	public Display setFixed(Position fixed) {
 		this.fixed = fixed;
 		return this;
-	}
-
-	@Override
-	public Display clone() {
-		try {
-			return (Display) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 }

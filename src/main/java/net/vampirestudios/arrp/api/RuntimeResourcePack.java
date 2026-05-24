@@ -19,7 +19,7 @@ import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.assets.equipment.EquipmentModel;
 import net.vampirestudios.arrp.assets.equipment.TrimMaterial;
 import net.vampirestudios.arrp.assets.equipment.TrimPattern;
-import net.vampirestudios.arrp.assets.item.ItemInfo;
+import net.vampirestudios.arrp.assets.item.ItemModelDefinition;
 import net.vampirestudios.arrp.assets.lang.Lang;
 import net.vampirestudios.arrp.data.loot.LootTable;
 import net.vampirestudios.arrp.assets.models.Model;
@@ -233,7 +233,7 @@ public interface RuntimeResourcePack extends PackResources {
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addItemModelInfo(ItemInfo model, Identifier path);
+	byte[] addItemModelInfo(ItemModelDefinition model, Identifier path);
 
 
 	/**

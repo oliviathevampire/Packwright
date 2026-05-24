@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
  *   "generator": { ... }
  * }
  */
-public class Dimension implements Cloneable {
+public class Dimension {
 	public static final Codec<Dimension> CODEC = new Codec<>() {
 		@Override
 		public <T> DataResult<T> encode(Dimension dimension, DynamicOps<T> ops, T prefix) {
@@ -132,22 +132,6 @@ public class Dimension implements Cloneable {
 			if (value != null) out.add(key, value.deepCopy());
 		}
 		return out;
-	}
-
-	@Override
-	public Dimension clone() {
-		try {
-			Dimension clone = (Dimension) super.clone();
-			clone.generator = this.generator == null ? null : this.generator.deepCopy();
-			clone.extra.entrySet().clear();
-			for (String key : this.extra.keySet()) {
-				JsonElement value = this.extra.get(key);
-				if (value != null) clone.extra.add(key, value.deepCopy());
-			}
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 
 	private static boolean isKnown(String key) {

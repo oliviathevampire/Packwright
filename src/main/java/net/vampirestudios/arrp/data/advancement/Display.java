@@ -1,4 +1,4 @@
-package net.vampirestudios.arrp.data.advancement;// imports (Yarn names)
+package net.vampirestudios.arrp.data.advancement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -29,52 +29,31 @@ public final class Display {
 		d.hidden = hidden.orElse(null);
 		return d;
 	}));
-	public Icon icon;
-	public Component title;
-	public Component description;
-	public String background;
-	public Frame frame = Frame.TASK;
-	public Boolean showToast, announceChat, hidden;
 
-	public Display icon(Icon icon) {
-		this.icon = icon;
-		return this;
-	}
+	private Icon icon;
+	private Component title;
+	private Component description;
+	private String background;
+	private Frame frame = Frame.TASK;
+	private Boolean showToast, announceChat, hidden;
 
-	public Display title(Component title) {
-		this.title = title;
-		return this;
-	}
+	public Display icon(Icon icon) { this.icon = icon; return this; }
+	public Display title(Component title) { this.title = title; return this; }
+	public Display description(Component description) { this.description = description; return this; }
+	public Display background(String background) { this.background = background; return this; }
+	public Display frame(Frame frame) { this.frame = frame; return this; }
+	public Display showToast(Boolean showToast) { this.showToast = showToast; return this; }
+	public Display announceChat(Boolean announceChat) { this.announceChat = announceChat; return this; }
+	public Display hidden(Boolean hidden) { this.hidden = hidden; return this; }
 
-	public Display description(Component description) {
-		this.description = description;
-		return this;
-	}
-
-	public Display background(String background) {
-		this.background = background;
-		return this;
-	}
-
-	public Display frame(Frame frame) {
-		this.frame = frame;
-		return this;
-	}
-
-	public Display showToast(Boolean showToast) {
-		this.showToast = showToast;
-		return this;
-	}
-
-	public Display announceChat(Boolean announceChat) {
-		this.announceChat = announceChat;
-		return this;
-	}
-
-	public Display hidden(Boolean hidden) {
-		this.hidden = hidden;
-		return this;
-	}
+	public Icon getIcon() { return icon; }
+	public Component getTitle() { return title; }
+	public Component getDescription() { return description; }
+	public String getBackground() { return background; }
+	public Frame getFrame() { return frame; }
+	public Boolean getShowToast() { return showToast; }
+	public Boolean getAnnounceChat() { return announceChat; }
+	public Boolean getHidden() { return hidden; }
 
 	public enum Frame implements StringRepresentable {
 		TASK("task"),
@@ -84,14 +63,9 @@ public final class Display {
 		public static final Codec<Frame> CODEC = StringRepresentable.fromEnum(Frame::values);
 
 		private final String id;
-
-		Frame(String id) {
-			this.id = id;
-		}
+		Frame(String id) { this.id = id; }
 
 		@Override
-		public String getSerializedName() {
-			return id;
-		}
+		public String getSerializedName() { return id; }
 	}
 }

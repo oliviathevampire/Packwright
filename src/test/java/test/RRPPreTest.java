@@ -1,7 +1,5 @@
 package test;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -13,9 +11,16 @@ import net.vampirestudios.arrp.assets.blockstates.Connectables;
 import net.vampirestudios.arrp.assets.blockstates.Variant;
 import net.vampirestudios.arrp.assets.equipment.*;
 import net.vampirestudios.arrp.assets.item.*;
+import net.vampirestudios.arrp.assets.item.models.ModelBasic;
+import net.vampirestudios.arrp.assets.item.models.ModelCondition;
+import net.vampirestudios.arrp.assets.item.models.ModelRangeDispatch;
+import net.vampirestudios.arrp.assets.item.properties.*;
+import net.vampirestudios.arrp.assets.item.tints.Tint;
+import net.vampirestudios.arrp.assets.item.tints.TintConstant;
+import net.vampirestudios.arrp.assets.item.tints.TintDye;
+import net.vampirestudios.arrp.assets.item.tints.TintTeam;
 import net.vampirestudios.arrp.assets.lang.Lang;
 import net.vampirestudios.arrp.assets.models.Model;
-import net.vampirestudios.arrp.assets.models.Textures;
 import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.data.recipe.*;
 import net.vampirestudios.arrp.data.registry.*;
@@ -23,7 +28,6 @@ import net.vampirestudios.arrp.data.worldgen.*;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.util.JsonBytes;
-import net.vampirestudios.arrp.util.ResourceLocationTypeAdapter;
 import net.vampirestudios.arrp.util.VanillaIds;
 
 import java.nio.file.Path;
@@ -52,7 +56,7 @@ public class RRPPreTest {
 				.effect(vanillaId("fire_walking"), "Fire Walking")
 				.allPotionOf(vanillaId("fire_walking"), "Fire Walking")
 		);
-		pack.addItemModelInfo(ItemInfo.item().model(ItemModel.select()
+		pack.addItemModelInfo(ItemModelDefinition.item().model(ItemModel.select()
 				.property(PropertyComponent.component("minecraft:item_name"))
 				.addCase(SelectCase.of("Diamond", ModelBasic.of(vanillaId("item/diamond"))))
 				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of(vanillaId("item/netherite_ingot"))))
@@ -321,7 +325,7 @@ public class RRPPreTest {
 				WorldClock.worldClock()
 		);
 		pack.addItemModelInfo(
-				ItemInfo.item().model(ItemModel.model(customId("test", "block/model")).tint(Tint.dye(0xFFFFFF))),
+				ItemModelDefinition.item().model(ItemModel.model(customId("test", "block/model")).tint(Tint.dye(0xFFFFFF))),
 				myModId("test_block")
 		);
 
@@ -377,39 +381,36 @@ public class RRPPreTest {
 						)
 				);
 
-
-		Gson gson = new GsonBuilder()
-				.registerTypeAdapter(Textures.class, new Textures.Serializer())
-				.registerTypeAdapter(Identifier.class, new ResourceLocationTypeAdapter())
-				.setPrettyPrinting()
-				.create();
+		Model model2 = Model.model("minecraft:block/cube_all")
+				.textures(Model.textures().var("all", "minecraft:block/dirt"));
 
 		Lang lang = Lang.lang().allPotionOf(customId("mod_id", "potion_id"), "Example");
 
 		System.out.println(RuntimeResourcePackImpl.GSON.toJson(loot("minecraft:block").pool(pool().rolls(1)
 				.entry(entry().type("minecraft:item").name("minecraft:diamond"))
 				.condition(predicate("minecraft:survives_explosion")))));
-		System.out.println(gson.toJson(iron_block));
-		System.out.println(gson.toJson(oak_fence));
-		System.out.println(gson.toJson(model));
+		System.out.println(JsonBytes.encodeToPrettyString(BlockState.CODEC, iron_block));
+		System.out.println(JsonBytes.encodeToPrettyString(BlockState.CODEC, oak_fence));
+		System.out.println(JsonBytes.encodeToPrettyString(Model.CODEC, model));
+		System.out.println(JsonBytes.encodeToPrettyString(Model.CODEC, model2));
 
-		System.out.println(gson.toJson(lang));
+		System.out.println(JsonBytes.encodeToPrettyString(Lang.CODEC, lang));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelBasic.of(vanillaId("item/template_spawn_egg"))
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ModelBasic.of(vanillaId("item/template_spawn_egg"))
 				.tint(new TintConstant(-278045))
 				.tint(new TintConstant(-5886604))
 		)));
 
 
-		ItemInfo itemInfo = ItemInfo.item().model(
+		ItemModelDefinition itemModelDefinition = ItemModelDefinition.item().model(
 				ItemModel.model(vanillaId("item/template_spawn_egg"))
 						.tints(Tint.constant(-278045), Tint.constant(-5886604))
 		).handAnimationOnSwap(true);
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, itemInfo));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, itemModelDefinition));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.model(vanillaId("item/bamboo")))));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.model(vanillaId("item/bamboo")))));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.rangeDispatch()
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.rangeDispatch()
 				.property(PropertyUseCycle.useCycle().period(10f))
 				.scale(0.1)
 				.entry(RangeEntry.of(0.25, ModelBasic.of(vanillaId("item/brush_brushing_0"))))
@@ -418,18 +419,18 @@ public class RRPPreTest {
 				.fallback(ModelBasic.of(vanillaId("item/brush")))
 		)));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.condition()
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.condition()
 				.property(new PropertyUsingItem())
 				.onTrue(ModelBasic.of(vanillaId("item/using_model")))
 				.onFalse(ModelBasic.of(vanillaId("item/default_model")))
 		)));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.composite()
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.composite()
 				.model(ModelBasic.of(vanillaId("item/part1")))
 				.model(ModelBasic.of(vanillaId("item/part2")))
 		)));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.rangeDispatch()
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.rangeDispatch()
 				.property(PropertyDamage.of(true))
 				.entry(RangeEntry.of(0.25, ModelBasic.of(vanillaId("item/damage_low"))))
 				.entry(RangeEntry.of(0.5, ModelBasic.of(vanillaId("item/damage_medium"))))
@@ -442,13 +443,13 @@ public class RRPPreTest {
 //				.animation(0.5f)
 //		).handAnimationOnSwap(false)));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ItemModel.condition()
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ItemModel.condition()
 				.property(new PropertyKeybindDown("key.sneak"))
 				.onTrue(ModelBasic.of(vanillaId("item/sneaking_model")))
 				.onFalse(ModelBasic.of(vanillaId("item/normal_model")))
 		)));
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(ModelBasic
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(ModelBasic
 				.of(vanillaId("item/team_colored_item"))
 				.tint(TintTeam.of(-1))
 		)));
@@ -490,7 +491,7 @@ public class RRPPreTest {
 				.onTrue(onTrueDispatch)
 				.onFalse(onFalseSelect);
 
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(compassModel)));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(compassModel)));
 
 		// Create the condition property
 		PropertyUsingItem usingItemProperty = new PropertyUsingItem();
@@ -526,7 +527,7 @@ public class RRPPreTest {
 						.fallback(ModelBasic.of(vanillaId("item/coal")))
 				))
 				.fallback(ModelBasic.of(vanillaId("block/stone")));
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(selectModel)));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(selectModel)));
 
 		selectModel = ItemModel.select()
 				.property(componentProperty)
@@ -539,7 +540,7 @@ public class RRPPreTest {
 						.fallback(ModelBasic.of(vanillaId("item/coal")))
 				))
 				.fallback(ModelBasic.of(vanillaId("block/stone")).tint(new TintDye(0xFF00FF)));
-		System.out.println(JsonBytes.encodeToPrettyString(ItemInfo.CODEC, ItemInfo.item().model(selectModel)));
+		System.out.println(JsonBytes.encodeToPrettyString(ItemModelDefinition.CODEC, ItemModelDefinition.item().model(selectModel)));
 
 		EquipmentModel eq = EquipmentModel.model()
 				.addLayer("wings",

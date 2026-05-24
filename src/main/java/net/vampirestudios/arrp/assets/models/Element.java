@@ -1,20 +1,43 @@
 package net.vampirestudios.arrp.assets.models;
 
-public class Element implements Cloneable {
-	// vanilla units: 0..16
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import java.util.List;
+import java.util.Optional;
+
+public class Element {
+	private static final Codec<float[]> VEC3 = Codec.FLOAT.listOf()
+			.xmap(l -> new float[]{l.get(0), l.get(1), l.get(2)},
+				  a -> List.of(a[0], a[1], a[2]));
+
+	public static final Codec<Element> CODEC = RecordCodecBuilder.create(i -> i.group(
+			VEC3.fieldOf("from").forGetter(e -> e.from),
+			VEC3.fieldOf("to").forGetter(e -> e.to),
+			Rotation.CODEC.optionalFieldOf("rotation").forGetter(e -> Optional.ofNullable(e.rotation)),
+			Codec.BOOL.optionalFieldOf("shade").forGetter(e -> Optional.ofNullable(e.shade)),
+			Faces.CODEC.optionalFieldOf("faces").forGetter(e -> Optional.ofNullable(e.faces)),
+			Codec.INT.optionalFieldOf("light_emission").forGetter(e -> Optional.ofNullable(e.light_emission))
+	).apply(i, (from, to, rotation, shade, faces, light) -> {
+		Element e = new Element();
+		e.from(from[0], from[1], from[2]);
+		e.to(to[0], to[1], to[2]);
+		rotation.ifPresent(e::rotation);
+		shade.ifPresent(e::shade);
+		faces.ifPresent(e::faces);
+		light.ifPresent(e::light);
+		return e;
+	}));
+
 	private final float[] from = new float[3];
 	private final float[] to   = new float[3];
 	private Rotation rotation;
-	private Boolean shade;                 // null => omit (default true)
+	private Boolean shade;
 	private Faces faces;
-
-	// NEW: optional per-element light emission (0..15); null => omit
 	private Integer light_emission;
 
 	/** @see Model#element() */
 	public Element() {}
-
-	/* ---------------- Core setters ---------------- */
 
 	public Element from(float x, float y, float z) {
 		this.from[0] = clamp016(x);
@@ -39,7 +62,6 @@ public class Element implements Cloneable {
 		return this;
 	}
 
-	/** Explicitly set shading; null means "omit" (vanilla default true). */
 	public Element shade(Boolean shade) {
 		this.shade = shade;
 		return this;
@@ -55,32 +77,20 @@ public class Element implements Cloneable {
 		return this;
 	}
 
-	/* ---------------- NEW: light emission ---------------- */
-
-	/** Set per-element light emission [0..15]; null to omit. */
 	public Element light(Integer level) {
-		if (level == null) {
-			this.light_emission = null;
-		} else {
-			int clamped = clamp015(level);
-			this.light_emission = clamped;
-		}
+		this.light_emission = level == null ? null : clamp015(level);
 		return this;
 	}
 
-	/** Convenience: fullbright element (15). */
 	public Element emissive() {
 		this.light_emission = 15;
 		return this;
 	}
 
-	/** Convenience: remove light (omit field). */
 	public Element noLight() {
 		this.light_emission = null;
 		return this;
 	}
-
-	/* ---------------- Face sugar ---------------- */
 
 	private Faces ensureFaces() {
 		if (this.faces == null) this.faces = Model.faces();
@@ -94,7 +104,6 @@ public class Element implements Cloneable {
 	public Element up   (Face face) { ensureFaces().up(face);    return this; }
 	public Element down (Face face) { ensureFaces().down(face);  return this; }
 
-	/** Quick fill all 6 faces with the same texture var. */
 	public Element allFaces(String texVar) {
 		var f = ensureFaces();
 		f.north(Model.face(texVar));
@@ -105,27 +114,6 @@ public class Element implements Cloneable {
 		f.down (Model.face(texVar));
 		return this;
 	}
-
-	/* ---------------- Clone (deep) ---------------- */
-
-	@Override
-	public Element clone() {
-		try {
-			Element c = (Element) super.clone();
-			System.arraycopy(this.from, 0, c.from, 0, 3);
-			System.arraycopy(this.to,   0, c.to,   0, 3);
-			c.rotation = this.rotation == null ? null : this.rotation.clone();
-			c.faces    = this.faces    == null ? null : this.faces.clone();
-			// shade/light_emission are boxed, safe to copy refs
-			c.shade = this.shade;
-			c.light_emission = this.light_emission;
-			return c;
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
-	}
-
-	/* ---------------- Internal ---------------- */
 
 	private static float clamp016(float v) {
 		if (v < 0f) return 0f;

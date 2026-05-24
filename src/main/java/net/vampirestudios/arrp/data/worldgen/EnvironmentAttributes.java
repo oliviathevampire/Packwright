@@ -9,18 +9,7 @@ import java.util.Map;
 
 import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
-/**
- * Map of Environment Attributes for a holder (biome, dimension, etc.):
- *
- * "attributes": {
- *   "minecraft:visual/fog_color": "#ffaaff",
- *   "minecraft:visual/cloud_opacity": 0.5,
- *   "minecraft:gameplay/water_evaporates": true
- * }
- *
- * Independent from Biome so it can be reused elsewhere.
- */
-public class EnvironmentAttributes implements Cloneable {
+public class EnvironmentAttributes {
     public static final Identifier FOG_COLOR = vanillaId("visual/fog_color");
     public static final Identifier FOG_START_DISTANCE = vanillaId("visual/fog_start_distance");
     public static final Identifier FOG_END_DISTANCE = vanillaId("visual/fog_end_distance");
@@ -171,19 +160,7 @@ public class EnvironmentAttributes implements Cloneable {
         return this.values.isEmpty();
     }
 
-    public EnvironmentAttributeValue get(String key) {
+    public EnvironmentAttributeValue get(Identifier key) {
         return this.values.get(key);
-    }
-
-    @Override
-    public EnvironmentAttributes clone() {
-        try {
-            EnvironmentAttributes clone = (EnvironmentAttributes) super.clone();
-            clone.values = new LinkedHashMap<>();
-            clone.values.putAll(this.values);
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new InternalError(e);
-        }
     }
 }

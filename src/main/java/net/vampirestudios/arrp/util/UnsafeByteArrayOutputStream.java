@@ -1,9 +1,9 @@
 package net.vampirestudios.arrp.util;
 
+import org.jspecify.annotations.NonNull;
+
 import java.io.OutputStream;
 import java.util.Arrays;
-
-import org.jetbrains.annotations.NotNull;
 
 public class UnsafeByteArrayOutputStream extends OutputStream implements AutoCloseable {
 	protected byte[] buf;
@@ -35,7 +35,7 @@ public class UnsafeByteArrayOutputStream extends OutputStream implements AutoClo
 	}
 
 	@Override
-	public void write(@NotNull byte b[], int off, int len) {
+	public void write(byte @NonNull [] b, int off, int len) {
 		if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) - b.length > 0)) {
 			throw new IndexOutOfBoundsException();
 		}

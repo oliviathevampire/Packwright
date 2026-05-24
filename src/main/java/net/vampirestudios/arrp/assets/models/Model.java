@@ -1,11 +1,14 @@
 package net.vampirestudios.arrp.assets.models;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.data.loot.Condition;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A block/item model. Static-import factory methods from this class for brevity.
@@ -16,7 +19,23 @@ import java.util.List;
  * - AO toggle: ambientOcclusion(boolean)
  * - Keep-elements factories: modelKeepElements(...)
  */
-public class Model implements Cloneable {
+public class Model {
+	public static final Codec<Model> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Codec.STRING.optionalFieldOf("parent").forGetter(m -> Optional.ofNullable(m.parent)),
+			Codec.BOOL.optionalFieldOf("ambientocclusion").forGetter(m -> Optional.ofNullable(m.ambientocclusion)),
+			Display.CODEC.optionalFieldOf("display").forGetter(m -> Optional.ofNullable(m.display)),
+			Textures.CODEC.optionalFieldOf("textures").forGetter(m -> Optional.ofNullable(m.textures)),
+			Element.CODEC.listOf().optionalFieldOf("elements").forGetter(m -> Optional.ofNullable(m.elements))
+	).apply(i, (parent, ao, display, textures, elements) -> {
+		Model model = new Model();
+		parent.ifPresent(p -> model.parent = p);
+		ao.ifPresent(a -> model.ambientocclusion = a);
+		display.ifPresent(d -> model.display = d);
+		textures.ifPresent(t -> model.textures = t);
+		elements.ifPresent(e -> model.elements = e);
+		return model;
+	}));
+
 	private String parent;
 	// true is default; null => omit (vanilla default true)
 	private Boolean ambientocclusion;
@@ -26,8 +45,6 @@ public class Model implements Cloneable {
 	private Textures textures;
 	// explicit element geometry (optional; omit to inherit from parent)
 	private List<Element> elements;
-	// item overrides
-	private List<ModelOverride> overrides;
 
 	/* ---------------------------------------------------------
 	 * Existing constructors / factories
@@ -67,10 +84,6 @@ public class Model implements Cloneable {
 
 	public static Model model(Identifier identifier) {
 		return model(identifier.toString());
-	}
-
-	public static ModelOverride override(Condition predicate, Identifier model) {
-		return new ModelOverride(predicate, model.toString());
 	}
 
 	public static Condition condition() {
@@ -170,12 +183,6 @@ public class Model implements Cloneable {
 	 * Fluent helpers
 	 * --------------------------------------------------------- */
 
-	public Model addOverride(ModelOverride override) {
-		if (this.overrides == null) this.overrides = new ArrayList<>();
-		this.overrides.add(override);
-		return this;
-	}
-
 	public Model parent(String parent) {
 		this.parent = parent;
 		return this;
@@ -260,14 +267,5 @@ public class Model implements Cloneable {
 	private Textures ensureTex() {
 		if (this.textures == null) this.textures = new Textures();
 		return this.textures;
-	}
-
-	@Override
-	public Model clone() {
-		try {
-			return (Model) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
-		}
 	}
 }

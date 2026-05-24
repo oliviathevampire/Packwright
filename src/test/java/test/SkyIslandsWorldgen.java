@@ -1,13 +1,10 @@
 package test;
 
-import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.EasingType;
 import net.vampirestudios.arrp.assets.timeline.Timeline;
-import net.vampirestudios.arrp.data.worldgen.AttributeValue;
-import net.vampirestudios.arrp.data.worldgen.IntProvider;
-import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
-import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
+import net.vampirestudios.arrp.data.worldgen.*;
 import net.vampirestudios.arrp.data.worldgen.biome.Biome;
 import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
@@ -38,22 +35,20 @@ public class SkyIslandsWorldgen {
 
 	public static Timeline buildSkyIslandsSkyTimeline() {
 		return new Timeline()
-				.period(24000)
-				.track("minecraft:visual/sky_color",
-						new Timeline.Track()
-								.ease("linear")
-								.addKeyframe(new Timeline.Keyframe(0,    new JsonPrimitive("#0b0f26")))  // night
-								.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive("#ffbf80")))  // sunrise
-								.addKeyframe(new Timeline.Keyframe(12000,new JsonPrimitive("#6eb1ff")))  // noon
-								.addKeyframe(new Timeline.Keyframe(18000,new JsonPrimitive("#141a33")))  // dusk
+				.setPeriodTicks(24000)
+				.addTrack(EnvironmentAttributes.SKY_COLOR, t -> t
+						.ease(EasingType.LINEAR)
+						.addKeyframe(0,     "#0b0f26")  // night
+						.addKeyframe(6000,  "#ffbf80")  // sunrise
+						.addKeyframe(12000, "#6eb1ff")  // noon
+						.addKeyframe(18000, "#141a33")  // dusk
 				)
-				.track("minecraft:visual/fog_color",
-						new Timeline.Track()
-								.ease("linear")
-								.addKeyframe(new Timeline.Keyframe(0,    new JsonPrimitive("#151a26")))
-								.addKeyframe(new Timeline.Keyframe(6000, new JsonPrimitive("#d8c7ff")))
-								.addKeyframe(new Timeline.Keyframe(12000,new JsonPrimitive("#c0d8ff")))
-								.addKeyframe(new Timeline.Keyframe(18000,new JsonPrimitive("#202535")))
+				.addTrack(EnvironmentAttributes.FOG_COLOR, t -> t
+						.ease(EasingType.LINEAR)
+						.addKeyframe(0,     "#151a26")
+						.addKeyframe(6000,  "#d8c7ff")
+						.addKeyframe(12000, "#c0d8ff")
+						.addKeyframe(18000, "#202535")
 				);
 	}
 
