@@ -166,7 +166,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addLang(Identifier identifier, Lang lang) {
-		return this.addCodecData(identifier, "lang", Lang.CODEC, lang);
+		return this.addCodecAsset(identifier, "lang", Lang.CODEC, lang);
 	}
 
 	@Override
@@ -336,7 +336,7 @@ public class RuntimeResourcePackImpl extends AbstractPackResources implements Ru
 
 	@Override
 	public byte[] addModel(Model model, Identifier path) {
-		return this.addCodecData(path, "models", Model.CODEC, model);
+		return this.addCodecAsset(path, "models", Model.CODEC, model);
 	}
 
 	@Override

@@ -26,7 +26,10 @@ public class ModelBanner extends ModelSpecial {
     }));
 
     static {
-        ItemModel.register(TYPE, CODEC.xmap(m -> { m.type = TYPE; return m; }, m -> m));
+        ItemModel.register(TYPE, CODEC.xmap(m -> {
+            m.type = TYPE;
+            return m;
+        }, m -> m));
     }
 
     private String color;

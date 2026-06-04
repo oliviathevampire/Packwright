@@ -9,6 +9,7 @@ import com.mojang.serialization.*;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public final class Codecs {
 	private Codecs() {
@@ -123,4 +124,53 @@ public final class Codecs {
 			dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue().getAsJsonObject(),
 			object -> new Dynamic<>(JsonOps.INSTANCE, object)
 	);
+
+	/**
+	 * Like {@link #tagged} but returns a {@link MapCodec} so the tag key and all
+	 * subtype fields are merged flat into the parent object rather than nested
+	 * under a separate key.  {@code lookup} must return {@code MapCodec}s.
+	 */
+	public static <B> MapCodec<B> taggedMap(
+			String tagKey,
+			Function<B, String> typeGetter,
+			Function<String, MapCodec<? extends B>> lookup
+	) {
+		return MapCodec.of(
+				new MapEncoder.Implementation<>() {
+					@Override
+					public <T> RecordBuilder<T> encode(B value, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+						String tag = Objects.requireNonNull(typeGetter.apply(value), "tag is null for " + value);
+						@SuppressWarnings("unchecked")
+						MapCodec<B> sub = (MapCodec<B>) lookup.apply(tag);
+						if (sub == null) return prefix.withErrorsFrom(DataResult.error(() -> "no codec for tag: " + tag));
+						prefix.add(ops.createString(tagKey), ops.createString(tag));
+						return sub.encode(value, ops, prefix);
+					}
+
+					@Override
+					public <T> Stream<T> keys(DynamicOps<T> ops) {
+						return Stream.of(ops.createString(tagKey));
+					}
+				},
+				new MapDecoder.Implementation<>() {
+					@Override
+					public <T> DataResult<B> decode(DynamicOps<T> ops, MapLike<T> input) {
+						T tagNode = input.get(tagKey);
+						if (tagNode == null) return DataResult.error(() -> "missing '" + tagKey + "'");
+						var tagRes = ops.getStringValue(tagNode);
+						if (tagRes.result().isEmpty()) return DataResult.error(() -> "'" + tagKey + "' must be a string");
+						String tag = tagRes.result().get();
+						@SuppressWarnings("unchecked")
+						MapCodec<B> sub = (MapCodec<B>) lookup.apply(tag);
+						if (sub == null) return DataResult.error(() -> "unknown '" + tagKey + "': " + tag);
+						return sub.decode(ops, input);
+					}
+
+					@Override
+					public <T> Stream<T> keys(DynamicOps<T> ops) {
+						return Stream.of(ops.createString(tagKey));
+					}
+				}
+		);
+	}
 }

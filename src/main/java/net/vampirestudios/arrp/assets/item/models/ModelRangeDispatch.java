@@ -1,11 +1,13 @@
 package net.vampirestudios.arrp.assets.item.models;
 
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.assets.item.ItemModel;
 import net.vampirestudios.arrp.assets.item.properties.Property;
 import net.vampirestudios.arrp.assets.item.RangeEntry;
 import net.vampirestudios.arrp.assets.item.tints.Tint;
+import net.vampirestudios.arrp.assets.models.Transformation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,105 +18,24 @@ import java.util.List;
 public class ModelRangeDispatch extends ItemModel {
 	public static final String TYPE = "minecraft:range_dispatch";
 
-	public static final Codec<ModelRangeDispatch> CODEC = Codec.of(
-			// Encoder
-			new Encoder<>() {
-				@Override
-				public <T> DataResult<T> encode(ModelRangeDispatch v, DynamicOps<T> ops, T prefix) {
-					if (v.property == null) return DataResult.error(() -> "range_dispatch: missing property");
-					if (v.entries == null || v.entries.isEmpty())
-						return DataResult.error(() -> "range_dispatch: empty 'entries'");
-					var b = ops.mapBuilder();
-
-					// --- base ---
-					if (v.tints != null && !v.tints.isEmpty()) {
-						var tintsEl = Tint.CODEC.listOf().encodeStart(ops, v.tints);
-						if (tintsEl.result().isEmpty()) return tintsEl;
-						b.add(ops.createString("tints"), tintsEl.result().get());
-					}
-					if (v.fallback != null) {
-						var fbEl = ItemModel.CODEC.encodeStart(ops, v.fallback);
-						if (fbEl.result().isEmpty()) return fbEl;
-						b.add(ops.createString("fallback"), fbEl.result().get());
-					}
-
-					// inline property
-					var propEl = Property.CODEC.encodeStart(ops, v.property);
-					if (propEl.result().isEmpty()) return propEl;
-					var propMap = ops.getMap(propEl.result().get());
-					if (propMap.result().isEmpty())
-						return DataResult.error(() -> "range_dispatch: property didn't encode to object");
-					for (var e : propMap.result().get().entries().toList()) b.add(e.getFirst(), e.getSecond());
-
-					// scale (omit if 1.0)
-					if (v.scale != 1.0) b.add(ops.createString("scale"), ops.createDouble(v.scale));
-
-					// entries[]
-					var entriesEl = RangeEntry.CODEC.listOf().encodeStart(ops, v.entries);
-					if (entriesEl.result().isEmpty()) return entriesEl;
-					b.add(ops.createString("entries"), entriesEl.result().get());
-
-					return b.build(prefix);
-				}
-			},
-			// Decoder
-			new Decoder<>() {
-				@Override
-				public <T> DataResult<Pair<ModelRangeDispatch, T>> decode(DynamicOps<T> ops, T input) {
-					var mapRes = ops.getMap(input);
-					if (mapRes.result().isEmpty()) return DataResult.error(() -> "range_dispatch: expected object");
-					var map = mapRes.result().get();
-
-					// --- base ---
-					java.util.List<Tint> tints = null;
-					var tNode = map.get("tints");
-					if (tNode != null) {
-						var tRes = Tint.CODEC.listOf().decode(ops, tNode);
-						if (tRes.result().isEmpty()) return DataResult.error(() -> "range_dispatch: invalid tints");
-						tints = tRes.result().get().getFirst();
-					}
-					ItemModel fallback = null;
-					var fbNode = map.get("fallback");
-					if (fbNode != null) {
-						var fbRes = ItemModel.CODEC.decode(ops, fbNode);
-						if (fbRes.result().isEmpty()) return DataResult.error(() -> "range_dispatch: invalid fallback");
-						fallback = fbRes.result().get().getFirst();
-					}
-
-					// inline property
-					var propRes = Property.CODEC.decode(ops, input);
-					if (propRes.result().isEmpty())
-						return DataResult.error(() -> "range_dispatch: invalid/missing property");
-
-					// scale
-					Double scale = null;
-					var scaleNum = ops.getNumberValue(map.get("scale"));
-					if (scaleNum.result().isPresent()) scale = scaleNum.result().get().doubleValue();
-
-					// entries[]
-					var entriesNode = map.get("entries");
-					if (entriesNode == null) return DataResult.error(() -> "range_dispatch: missing 'entries'");
-					var entriesRes = RangeEntry.CODEC.listOf().decode(ops, entriesNode);
-					if (entriesRes.result().isEmpty())
-						return DataResult.error(() -> "range_dispatch: invalid 'entries'");
-
-					var m = new ModelRangeDispatch();
-					m.type = TYPE;
-					m.property = propRes.result().get().getFirst();
-					m.scale = (scale == null) ? 1.0 : scale;
-					m.entries = entriesRes.result().get().getFirst();
-					if (tints != null && !tints.isEmpty()) for (var t : tints) m.tint(t);
-					if (fallback != null) m.fallback(fallback);
-					return DataResult.success(Pair.of(m, input));
-				}
-			}
-	);
+	public static final MapCodec<ModelRangeDispatch> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+			Tint.CODEC.listOf().optionalFieldOf("tints").forGetter(ModelRangeDispatch::codecGetTints),
+			LAZY_SELF.optionalFieldOf("fallback").forGetter(ModelRangeDispatch::codecGetFallback),
+			Transformation.CODEC.optionalFieldOf("transformation").forGetter(ModelRangeDispatch::codecGetTransformation),
+			Property.MAP_CODEC.forGetter(ModelRangeDispatch::getProperty),
+			Codec.DOUBLE.optionalFieldOf("scale", 1.0).forGetter(ModelRangeDispatch::getScale),
+			RangeEntry.CODEC.listOf().fieldOf("entries").forGetter(ModelRangeDispatch::getEntries)
+	).apply(i, (tints, fallback, transformation, property, scale, entries) -> {
+		ModelRangeDispatch m = new ModelRangeDispatch();
+		applyBase(m, tints, fallback, transformation);
+		m.property = property;
+		m.scale = scale;
+		m.entries = entries;
+		return m;
+	}));
 
 	static {
-		ItemModel.register(TYPE, MapCodec.assumeMapUnsafe(CODEC).xmap(m -> {
-			m.type = TYPE;
-			return m;
-		}, m -> m));
+		ItemModel.register(TYPE, CODEC);
 	}
 
 	private Property property;

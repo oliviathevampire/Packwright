@@ -21,12 +21,13 @@ public abstract class Property {
         return type;
     }
 
-    // ===== Registry + base codec =====
+    // ===== Registry + codecs =====
 
-    private static final Map<String, Codec<? extends Property>> REGISTRY = new ConcurrentHashMap<>();
+    private static final Map<String, MapCodec<? extends Property>> REGISTRY = new ConcurrentHashMap<>();
     public static void register(String property, MapCodec<? extends Property> codec) {
-        REGISTRY.put(property, codec.codec());
+        REGISTRY.put(property, codec);
     }
 
-    public static final Codec<Property> CODEC = Codecs.tagged("property", Property::getPropertyType, REGISTRY::get);
+    public static final MapCodec<Property> MAP_CODEC = Codecs.taggedMap("property", Property::getPropertyType, REGISTRY::get);
+    public static final Codec<Property> CODEC = MAP_CODEC.codec();
 }

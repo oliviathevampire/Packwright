@@ -1,11 +1,11 @@
-// src/.../model/ModelCondition.java
 package net.vampirestudios.arrp.assets.item.models;
 
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.assets.item.ItemModel;
 import net.vampirestudios.arrp.assets.item.properties.Property;
 import net.vampirestudios.arrp.assets.item.tints.Tint;
+import net.vampirestudios.arrp.assets.models.Transformation;
 
 /**
  * "minecraft:condition" — property MUST resolve to a boolean at runtime.
@@ -14,114 +14,24 @@ import net.vampirestudios.arrp.assets.item.tints.Tint;
 public class ModelCondition extends ItemModel {
 	public static final String TYPE = "minecraft:condition";
 
-	public static final Codec<ModelCondition> CODEC = Codec.of(
-			// Encoder
-			new Encoder<>() {
-				@Override
-				public <T> DataResult<T> encode(ModelCondition v, DynamicOps<T> ops, T prefix) {
-					if (v.property == null) return DataResult.error(() -> "condition: missing property");
-					if (v.onTrue == null) return DataResult.error(() -> "condition: missing 'on_true'");
-
-					var b = ops.mapBuilder();
-
-					// base: tints[], fallback
-					if (v.tints != null && !v.tints.isEmpty()) {
-						var tintsNode = Tint.CODEC.listOf().encodeStart(ops, v.tints);
-						if (tintsNode.result().isEmpty()) return tintsNode;
-						b.add(ops.createString("tints"), tintsNode.result().get());
-					}
-					if (v.fallback != null) {
-						var fbNode = ItemModel.CODEC.encodeStart(ops, v.fallback);
-						if (fbNode.result().isEmpty()) return fbNode;
-						b.add(ops.createString("fallback"), fbNode.result().get());
-					}
-
-					// inline property
-					var propEl = Property.CODEC.encodeStart(ops, v.property);
-					if (propEl.result().isEmpty()) return propEl;
-					var propMap = ops.getMap(propEl.result().get());
-					if (propMap.result().isEmpty())
-						return DataResult.error(() -> "condition: property didn't encode to object");
-					for (var e : propMap.result().get().entries().toList()) b.add(e.getFirst(), e.getSecond());
-
-					// on_true
-					var t = ItemModel.CODEC.encodeStart(ops, v.onTrue);
-					if (t.result().isEmpty()) return t;
-					b.add(ops.createString("on_true"), t.result().get());
-
-					// on_false (optional)
-					if (v.onFalse != null) {
-						var f = ItemModel.CODEC.encodeStart(ops, v.onFalse);
-						if (f.result().isEmpty()) return f;
-						b.add(ops.createString("on_false"), f.result().get());
-					}
-					return b.build(prefix);
-				}
-			},
-			// Decoder
-			new Decoder<>() {
-				@Override
-				public <T> DataResult<Pair<ModelCondition, T>> decode(DynamicOps<T> ops, T input) {
-					var mapRes = ops.getMap(input);
-					if (mapRes.result().isEmpty()) return DataResult.error(() -> "condition: expected object");
-					var map = mapRes.result().get();
-
-					// base
-					var tintsNode = map.get("tints");
-					java.util.List<Tint> tints = null;
-					if (tintsNode != null) {
-						var tRes = Tint.CODEC.listOf().decode(ops, tintsNode);
-						if (tRes.result().isEmpty()) return DataResult.error(() -> "condition: invalid tints");
-						tints = tRes.result().get().getFirst();
-					}
-					var fbNode = map.get("fallback");
-					ItemModel fallback = null;
-					if (fbNode != null) {
-						var fRes = ItemModel.CODEC.decode(ops, fbNode);
-						if (fRes.result().isEmpty()) return DataResult.error(() -> "condition: invalid fallback");
-						fallback = fRes.result().get().getFirst();
-					}
-
-					// inline property (boolean kind at runtime)
-					var propRes = Property.CODEC.decode(ops, input);
-					if (propRes.result().isEmpty())
-						return DataResult.error(() -> "condition: invalid/missing property");
-					var property = propRes.result().get().getFirst();
-
-					// on_true (required)
-					var onTrueNode = map.get("on_true");
-					if (onTrueNode == null) return DataResult.error(() -> "condition: missing 'on_true'");
-					var onTrueRes = ItemModel.CODEC.decode(ops, onTrueNode);
-					if (onTrueRes.result().isEmpty()) return DataResult.error(() -> "condition: invalid 'on_true'");
-					var onTrue = onTrueRes.result().get().getFirst();
-
-					// on_false (optional)
-					var onFalseNode = map.get("on_false");
-					ItemModel onFalse = null;
-					if (onFalseNode != null) {
-						var onFalseRes = ItemModel.CODEC.decode(ops, onFalseNode);
-						if (onFalseRes.result().isEmpty())
-							return DataResult.error(() -> "condition: invalid 'on_false'");
-						onFalse = onFalseRes.result().get().getFirst();
-					}
-
-					var m = new ModelCondition();
-					m.type = TYPE;
-					m.property = property;
-					m.onTrue = onTrue;
-					m.onFalse = onFalse;
-					if (tints != null && !tints.isEmpty()) for (var t : tints) m.tint(t);
-					if (fallback != null) m.fallback(fallback);
-					return DataResult.success(Pair.of(m, input));
-				}
-			}
-	);
+	public static final MapCodec<ModelCondition> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+			Tint.CODEC.listOf().optionalFieldOf("tints").forGetter(ModelCondition::codecGetTints),
+			LAZY_SELF.optionalFieldOf("fallback").forGetter(ModelCondition::codecGetFallback),
+			Transformation.CODEC.optionalFieldOf("transformation").forGetter(ModelCondition::codecGetTransformation),
+			Property.MAP_CODEC.forGetter(ModelCondition::getProperty),
+			LAZY_SELF.fieldOf("on_true").forGetter(ModelCondition::getOnTrue),
+			LAZY_SELF.optionalFieldOf("on_false").forGetter(ModelCondition::codecGetOnFalse)
+	).apply(i, (tints, fallback, transformation, property, onTrue, onFalse) -> {
+		ModelCondition m = new ModelCondition();
+		applyBase(m, tints, fallback, transformation);
+		m.property = property;
+		m.onTrue = onTrue;
+		onFalse.ifPresent(f -> m.onFalse = f);
+		return m;
+	}));
 
 	static {
-		ItemModel.register(TYPE, MapCodec.assumeMapUnsafe(CODEC).xmap(m -> {
-			m.type = TYPE;
-			return m;
-		}, m -> m));
+		ItemModel.register(TYPE, CODEC);
 	}
 
 	private Property property;        // boolean property
@@ -131,6 +41,10 @@ public class ModelCondition extends ItemModel {
 	public ModelCondition() {
 		super(TYPE);
 	}
+
+	public Property getProperty() { return property; }
+	public ItemModel getOnTrue() { return onTrue; }
+	public java.util.Optional<ItemModel> codecGetOnFalse() { return java.util.Optional.ofNullable(onFalse); }
 
 	public ModelCondition property(Property p) {
 		this.property = p;

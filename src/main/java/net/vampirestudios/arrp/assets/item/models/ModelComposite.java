@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.arrp.assets.item.ItemModel;
 import net.vampirestudios.arrp.assets.item.tints.Tint;
+import net.vampirestudios.arrp.assets.models.Transformation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +15,13 @@ public final class ModelComposite extends ItemModel {
 			// base fields first
 			Tint.CODEC.listOf().optionalFieldOf("tints").forGetter(ModelComposite::codecGetTints),
 			LAZY_SELF.optionalFieldOf("fallback").forGetter(ModelComposite::codecGetFallback),
+			Transformation.CODEC.optionalFieldOf("transformation").forGetter(ModelComposite::codecGetTransformation),
 			// subtype
 			LAZY_SELF.listOf().fieldOf("parts").forGetter(ModelComposite::getParts)
-	).apply(i, (tints, fallback, parts) -> {
+	).apply(i, (tints, fallback, transformation, parts) -> {
 		ModelComposite m = new ModelComposite();
 		m.parts = parts;
-		ItemModel.applyBase(m, tints, fallback);
+		ItemModel.applyBase(m, tints, fallback, transformation);
 		return m;
 	}));
 

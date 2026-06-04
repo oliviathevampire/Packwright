@@ -2,10 +2,10 @@ package net.vampirestudios.arrp.assets.item;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.assets.item.models.*;
 import net.vampirestudios.arrp.assets.item.tints.Tint;
+import net.vampirestudios.arrp.assets.models.Transformation;
 import net.vampirestudios.arrp.impl.Codecs;
 
 import java.util.*;
@@ -18,6 +18,7 @@ public abstract class ItemModel {
     protected String type;
     protected List<Tint> tints;
     protected ItemModel fallback;
+    protected Transformation transformation;
 
     protected ItemModel() {}
 
@@ -30,6 +31,11 @@ public abstract class ItemModel {
     public List<Tint> getTints() { return tints; }
 
     public ItemModel getFallback() { return fallback; }
+
+    public ItemModel transformation(Transformation transformation) {
+        this.transformation = transformation;
+        return this;
+    }
 
     public ItemModel tints(Tint... tints) {
         this.tints = Arrays.asList(tints);
@@ -104,6 +110,11 @@ public abstract class ItemModel {
         return Optional.ofNullable(fallback);
     }
 
+    /** null-safe Optional getter for transformation */
+    protected Optional<Transformation> codecGetTransformation() {
+        return Optional.ofNullable(transformation);
+    }
+
     /** apply decoded tints+fallback to a subtype instance */
     protected static <M extends ItemModel> M applyBase(M m,
                                                         Optional<List<Tint>> tintsOpt,
@@ -113,15 +124,14 @@ public abstract class ItemModel {
         return m;
     }
 
-    // ----- helper for subtypes -----
-
-    /**
-     * Convenience group for including base fields in subtype RecordCodecBuilder.
-     */
-    protected static <M extends ItemModel> List<RecordCodecBuilder<M, ?>> baseFields() {
-        return List.of(
-            Tint.CODEC.listOf().optionalFieldOf("tints").forGetter(M::codecGetTints),
-            LAZY_SELF.optionalFieldOf("fallback").forGetter(M::codecGetFallback)
-        );
+    /** apply decoded tints, fallback, and transformation to a subtype instance */
+    protected static <M extends ItemModel> M applyBase(M m,
+                                                       Optional<List<Tint>> tintsOpt,
+                                                       Optional<ItemModel> fbOpt,
+                                                       Optional<Transformation> transformationOpt) {
+        tintsOpt.ifPresent(m::tints);
+        fbOpt.ifPresent(m::fallback);
+        transformationOpt.ifPresent(m::transformation);
+        return m;
     }
 }
