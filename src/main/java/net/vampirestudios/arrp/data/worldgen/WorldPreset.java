@@ -44,7 +44,8 @@ public class WorldPreset {
 	public static class Generator {
 		public static final Codec<Generator> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("type").forGetter(x -> x.type),
-				Identifier.CODEC.optionalFieldOf("settings", vanillaId("overworld")).forGetter(x -> x.settings),
+				// required by the noise generator; fieldOf+orElse always encodes it
+				Identifier.CODEC.fieldOf("settings").orElse(vanillaId("overworld")).forGetter(x -> x.settings),
 				BiomeSource.CODEC.fieldOf("biome_source").forGetter(x -> x.biomeSource)
 		).apply(i, (type, settings, biomeSource) -> new Generator().type(type).settings(settings).biomeSource(biomeSource)));
 
@@ -63,7 +64,8 @@ public class WorldPreset {
 		public static class BiomeSource {
 			public static final Codec<BiomeSource> CODEC = RecordCodecBuilder.create(i -> i.group(
 					Identifier.CODEC.fieldOf("type").forGetter(x -> x.type),
-					Identifier.CODEC.optionalFieldOf("biome", vanillaId("plains")).forGetter(x -> x.biome)
+					// required by the fixed biome source; fieldOf+orElse always encodes it
+					Identifier.CODEC.fieldOf("biome").orElse(vanillaId("plains")).forGetter(x -> x.biome)
 			).apply(i, (type, biome) -> new BiomeSource().type(type).biome(biome)));
 
 			private Identifier type = vanillaId("fixed");

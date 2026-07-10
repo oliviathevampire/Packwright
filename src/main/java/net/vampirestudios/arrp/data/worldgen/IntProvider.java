@@ -18,7 +18,9 @@ public interface IntProvider {
 				return switch (normalizeType(type)) {
 					case "uniform" -> UniformInt.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 					case "biased_to_bottom" -> BiasedToBottomInt.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+					case "very_biased_to_bottom" -> VeryBiasedToBottomInt.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 					case "clamped" -> ClampedInt.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+					case "weighted_list" -> WeightedListInt.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 					default -> DataResult.error(() -> "Unknown int provider type: " + type);
 				};
 			});
@@ -28,7 +30,9 @@ public interface IntProvider {
 		public <T> DataResult<T> encode(IntProvider input, DynamicOps<T> ops, T prefix) {
 			if (input instanceof UniformInt uniform) return UniformInt.CODEC.codec().encode(uniform, ops, prefix);
 			if (input instanceof BiasedToBottomInt biased) return BiasedToBottomInt.CODEC.codec().encode(biased, ops, prefix);
+			if (input instanceof VeryBiasedToBottomInt veryBiased) return VeryBiasedToBottomInt.CODEC.codec().encode(veryBiased, ops, prefix);
 			if (input instanceof ClampedInt clamped) return ClampedInt.CODEC.codec().encode(clamped, ops, prefix);
+			if (input instanceof WeightedListInt weightedList) return WeightedListInt.CODEC.codec().encode(weightedList, ops, prefix);
 			return DataResult.error(() -> "Constant int providers must be encoded as a raw int");
 		}
 	};
@@ -50,8 +54,23 @@ public interface IntProvider {
 		return new BiasedToBottomInt(minInclusive, maxInclusive);
 	}
 
+	/**
+	 * a random value in the range with a quadratic bias towards the minimum (since 26.3)
+	 */
+	static IntProvider veryBiasedToBottom(int minInclusive, int maxInclusive) {
+		return new VeryBiasedToBottomInt(minInclusive, maxInclusive);
+	}
+
 	static IntProvider clamped(IntProvider source, int minInclusive, int maxInclusive) {
 		return new ClampedInt(source, minInclusive, maxInclusive);
+	}
+
+	static IntProvider weightedList(WeightedIntProviderEntry... entries) {
+		return new WeightedListInt(java.util.List.of(entries));
+	}
+
+	static WeightedIntProviderEntry weighted(IntProvider provider, int weight) {
+		return new WeightedIntProviderEntry(provider, weight);
 	}
 
 	int min();
@@ -100,6 +119,19 @@ public interface IntProvider {
 		public int max() { return maxInclusive; }
 	}
 
+	record VeryBiasedToBottomInt(int minInclusive, int maxInclusive) implements IntProvider {
+		public static final MapCodec<VeryBiasedToBottomInt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:very_biased_to_bottom"),
+				Codec.INT.fieldOf("min_inclusive").forGetter(VeryBiasedToBottomInt::minInclusive),
+				Codec.INT.fieldOf("max_inclusive").forGetter(VeryBiasedToBottomInt::maxInclusive)
+		).apply(i, (type, minInclusive, maxInclusive) -> new VeryBiasedToBottomInt(minInclusive, maxInclusive)));
+
+		@Override
+		public int min() { return minInclusive; }
+		@Override
+		public int max() { return maxInclusive; }
+	}
+
 	record ClampedInt(IntProvider source, int minInclusive, int maxInclusive) implements IntProvider {
 		public static final MapCodec<ClampedInt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:clamped"),
@@ -112,5 +144,29 @@ public interface IntProvider {
 		public int min() { return minInclusive; }
 		@Override
 		public int max() { return maxInclusive; }
+	}
+
+	record WeightedListInt(java.util.List<WeightedIntProviderEntry> distribution) implements IntProvider {
+		public static final MapCodec<WeightedListInt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:weighted_list"),
+				WeightedIntProviderEntry.CODEC.listOf().fieldOf("distribution").forGetter(WeightedListInt::distribution)
+		).apply(i, (type, distribution) -> new WeightedListInt(distribution)));
+
+		@Override
+		public int min() {
+			return distribution.stream().mapToInt(entry -> entry.data().min()).min().orElse(0);
+		}
+
+		@Override
+		public int max() {
+			return distribution.stream().mapToInt(entry -> entry.data().max()).max().orElse(0);
+		}
+	}
+
+	record WeightedIntProviderEntry(IntProvider data, int weight) {
+		public static final Codec<WeightedIntProviderEntry> CODEC = RecordCodecBuilder.create(i -> i.group(
+				IntProvider.CODEC.fieldOf("data").forGetter(WeightedIntProviderEntry::data),
+				Codec.INT.fieldOf("weight").forGetter(WeightedIntProviderEntry::weight)
+		).apply(i, WeightedIntProviderEntry::new));
 	}
 }

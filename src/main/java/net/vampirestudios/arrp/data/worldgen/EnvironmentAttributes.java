@@ -42,6 +42,8 @@ public class EnvironmentAttributes {
     public static final Identifier CAN_START_RAID = vanillaId("gameplay/can_start_raid");
     public static final Identifier WATER_EVAPORATES = vanillaId("gameplay/water_evaporates");
     public static final Identifier BED_RULE = vanillaId("gameplay/bed_rule");
+    /** same format as {@link #BED_RULE}, but used for the straw bed (since 26.3) */
+    public static final Identifier STRAW_BED_RULE = vanillaId("gameplay/straw_bed_rule");
     public static final Identifier RESPAWN_ANCHOR_WORKS = vanillaId("gameplay/respawn_anchor_works");
     public static final Identifier NETHER_PORTAL_SPAWNS_PIGLINS = vanillaId("gameplay/nether_portal_spawns_piglin");
     public static final Identifier FAST_LAVA = vanillaId("gameplay/fast_lava");
@@ -105,6 +107,43 @@ public class EnvironmentAttributes {
         return this;
     }
 
+    /** for object-valued attributes, e.g. the bed rules */
+    public EnvironmentAttributes set(Identifier key, com.google.gson.JsonElement value) {
+        if (key != null && value != null) {
+            this.values.put(key, EnvironmentAttributeValue.ofJson(value));
+        }
+        return this;
+    }
+
+    /** when sleeping / setting spawn is possible in a bed rule */
+    public enum BedRuleCondition {
+        ALWAYS("always"),
+        /** global skylight level is less than 4 */
+        WHEN_DARK("when_dark"),
+        NEVER("never");
+
+        private final String id;
+
+        BedRuleCondition(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
+    private static com.google.gson.JsonObject bedRuleValue(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
+        com.google.gson.JsonObject rule = new com.google.gson.JsonObject();
+        rule.addProperty("can_set_spawn", canSetSpawn.getId());
+        rule.addProperty("can_sleep", canSleep.getId());
+        rule.addProperty("destroy_on_use", destroyOnUse);
+        if (destroyOnLeave != null) {
+            rule.addProperty("destroy_on_leave", destroyOnLeave);
+        }
+        return rule;
+    }
+
     public EnvironmentAttributes fogColor(String color) { return set(FOG_COLOR, color); }
     public EnvironmentAttributes fogStartDistance(float value) { return set(FOG_START_DISTANCE, value); }
     public EnvironmentAttributes fogEndDistance(float value) { return set(FOG_END_DISTANCE, value); }
@@ -132,7 +171,19 @@ public class EnvironmentAttributes {
     public EnvironmentAttributes skyLightLevel(float value) { return set(SKY_LIGHT_LEVEL, value); }
     public EnvironmentAttributes canStartRaid(boolean value) { return set(CAN_START_RAID, value); }
     public EnvironmentAttributes waterEvaporates(boolean value) { return set(WATER_EVAPORATES, value); }
-    public EnvironmentAttributes bedRule(String value) { return set(BED_RULE, value); }
+    /**
+     * bed rule as an object value with the fields the game requires;
+     * {@code explodes} was renamed to {@code destroy_on_use} in 26.3
+     *
+     * @param destroyOnLeave optional, may be null
+     */
+    public EnvironmentAttributes bedRule(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
+        return set(BED_RULE, bedRuleValue(canSetSpawn, canSleep, destroyOnUse, destroyOnLeave));
+    }
+
+    public EnvironmentAttributes strawBedRule(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
+        return set(STRAW_BED_RULE, bedRuleValue(canSetSpawn, canSleep, destroyOnUse, destroyOnLeave));
+    }
     public EnvironmentAttributes respawnAnchorWorks(boolean value) { return set(RESPAWN_ANCHOR_WORKS, value); }
     public EnvironmentAttributes netherPortalSpawnsPiglins(boolean value) { return set(NETHER_PORTAL_SPAWNS_PIGLINS, value); }
     public EnvironmentAttributes fastLava(boolean value) { return set(FAST_LAVA, value); }

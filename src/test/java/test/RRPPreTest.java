@@ -1,5 +1,6 @@
 package test;
 
+import com.google.gson.JsonObject;
 import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -10,7 +11,10 @@ import net.vampirestudios.arrp.assets.blockstates.BlockState;
 import net.vampirestudios.arrp.assets.blockstates.Connectables;
 import net.vampirestudios.arrp.assets.blockstates.Variant;
 import net.vampirestudios.arrp.assets.equipment.*;
-import net.vampirestudios.arrp.assets.item.*;
+import net.vampirestudios.arrp.assets.item.ItemModel;
+import net.vampirestudios.arrp.assets.item.ItemModelDefinition;
+import net.vampirestudios.arrp.assets.item.RangeEntry;
+import net.vampirestudios.arrp.assets.item.SelectCase;
 import net.vampirestudios.arrp.assets.item.models.ModelBasic;
 import net.vampirestudios.arrp.assets.item.models.ModelCondition;
 import net.vampirestudios.arrp.assets.item.models.ModelRangeDispatch;
@@ -22,11 +26,18 @@ import net.vampirestudios.arrp.assets.item.tints.TintTeam;
 import net.vampirestudios.arrp.assets.lang.Lang;
 import net.vampirestudios.arrp.assets.models.Model;
 import net.vampirestudios.arrp.data.entity.*;
+import net.vampirestudios.arrp.data.loot.Condition;
+import net.vampirestudios.arrp.data.loot.Entry;
+import net.vampirestudios.arrp.data.loot.LootFunction;
+import net.vampirestudios.arrp.data.loot.LootTable;
+import net.vampirestudios.arrp.data.loot.NumberProvider;
+import net.vampirestudios.arrp.data.loot.Pool;
 import net.vampirestudios.arrp.data.recipe.*;
 import net.vampirestudios.arrp.data.registry.*;
 import net.vampirestudios.arrp.data.worldgen.*;
+import net.vampirestudios.arrp.data.worldgen.material.MaterialCondition;
+import net.vampirestudios.arrp.data.worldgen.material.MaterialRule;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
-import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.util.JsonBytes;
 import net.vampirestudios.arrp.util.VanillaIds;
 
@@ -37,7 +48,6 @@ import java.util.Optional;
 
 import static net.vampirestudios.arrp.assets.blockstates.BlockState.*;
 import static net.vampirestudios.arrp.assets.models.Model.*;
-import static net.vampirestudios.arrp.data.loot.LootTable.*;
 import static net.vampirestudios.arrp.util.ResourceHelpers.customId;
 import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
@@ -47,7 +57,7 @@ public class RRPPreTest {
 		return customId("mymod", path);
 	}
 
-	static void main(String[] args) {
+	static void main() {
 		RuntimeResourcePack pack = RuntimeResourcePack.create("test:test");
 		pack.addLang(Identifier.tryParse("aaaa:aaaa"), new Lang().entry("aaaa", "bbbbb"));
 		pack.addLang(Identifier.tryParse("modid:en_us"), new Lang().entry("item.custom", "Custom Item"));
@@ -62,7 +72,6 @@ public class RRPPreTest {
 				.addCase(SelectCase.of("Netherite Ingot", ModelBasic.of(vanillaId("item/netherite_ingot"))))
 				.addCase(SelectCase.of("Dirt", ModelBasic.of(vanillaId("block/dirt"))))
 				.addCase(SelectCase.of("Coal", ItemModel.rangeDispatch()
-						.property(PropertyCount.count())
 						.property(PropertyCount.count())
 						.entry(RangeEntry.of(10, ModelBasic.of(vanillaId("item/charcoal"))))
 						.fallback(ModelBasic.of(vanillaId("item/coal")))
@@ -190,8 +199,7 @@ public class RRPPreTest {
 		pack.addTrimMaterial(
 				myModId("copper"),
 				TrimMaterial.trimMaterial()
-						.assets(TrimMaterial.AssetGroup.assetGroup("copper")
-								.overrideArmorAsset(myModId("test_armor"), "copper_test"))
+						.palette(vanillaId("trim/copper"))
 						.description("Copper")
 		);
 		pack.addTrimPattern(
@@ -225,6 +233,7 @@ public class RRPPreTest {
 				Instrument.instrument()
 						.soundEvent(vanillaId("item.goat_horn.sound.0"))
 						.useDuration(7.0F)
+						.durabilityDamage(1)
 						.range(64.0F)
 						.description("Small Horn")
 		);
@@ -236,41 +245,31 @@ public class RRPPreTest {
 						.lengthInSeconds(120.0F)
 						.comparatorOutput(7)
 		);
-		pack.addConfiguredCarver(
+		pack.addCarver(
 				myModId("small_cave"),
-				ConfiguredCarver.carver()
-						.type("minecraft:cave")
+				Carver.cave()
 						.probability(0.05F)
-						.replaceable(Identifier.tryParse("minecraft:overworld_carver_replaceables"))
+						.y(HeightProvider.uniform(VerticalAnchor.absolute(8), VerticalAnchor.absolute(180)))
+						// quadratic bias towards 0 tunnels per seed chunk (26.3 int provider type)
+						.count(IntProvider.veryBiasedToBottom(0, 3))
+						.thickness(FloatProvider.uniform(0.5F, 1.5F))
+						.weirdThicknessBias(true)
+						.roomVerticalRadiusMultiplier(FloatProvider.constant(1.0F))
 		);
-		pack.addConfiguredCarver(
+		pack.addCarver(
 				myModId("canyon"),
-				ConfiguredCarver.canyon()
-						.config(ConfiguredCarver.Config.config()
-								.debugSettings(ConfiguredCarver.DebugSettings.debugSettings()
-										.airState(WorldgenBlockState.blockState(vanillaId("warped_button"))
-												.property("face", "wall")
-												.property("facing", "north")
-												.property("powered", false))
-										.barrierState(WorldgenBlockState.blockState(vanillaId("glass")))
-										.lavaState(WorldgenBlockState.blockState(vanillaId("orange_stained_glass")))
-										.waterState(WorldgenBlockState.blockState(vanillaId("candle"))
-												.property("candles", 1)
-												.property("lit", false)
-												.property("waterlogged", false)))
-								.lavaLevel(VerticalAnchor.aboveBottom(8))
-								.probability(0.01F)
-								.replaceable(vanillaId("overworld_carver_replaceables"))
-								.shape(ConfiguredCarver.CanyonShape.canyonShape()
-										.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
-										.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
-										.thickness(FloatProvider.trapezoid(0.0F, 6.0F, 2.0F))
-										.verticalRadiusCenterFactor(0.0F)
-										.verticalRadiusDefaultFactor(1.0F)
-										.widthSmoothness(3))
-								.verticalRotation(FloatProvider.uniform(-0.125F, 0.125F))
-								.y(HeightProvider.uniform(VerticalAnchor.absolute(10), VerticalAnchor.absolute(67)))
-								.yScale(3.0F))
+				Carver.canyon()
+						.probability(0.01F)
+						.y(HeightProvider.uniform(VerticalAnchor.absolute(10), VerticalAnchor.absolute(67)))
+						.shape(Carver.CanyonShape.canyonShape()
+								.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
+								.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
+								.thickness(FloatProvider.trapezoid(0.0F, 6.0F, 2.0F))
+								.yScale(3.0F)
+								.verticalRadiusCenterFactor(0.0F)
+								.verticalRadiusDefaultFactor(1.0F)
+								.widthSmoothness(3))
+						.verticalRotation(FloatProvider.uniform(-0.125F, 0.125F))
 		);
 		pack.addProcessorList(
 				myModId("mossy_replace"),
@@ -361,6 +360,88 @@ public class RRPPreTest {
 								})
 				)
 		);
+		// data-driven brewing (since 26.3): a vanilla-style potion recipe, matching only
+		// awkward potions in the bottle slots via a potion_contents predicate
+		pack.addRecipe(
+				customId("example", "brew_luck"),
+				Recipe.brewing(
+						BrewingRecipe.PotionIngredient.of(vanillaId("potion"))
+								.potion(vanillaId("awkward")),
+						BrewingRecipe.PotionIngredient.of(vanillaId("rabbit_foot")),
+						Result.result(vanillaId("potion"))
+								.components(components -> {
+									JsonObject contents = new JsonObject();
+									contents.addProperty("potion", "minecraft:luck");
+									components.add("minecraft:potion_contents", contents);
+								})
+				)
+		);
+		// brewing is no longer limited to potions - any items may be used in any slot
+		pack.addRecipe(
+				customId("example", "brew_sponge"),
+				Recipe.brewing(
+						BrewingRecipe.PotionIngredient.of(vanillaId("wet_sponge")),
+						BrewingRecipe.PotionIngredient.of(vanillaId("blaze_powder")),
+						Result.result(vanillaId("sponge"))
+				)
+		);
+
+		// reusable number providers in the number_provider registry (since 26.3),
+		// e.g. for the minecraft:compostable component's "layers" field
+		pack.addNumberProvider(
+				myModId("compostable/golden"),
+				NumberProvider.weightedList(List.of(
+						NumberProvider.weighted(NumberProvider.constant(1), 9),
+						NumberProvider.weighted(NumberProvider.constant(2), 1)
+				))
+		);
+		pack.addNumberProvider(
+				myModId("lucky_bonus"),
+				NumberProvider.numberDispatcher(
+						NumberProvider.constant(0),
+						List.of(
+								NumberProvider.dispatchCase(Condition.randomChance(0.05F), NumberProvider.uniform(3, 5)),
+								NumberProvider.dispatchCase(Condition.randomChance(0.25F), NumberProvider.constant(1))
+						)
+				)
+		);
+
+		// material rules & conditions (since 26.3): the pipeline that used to live in the
+		// noise settings' surface_rule field, now reusable as registry entries
+		pack.addMaterialCondition(
+				myModId("above_sea_level"),
+				MaterialCondition.yAbove(VerticalAnchor.absolute(63), 0, false)
+		);
+		pack.addMaterialRule(
+				myModId("desert_surface"),
+				MaterialRule.sequence(
+						MaterialRule.condition(
+								MaterialCondition.biome(vanillaId("desert")),
+								MaterialRule.condition(
+										MaterialCondition.stoneDepth(0, true, "floor"),
+										MaterialRule.block(vanillaId("red_sand")))),
+						MaterialRule.block(VanillaIds.STONE)
+				)
+		);
+
+		// block loot with 26.3 loot features: the tool/can_silk_touch vanilla predicate
+		// referenced instead of an inlined check, and a conditional_value number provider
+		pack.addLootTable(
+				myModId("blocks/gilded_stone"),
+				LootTable.block().pool(Pool.of().rolls(1)
+						.entry(Entry.alternatives(
+								Entry.item(vanillaId("gilded_stone"))
+										.condition(Condition.reference(vanillaId("tool/can_silk_touch"))),
+								Entry.item(vanillaId("gold_nugget"))
+										.function(LootFunction.setCount(NumberProvider.conditionalValue(
+												Condition.randomChance(0.1F),
+												NumberProvider.uniform(2, 4),
+												NumberProvider.constant(1))))
+						))
+						.condition(Condition.survivesExplosion())
+				)
+		);
+		pack.addDataPackMcmeta("ARRP kitchen-sink test pack");
 		pack.dumpDirect(Path.of("aaaa"));
 
 		BlockState iron_block = state(variant(BlockState.model(vanillaId("block/iron_block"))));
@@ -386,9 +467,17 @@ public class RRPPreTest {
 
 		Lang lang = Lang.lang().allPotionOf(customId("mod_id", "potion_id"), "Example");
 
-		System.out.println(RuntimeResourcePackImpl.GSON.toJson(loot("minecraft:block").pool(pool().rolls(1)
-				.entry(entry().type("minecraft:item").name("minecraft:diamond"))
-				.condition(predicate("minecraft:survives_explosion")))));
+		var lootTableNew = LootTable.block().pool(Pool.of().rolls(1)
+				.entry(Entry.item("minecraft:diamond"))
+				.condition(Condition.survivesExplosion())
+		);
+		LootTable lootTable = LootTable.loot("minecraft:block").pool(
+				LootTable.pool().rolls(1)
+						.entry(LootTable.entry().type("minecraft:item").name("minecraft:diamond"))
+						.condition(Condition.survivesExplosion())
+		);
+		System.out.println(JsonBytes.encodeToPrettyString(LootTable.CODEC, lootTable));
+
 		System.out.println(JsonBytes.encodeToPrettyString(BlockState.CODEC, iron_block));
 		System.out.println(JsonBytes.encodeToPrettyString(BlockState.CODEC, oak_fence));
 		System.out.println(JsonBytes.encodeToPrettyString(Model.CODEC, model));
@@ -677,7 +766,9 @@ public class RRPPreTest {
 			System.out.println("// Connectables.counterLike");
 			System.out.println(JsonBytes.encodeToPrettyString(BlockState.CODEC, counterLike));
 
-			SkyIslandsWorldgen.main(args);
+			SkyIslandsWorldgen.main();
+			EmberWastesWorldgen.main();
+			DataRegistryExamples.main();
 
 			EnvironmentAttributes environmentAttributes = new EnvironmentAttributes()
 					.skyColor("#78a7ff")
@@ -699,7 +790,10 @@ public class RRPPreTest {
 					.set(EnvironmentAttributes.SKY_LIGHT_FACTOR, 0.0F)
 					.set(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, -13621215)
 					.set(EnvironmentAttributes.DEFAULT_DRIPSTONE_PARTICLE, vanillaId("pointed_dripstone_lava"))
-					.set(EnvironmentAttributes.BED_RULE, "explodes")
+					.bedRule(EnvironmentAttributes.BedRuleCondition.NEVER,
+							EnvironmentAttributes.BedRuleCondition.NEVER, true, true)
+					.strawBedRule(EnvironmentAttributes.BedRuleCondition.ALWAYS,
+							EnvironmentAttributes.BedRuleCondition.WHEN_DARK, false, null)
 					.set(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, true)
 					.set(EnvironmentAttributes.WATER_EVAPORATES, true)
 					.set(EnvironmentAttributes.FAST_LAVA, true)

@@ -34,7 +34,7 @@ public class Biome {
 					Effects.CODEC.fieldOf("effects")
 							.forGetter(Biome::effects),
 					Codec.unboundedMap(Identifier.CODEC, AttributeValue.CODEC)
-							.optionalFieldOf("attributes", Collections.emptyMap())
+							.fieldOf("attributes").orElse(Collections.emptyMap())
 							.forGetter(b -> b.attributes == null ? Collections.emptyMap() : b.attributes),
 					Codec.FLOAT.optionalFieldOf("creature_spawn_probability")
 							.forGetter(b -> {
@@ -56,15 +56,16 @@ public class Biome {
 											? Collections.emptyMap()
 											: b.spawnSettings.getSpawners()
 							)),
+					// carvers and features are required by the game, even when empty
 					Identifier.CODEC.listOf()
-							.optionalFieldOf("carvers", Collections.emptyList())
+							.fieldOf("carvers").orElse(Collections.emptyList())
 							.forGetter(b -> {
 								if (b.generation == null) return Collections.emptyList();
 								return b.generation.getCarvers();
 							}),
 
 					Identifier.CODEC.listOf().listOf()
-							.optionalFieldOf("features", Collections.emptyList())
+							.fieldOf("features").orElse(Collections.emptyList())
 							.forGetter(b -> {
 								if (b.generation == null) return Collections.emptyList();
 								return b.generation.getFeaturesByStep();
@@ -494,9 +495,10 @@ public class Biome {
 	public static class Generation {
 		public static final Codec<Generation> CODEC = RecordCodecBuilder.create(instance ->
 				instance.group(
-						Identifier.CODEC.listOf().optionalFieldOf("carvers", Collections.emptyList())
+						// carvers and features are required by the game, even when empty
+						Identifier.CODEC.listOf().fieldOf("carvers").orElse(Collections.emptyList())
 								.forGetter(g -> g.carvers == null ? Collections.emptyList() : g.carvers),
-						Identifier.CODEC.listOf().listOf().optionalFieldOf("features", Collections.emptyList())
+						Identifier.CODEC.listOf().listOf().fieldOf("features").orElse(Collections.emptyList())
 								.forGetter(g -> g.features == null ? Collections.emptyList() : g.features)
 				).apply(instance, (carvers, features) -> {
 					Generation g = new Generation();

@@ -1,10 +1,10 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17.0-alpha.8'
+    id 'net.fabricmc.fabric-loom' version '1.17.13'
     id 'maven-publish'
     id "me.modmuss50.mod-publish-plugin" version "1.1.0"
 }
 
-version = project.mod_version
+version = project.mod_version + "-" + project.minecraft_version
 group = project.maven_group
 
 dependencies {

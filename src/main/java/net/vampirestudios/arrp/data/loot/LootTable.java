@@ -1,52 +1,122 @@
 package net.vampirestudios.arrp.data.loot;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.vampirestudios.arrp.data.predicate.ItemPredicate;
+import net.vampirestudios.arrp.data.predicate.PredicateBuilder;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
-public class LootTable {
-	public static final Codec<LootTable> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Codec.STRING.fieldOf("type").forGetter(LootTable::getType),
-			Pool.CODEC.listOf().fieldOf("pools").forGetter(LootTable::getPools),
-			Identifier.CODEC.optionalFieldOf("random_sequence").forGetter(t -> Optional.ofNullable(t.randomSequence))
-	).apply(i, (type, pools, rnd) -> {
-		LootTable t = new LootTable(type, pools);
-		rnd.ifPresent(t::randomSequence);
-		return t;
-	}));
+/**
+ * A loot table. Create one with a typed factory ({@link #block()}, {@link #entity()},
+ * {@link #chest()}, ...) or {@link #loot(String)}, then add pools:
+ * <pre>{@code
+ * LootTable.block()
+ *     .pool(Pool.of().rolls(1)
+ *         .entry(Entry.item("mymod:my_block")
+ *             .condition(Condition.survivesExplosion())))
+ * }</pre>
+ */
+public class LootTable extends PredicateBuilder<LootTable> {
+	public static final Codec<LootTable> CODEC = codecOf(LootTable::new, null, "Loot table");
 
-	private final String type;
-	private List<Pool> pools;
-	private Identifier randomSequence; // NEW
+	private final List<Pool> pools = new ArrayList<>();
+
+	public LootTable() {
+	}
 
 	/**
 	 * @see LootTable#loot(String)
 	 */
 	public LootTable(String type) {
-		this.type = type;
+		if (type != null) {
+			this.type(type);
+		}
 	}
 
 	public LootTable(String type, List<Pool> pools) {
-		this.type = type;
-		this.pools = pools;
+		this(type);
+		for (Pool pool : pools) {
+			this.pool(pool);
+		}
 	}
+
+	// ---------- factories ----------
 
 	public static LootTable loot(String type) {
 		return new LootTable(type);
 	}
 
+	public static LootTable block() {
+		return loot("minecraft:block");
+	}
+
+	public static LootTable entity() {
+		return loot("minecraft:entity");
+	}
+
+	public static LootTable chest() {
+		return loot("minecraft:chest");
+	}
+
+	public static LootTable fishing() {
+		return loot("minecraft:fishing");
+	}
+
+	public static LootTable gift() {
+		return loot("minecraft:gift");
+	}
+
+	public static LootTable barterTable() {
+		return loot("minecraft:barter");
+	}
+
+	public static LootTable archaeology() {
+		return loot("minecraft:archaeology");
+	}
+
+	public static LootTable generic() {
+		return loot("minecraft:generic");
+	}
+
 	/** Single-item block drop: one pool, one roll, one item entry. */
 	public static LootTable dropping(Identifier item) {
-		return loot("minecraft:block")
-				.pool(pool().rolls(1).entry(entry().type("minecraft:item").name(item.toString())));
+		return block().pool(Pool.of().rolls(1).entry(Entry.item(item)));
 	}
 
 	public static LootTable dropping(String item) {
 		return dropping(Identifier.parse(item));
+	}
+
+	/**
+	 * Single-item block drop that is destroyed by explosions, like most vanilla blocks.
+	 */
+	public static LootTable droppingSurvivesExplosion(Identifier item) {
+		return block().pool(Pool.of().rolls(1)
+				.entry(Entry.item(item).condition(Condition.survivesExplosion())));
+	}
+
+	/**
+	 * Drops one of two items depending on whether the tool has silk touch, e.g. glass vs nothing
+	 * or stone vs cobblestone.
+	 */
+	public static LootTable droppingWithSilkTouch(Identifier withSilkTouch, Identifier withoutSilkTouch) {
+		return block().pool(Pool.of().rolls(1)
+				.entry(Entry.alternatives(
+						Entry.item(withSilkTouch).condition(hasSilkTouch()),
+						Entry.item(withoutSilkTouch).condition(Condition.survivesExplosion()))));
+	}
+
+	/**
+	 * the standard vanilla "tool has silk touch" check
+	 */
+	public static Condition hasSilkTouch() {
+		return Condition.matchTool(ItemPredicate.of()
+				.predicate("minecraft:enchantments", List.of(Map.of(
+						"enchantments", "minecraft:silk_touch",
+						"levels", Map.of("min", 1)))));
 	}
 
 	public static Entry entry() {
@@ -68,37 +138,56 @@ public class LootTable {
 		return new Pool();
 	}
 
-	public static Roll roll(int min, int max) {
-		return new Roll(min, max);
+	// ---------- builder ----------
+
+	public LootTable type(String type) {
+		return parameter("type", type);
 	}
 
-	// --- NEW: builder + getter ---
-	public LootTable randomSequence(Identifier id) {
-		this.randomSequence = id;
-		return this;
-	}
-
-	public LootTable randomSequence(String id) {
-		return randomSequence(Identifier.tryParse(id));
-	}
-
-	public Identifier getRandomSequence() {
-		return randomSequence;
+	public LootTable type(Identifier type) {
+		return parameter("type", type);
 	}
 
 	public LootTable pool(Pool pool) {
-		if (this.pools == null) {
-			this.pools = new ArrayList<>(1);
-		}
 		this.pools.add(pool);
+		subList("pools").add(pool.asMap());
 		return this;
 	}
 
+	public LootTable pools(Pool... pools) {
+		for (Pool pool : pools) {
+			pool(pool);
+		}
+		return this;
+	}
+
+	/**
+	 * adds a table-wide function, applied to every item this table drops
+	 */
+	public LootTable function(LootFunction function) {
+		subList("functions").add(function.asMap());
+		return this;
+	}
+
+	public LootTable randomSequence(Identifier id) {
+		return parameter("random_sequence", id);
+	}
+
+	public LootTable randomSequence(String id) {
+		return parameter("random_sequence", id);
+	}
+
+	public Identifier getRandomSequence() {
+		Object id = this.values.get("random_sequence");
+		return id == null ? null : Identifier.tryParse(String.valueOf(id));
+	}
+
 	public String getType() {
-		return type;
+		Object type = this.values.get("type");
+		return type == null ? null : String.valueOf(type);
 	}
 
 	public List<Pool> getPools() {
-		return pools == null ? List.of() : List.copyOf(pools);
+		return List.copyOf(this.pools);
 	}
 }

@@ -6,7 +6,7 @@ import com.mojang.serialization.Codec;
 import java.util.function.Function;
 
 public interface VerticalAnchor {
-	Codec<VerticalAnchor> CODEC = Codec.xor(Absolute.CODEC, Codec.xor(AboveBottom.CODEC, BelowTop.CODEC))
+	Codec<VerticalAnchor> CODEC = Codec.xor(Absolute.CODEC, Codec.xor(AboveBottom.CODEC, Codec.xor(BelowTop.CODEC, RelativeToSeaLevel.CODEC)))
 			.xmap(VerticalAnchor::merge, VerticalAnchor::split);
 	VerticalAnchor BOTTOM = aboveBottom(0);
 	VerticalAnchor TOP = belowTop(0);
@@ -25,6 +25,10 @@ public interface VerticalAnchor {
 		return new BelowTop(offset);
 	}
 
+	public static VerticalAnchor relativeToSeaLevel(int offset) {
+		return new RelativeToSeaLevel(offset);
+	}
+
 	public static VerticalAnchor bottom() {
 		return BOTTOM;
 	}
@@ -33,14 +37,16 @@ public interface VerticalAnchor {
 		return TOP;
 	}
 
-	private static VerticalAnchor merge(Either<Absolute, Either<AboveBottom, BelowTop>> either) {
-		return either.map(Function.identity(), Either::unwrap);
+	private static VerticalAnchor merge(Either<Absolute, Either<AboveBottom, Either<BelowTop, RelativeToSeaLevel>>> either) {
+		return either.map(Function.identity(), right -> right.map(Function.identity(), Either::unwrap));
 	}
 
-	private static Either<Absolute, Either<AboveBottom, BelowTop>> split(VerticalAnchor anchor) {
+	private static Either<Absolute, Either<AboveBottom, Either<BelowTop, RelativeToSeaLevel>>> split(VerticalAnchor anchor) {
 		return anchor instanceof Absolute absolute
 				? Either.left(absolute)
-				: Either.right(anchor instanceof AboveBottom aboveBottom ? Either.left(aboveBottom) : Either.right((BelowTop) anchor));
+				: Either.right(anchor instanceof AboveBottom aboveBottom
+						? Either.left(aboveBottom)
+						: Either.right(anchor instanceof BelowTop belowTop ? Either.left(belowTop) : Either.right((RelativeToSeaLevel) anchor)));
 	}
 
 	public record AboveBottom(int offset) implements VerticalAnchor {
@@ -61,6 +67,13 @@ public interface VerticalAnchor {
 		public static final Codec<BelowTop> CODEC = Codec.intRange(MIN_Y, MAX_Y)
 				.fieldOf("below_top")
 				.xmap(BelowTop::new, BelowTop::offset)
+				.codec();
+	}
+
+	public record RelativeToSeaLevel(int offset) implements VerticalAnchor {
+		public static final Codec<RelativeToSeaLevel> CODEC = Codec.intRange(MIN_Y, MAX_Y)
+				.fieldOf("relative_to_sea_level")
+				.xmap(RelativeToSeaLevel::new, RelativeToSeaLevel::offset)
 				.codec();
 	}
 }

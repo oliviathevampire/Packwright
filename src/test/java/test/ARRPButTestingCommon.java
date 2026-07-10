@@ -25,7 +25,7 @@ import java.util.Map;
 public class ARRPButTestingCommon {
 	public static final String MOD_ID = "arrp_but_testing";
 
-	public static void main(String[] args) {
+	static void main() {
 		RuntimeResourcePack pack = RuntimeResourcePack.create(Identifier.fromNamespaceAndPath(MOD_ID, "before_user"));
 		pack.addLang(Identifier.fromNamespaceAndPath(MOD_ID, "en_us"), new Lang()
 				.block(Identifier.withDefaultNamespace("torch"), "Torch but it's different but it's not so it's the same")

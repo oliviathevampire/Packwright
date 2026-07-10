@@ -5,27 +5,25 @@
   "name": "Runtime Resource Pack",
   "description": "A mod that allows mods to generate assets/data on the fly",
   "authors": [
-    "HalfOf2"
+    "HalfOf2", "OliviaTheVampire"
   ],
   "contact": {
-    "homepage": "https://github.com/Devan-Kerman/RRP#readme",
-    "issues": "https://github.com/Devan-Kerman/RRP/issues",
-    "sources": "https://github.com/Devan-Kerman/RRP"
+    "homepage": "https://github.com/oliviathevampire/ARRP#readme",
+    "issues": "https://github.com/oliviathevampire/ARRP/issues",
+    "sources": "https://github.com/oliviathevampire/ARRP"
   },
   "license": "MPLv2",
   "icon": "assets/arrp/icon.png",
   "environment": "*",
   "entrypoints": {
-    "preLaunch": [
-		"net.vampirestudios.arrp.ARRP"
-    ]
+    "preLaunch": ["net.vampirestudios.arrp.ARRP"]
   },
   "mixins": [
     "arrp.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.18.4",
-    "minecraft": ">=26.1.2 <26.2"
+    "minecraft": ">=26.2-"
   },
   "custom": {
     "modmenu": {

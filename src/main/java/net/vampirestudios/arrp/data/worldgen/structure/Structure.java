@@ -30,7 +30,6 @@ public class Structure {
 	private JsonElement biomes;          // string or tag
 	private String step;
 	private JsonObject spawnOverrides;
-	private JsonObject settings;         // structure-specific settings
 	private final JsonObject extra = new JsonObject();
 
 	public static Structure structure() {
@@ -46,7 +45,6 @@ public class Structure {
 		this.biomes = null;
 		this.step = null;
 		this.spawnOverrides = null;
-		this.settings = null;
 		this.extra.entrySet().clear();
 
 		if (json == null) return this;
@@ -63,10 +61,6 @@ public class Structure {
 		if (json.has("spawn_overrides") && json.get("spawn_overrides").isJsonObject()) {
 			this.spawnOverrides = json.getAsJsonObject("spawn_overrides").deepCopy();
 		}
-		if (json.has("settings") && json.get("settings").isJsonObject()) {
-			this.settings = json.getAsJsonObject("settings").deepCopy();
-		}
-
 		for (String key : json.keySet()) {
 			if (!isKnown(key)) {
 				JsonElement val = json.get(key);
@@ -107,51 +101,63 @@ public class Structure {
 		return this;
 	}
 
-	public Structure settings(JsonObject settings) {
-		this.settings = settings == null ? null : settings.deepCopy();
-		return this;
-	}
-
-	public Structure extra(String key, JsonElement value) {
+	public Structure property(String key, JsonElement value) {
 		if (key != null && value != null && !isKnown(key)) {
 			this.extra.add(key, value.deepCopy());
 		}
 		return this;
 	}
 
+	public Structure property(String key, String value) {
+		return property(key, new JsonPrimitive(value));
+	}
+
+	public Structure property(String key, Identifier value) {
+		return property(key, value == null ? null : new JsonPrimitive(value.toString()));
+	}
+
+	public Structure property(String key, int value) {
+		return property(key, new JsonPrimitive(value));
+	}
+
+	public Structure property(String key, boolean value) {
+		return property(key, new JsonPrimitive(value));
+	}
+
+	public Structure extra(String key, JsonElement value) {
+		return property(key, value);
+	}
+
 	// Convenience helpers for jigsaw-like structures
 
 	public static Structure jigsaw(String startPool) {
-		Structure s = Structure.structure().type(vanillaId("jigsaw"));
-		JsonObject settings = new JsonObject();
-		settings.addProperty("start_pool", startPool);
-		s.settings(settings);
-		return s;
-	}
-
-	private JsonObject ensureSettings() {
-		if (this.settings == null) this.settings = new JsonObject();
-		return this.settings;
+		return Structure.structure()
+				.type(vanillaId("jigsaw"))
+				.property("start_pool", startPool);
 	}
 
 	public Structure size(int size) {
-		ensureSettings().addProperty("size", size);
-		return this;
+		return property("size", size);
 	}
 
 	public Structure maxDistanceFromCenter(int v) {
-		ensureSettings().addProperty("max_distance_from_center", v);
-		return this;
+		return property("max_distance_from_center", v);
 	}
 
+	/** absolute start height; the game requires a vertical anchor object, not a bare int */
 	public Structure startHeightInt(int v) {
-		ensureSettings().addProperty("start_height", v);
-		return this;
+		JsonObject anchor = new JsonObject();
+		anchor.addProperty("absolute", v);
+		return startHeight(anchor);
+	}
+
+	/** a height provider or vertical anchor object, e.g. {@code {"absolute": 0}} */
+	public Structure startHeight(JsonObject heightProvider) {
+		return property("start_height", heightProvider);
 	}
 
 	public Structure useExpansionHack(boolean v) {
-		ensureSettings().addProperty("use_expansion_hack", v);
-		return this;
+		return property("use_expansion_hack", v);
 	}
 
 	public JsonObject toJson() {
@@ -159,8 +165,8 @@ public class Structure {
 		if (this.type != null) out.addProperty("type", this.type);
 		if (this.biomes != null) out.add("biomes", this.biomes.deepCopy());
 		if (this.step != null) out.addProperty("step", this.step);
-		if (this.spawnOverrides != null) out.add("spawn_overrides", this.spawnOverrides.deepCopy());
-		if (this.settings != null) out.add("settings", this.settings.deepCopy());
+		// spawn_overrides is required by the game; default to no overrides
+		out.add("spawn_overrides", this.spawnOverrides != null ? this.spawnOverrides.deepCopy() : new JsonObject());
 		for (String key : this.extra.keySet()) {
 			JsonElement val = this.extra.get(key);
 			if (val != null) out.add(key, val.deepCopy());
@@ -172,7 +178,6 @@ public class Structure {
 		return "type".equals(key)
 				|| "biomes".equals(key)
 				|| "step".equals(key)
-				|| "spawn_overrides".equals(key)
-				|| "settings".equals(key);
+				|| "spawn_overrides".equals(key);
 	}
 }

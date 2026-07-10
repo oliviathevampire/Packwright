@@ -33,12 +33,16 @@ import java.util.function.Consumer;
  */
 public class Timeline {
 	public static final Codec<Timeline> CODEC = RecordCodecBuilder.create(i -> i.group(
+			// clock is required by the game; overworld matches pre-World-Clock behavior
+			Identifier.CODEC.fieldOf("clock").orElse(Identifier.withDefaultNamespace("overworld"))
+					.forGetter(t -> t.clock),
 			Codec.INT.optionalFieldOf("period_ticks").forGetter(t -> Optional.ofNullable(t.periodTicks)),
 			Codec.unboundedMap(Identifier.CODEC, TimeMarkerInfo.CODEC).optionalFieldOf("time_markers")
 					.forGetter(t -> t.timeMarkers.isEmpty() ? Optional.empty() : Optional.of(t.timeMarkers)),
 			Codec.unboundedMap(Identifier.CODEC, KeyframeTrack.CODEC).fieldOf("tracks").forGetter(t -> t.tracks)
-	).apply(i, (period, markers, tracks) -> {
+	).apply(i, (clock, period, markers, tracks) -> {
 		Timeline timeline = new Timeline();
+		timeline.clock = clock;
 		period.ifPresent(p -> timeline.periodTicks = p);
 		markers.ifPresent(timeline.timeMarkers::putAll);
 		timeline.tracks.putAll(tracks);
@@ -46,6 +50,7 @@ public class Timeline {
 	}));
 	private final Map<Identifier, TimeMarkerInfo> timeMarkers = new LinkedHashMap<>();
 	private final Map<Identifier, KeyframeTrack> tracks = new LinkedHashMap<>();
+	private Identifier clock = Identifier.withDefaultNamespace("overworld");
 	private Integer periodTicks;
 
 	public Timeline() {
@@ -103,6 +108,16 @@ public class Timeline {
 		config.accept(track);
 		tracks.put(attributeId, track);
 		return this;
+	}
+
+	/** the World Clock this timeline is tied to (required by the game; defaults to {@code minecraft:overworld}) */
+	public Timeline clock(Identifier clock) {
+		if (clock != null) this.clock = clock;
+		return this;
+	}
+
+	public Identifier getClock() {
+		return clock;
 	}
 
 	public Integer getPeriodTicks() {

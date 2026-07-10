@@ -72,6 +72,21 @@ public class StructureSet {
 		return this;
 	}
 
+	public StructureSet randomSpreadPlacement(int salt, int spacing, int separation) {
+		JsonObject placement = new JsonObject();
+		placement.addProperty("type", "minecraft:random_spread");
+		placement.addProperty("salt", salt);
+		placement.addProperty("spacing", spacing);
+		placement.addProperty("separation", separation);
+		return placement(placement);
+	}
+
+	public StructureSet dimensionOriginPlacement() {
+		JsonObject placement = new JsonObject();
+		placement.addProperty("type", "minecraft:dimension_origin");
+		return placement(placement);
+	}
+
 	public StructureSet extra(String key, JsonElement value) {
 		if (key != null && value != null && !isKnown(key)) {
 			this.extra.add(key, value.deepCopy());
@@ -95,17 +110,9 @@ public class StructureSet {
 	}
 
 	public static StructureSet randomSpread(Identifier structureId, int weight, int salt, int spacing, int separation) {
-		StructureSet set = StructureSet.set();
-		set.addStructure(structureId, weight);
-
-		JsonObject placement = new JsonObject();
-		placement.addProperty("type", "minecraft:random_spread");
-		placement.addProperty("salt", salt);
-		placement.addProperty("spacing", spacing);
-		placement.addProperty("separation", separation);
-		set.placement(placement);
-
-		return set;
+		return StructureSet.set()
+				.addStructure(structureId, weight)
+				.randomSpreadPlacement(salt, spacing, separation);
 	}
 
 	public JsonObject toJson() {

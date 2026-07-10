@@ -7,17 +7,18 @@ import net.minecraft.resources.Identifier;
 import net.vampirestudios.arrp.data.worldgen.HeightProvider;
 import net.vampirestudios.arrp.data.worldgen.IntProvider;
 import net.vampirestudios.arrp.data.worldgen.VerticalAnchor;
+import net.vampirestudios.arrp.data.worldgen.WorldgenBlockState;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PlacedFeature {
 	public static final Codec<PlacedFeature> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Identifier.CODEC.fieldOf("feature").forGetter(x -> x.feature),
+			FeatureReference.CODEC.fieldOf("feature").forGetter(x -> x.feature),
 			PlacementModifier.CODEC.listOf().fieldOf("placement").forGetter(x -> x.placement)
-	).apply(i, (feature, placement) -> new PlacedFeature().featureId(feature).placement(placement)));
+	).apply(i, (feature, placement) -> new PlacedFeature().feature(feature).placement(placement)));
 
-	private Identifier feature;
+	private FeatureReference feature;
 	private List<PlacementModifier> placement = new ArrayList<>();
 
 	public static PlacedFeature placed() {
@@ -25,11 +26,31 @@ public class PlacedFeature {
 	}
 
 	public static PlacedFeature placed(Identifier featureId) {
+		return placedReference(featureId);
+	}
+
+	public static PlacedFeature placed(Feature feature) {
+		return placedInline(feature);
+	}
+
+	public static PlacedFeature placedReference(Identifier featureId) {
 		return new PlacedFeature().featureId(featureId);
 	}
 
+	public static PlacedFeature placedInline(Feature feature) {
+		return new PlacedFeature().feature(feature);
+	}
+
 	public PlacedFeature featureId(Identifier id) {
-		this.feature = id;
+		return feature(FeatureReference.id(id));
+	}
+
+	public PlacedFeature feature(Feature feature) {
+		return feature(FeatureReference.inline(feature));
+	}
+
+	public PlacedFeature feature(FeatureReference feature) {
+		this.feature = feature;
 		return this;
 	}
 
@@ -75,12 +96,12 @@ public class PlacedFeature {
 		return heightRange(HeightProvider.uniform(minInclusive, maxInclusive));
 	}
 
-	public PlacedFeature randomOffset(int xzSpread, int ySpread) {
-		return randomOffset(IntProvider.constant(xzSpread), IntProvider.constant(ySpread));
+	public PlacedFeature offset(int x, int y, int z) {
+		return offset(IntProvider.constant(x), IntProvider.constant(y), IntProvider.constant(z));
 	}
 
-	public PlacedFeature randomOffset(IntProvider xzSpread, IntProvider ySpread) {
-		return modifier(new RandomOffsetPlacement(xzSpread, ySpread));
+	public PlacedFeature offset(IntProvider x, IntProvider y, IntProvider z) {
+		return modifier(new OffsetPlacement(x, y, z));
 	}
 
 	public PlacedFeature surfaceWaterDepthFilter(int maxWaterDepth) {
@@ -99,7 +120,15 @@ public class PlacedFeature {
 		return modifier(new BiomeFilterPlacement());
 	}
 
-	public Identifier getFeature() {
+	public Feature getFeature() {
+		return feature == null ? null : feature.inline();
+	}
+
+	public Identifier getFeatureId() {
+		return feature == null ? null : feature.id();
+	}
+
+	public FeatureReference getFeatureReference() {
 		return feature;
 	}
 
@@ -120,7 +149,7 @@ public class PlacedFeature {
 						case "in_square" -> InSquarePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "heightmap" -> HeightmapPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "height_range" -> HeightRangePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-						case "random_offset" -> RandomOffsetPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "offset" -> OffsetPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "surface_water_depth_filter" -> SurfaceWaterDepthFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "block_predicate_filter" -> BlockPredicateFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "environment_scan" -> EnvironmentScanPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
@@ -138,7 +167,7 @@ public class PlacedFeature {
 				if (input instanceof InSquarePlacement inSquare) return InSquarePlacement.CODEC.codec().encode(inSquare, ops, prefix);
 				if (input instanceof HeightmapPlacement heightmap) return HeightmapPlacement.CODEC.codec().encode(heightmap, ops, prefix);
 				if (input instanceof HeightRangePlacement heightRange) return HeightRangePlacement.CODEC.codec().encode(heightRange, ops, prefix);
-				if (input instanceof RandomOffsetPlacement randomOffset) return RandomOffsetPlacement.CODEC.codec().encode(randomOffset, ops, prefix);
+				if (input instanceof OffsetPlacement offset) return OffsetPlacement.CODEC.codec().encode(offset, ops, prefix);
 				if (input instanceof SurfaceWaterDepthFilterPlacement waterDepth) return SurfaceWaterDepthFilterPlacement.CODEC.codec().encode(waterDepth, ops, prefix);
 				if (input instanceof BlockPredicateFilterPlacement predicateFilter) return BlockPredicateFilterPlacement.CODEC.codec().encode(predicateFilter, ops, prefix);
 				if (input instanceof EnvironmentScanPlacement environmentScan) return EnvironmentScanPlacement.CODEC.codec().encode(environmentScan, ops, prefix);
@@ -189,12 +218,13 @@ public class PlacedFeature {
 		).apply(i, (type, height) -> new HeightRangePlacement(height)));
 	}
 
-	public record RandomOffsetPlacement(IntProvider xzSpread, IntProvider ySpread) implements PlacementModifier {
-		public static final MapCodec<RandomOffsetPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:random_offset"),
-				IntProvider.CODEC.fieldOf("xz_spread").forGetter(RandomOffsetPlacement::xzSpread),
-				IntProvider.CODEC.fieldOf("y_spread").forGetter(RandomOffsetPlacement::ySpread)
-		).apply(i, (type, xzSpread, ySpread) -> new RandomOffsetPlacement(xzSpread, ySpread)));
+	public record OffsetPlacement(IntProvider x, IntProvider y, IntProvider z) implements PlacementModifier {
+		public static final MapCodec<OffsetPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(v -> "minecraft:offset"),
+				IntProvider.CODEC.fieldOf("x").forGetter(OffsetPlacement::x),
+				IntProvider.CODEC.fieldOf("y").forGetter(OffsetPlacement::y),
+				IntProvider.CODEC.fieldOf("z").forGetter(OffsetPlacement::z)
+		).apply(i, (type, x, y, z) -> new OffsetPlacement(x, y, z)));
 	}
 
 	public record SurfaceWaterDepthFilterPlacement(int maxWaterDepth) implements PlacementModifier {
@@ -239,6 +269,7 @@ public class PlacedFeature {
 						case "matching_block_tag" -> MatchingBlockTagPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "would_survive" -> WouldSurvivePredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "replaceable" -> ReplaceablePredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "height_range" -> HeightRangePredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "not" -> NotPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "all_of" -> AllOfPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "any_of" -> AnyOfPredicate.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
@@ -253,6 +284,7 @@ public class PlacedFeature {
 				if (input instanceof MatchingBlockTagPredicate matchingTag) return MatchingBlockTagPredicate.CODEC.codec().encode(matchingTag, ops, prefix);
 				if (input instanceof WouldSurvivePredicate wouldSurvive) return WouldSurvivePredicate.CODEC.codec().encode(wouldSurvive, ops, prefix);
 				if (input instanceof ReplaceablePredicate replaceable) return ReplaceablePredicate.CODEC.codec().encode(replaceable, ops, prefix);
+				if (input instanceof HeightRangePredicate heightRange) return HeightRangePredicate.CODEC.codec().encode(heightRange, ops, prefix);
 				if (input instanceof NotPredicate not) return NotPredicate.CODEC.codec().encode(not, ops, prefix);
 				if (input instanceof AllOfPredicate allOf) return AllOfPredicate.CODEC.codec().encode(allOf, ops, prefix);
 				if (input instanceof AnyOfPredicate anyOf) return AnyOfPredicate.CODEC.codec().encode(anyOf, ops, prefix);
@@ -262,8 +294,10 @@ public class PlacedFeature {
 
 		static BlockPredicate matchingBlocks(Identifier... blocks) { return new MatchingBlocksPredicate(List.of(blocks), Offset.ZERO); }
 		static BlockPredicate matchingBlockTag(String tag) { return new MatchingBlockTagPredicate(stripTagPrefix(tag), Offset.ZERO); }
-		static BlockPredicate wouldSurvive(String state) { return new WouldSurvivePredicate(state, Offset.ZERO); }
+		static BlockPredicate wouldSurvive(String block) { return new WouldSurvivePredicate(WorldgenBlockState.blockState(Identifier.tryParse(block)), Offset.ZERO); }
+		static BlockPredicate wouldSurvive(WorldgenBlockState state) { return new WouldSurvivePredicate(state, Offset.ZERO); }
 		static BlockPredicate replaceable() { return new ReplaceablePredicate(Offset.ZERO); }
+		static BlockPredicate heightRange(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) { return new HeightRangePredicate(minInclusive, maxInclusive); }
 		static BlockPredicate not(BlockPredicate predicate) { return new NotPredicate(predicate); }
 		static BlockPredicate allOf(BlockPredicate... predicates) { return new AllOfPredicate(List.of(predicates)); }
 		static BlockPredicate anyOf(BlockPredicate... predicates) { return new AnyOfPredicate(List.of(predicates)); }
@@ -293,10 +327,10 @@ public class PlacedFeature {
 		).apply(i, (type, tag, offset) -> new MatchingBlockTagPredicate(tag, offset)));
 	}
 
-	public record WouldSurvivePredicate(String state, Offset offset) implements BlockPredicate {
+	public record WouldSurvivePredicate(WorldgenBlockState state, Offset offset) implements BlockPredicate {
 		public static final MapCodec<WouldSurvivePredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:would_survive"),
-				Codec.STRING.fieldOf("state").forGetter(WouldSurvivePredicate::state),
+				WorldgenBlockState.CODEC.fieldOf("state").forGetter(WouldSurvivePredicate::state),
 				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(WouldSurvivePredicate::offset)
 		).apply(i, (type, state, offset) -> new WouldSurvivePredicate(state, offset)));
 	}
@@ -306,6 +340,14 @@ public class PlacedFeature {
 				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:replaceable"),
 				Offset.CODEC.optionalFieldOf("offset", Offset.ZERO).forGetter(ReplaceablePredicate::offset)
 		).apply(i, (type, offset) -> new ReplaceablePredicate(offset)));
+	}
+
+	public record HeightRangePredicate(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) implements BlockPredicate {
+		public static final MapCodec<HeightRangePredicate> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:height_range"),
+				VerticalAnchor.CODEC.fieldOf("min_inclusive").forGetter(HeightRangePredicate::minInclusive),
+				VerticalAnchor.CODEC.fieldOf("max_inclusive").forGetter(HeightRangePredicate::maxInclusive)
+		).apply(i, (type, minInclusive, maxInclusive) -> new HeightRangePredicate(minInclusive, maxInclusive)));
 	}
 
 	public record NotPredicate(BlockPredicate predicate) implements BlockPredicate {

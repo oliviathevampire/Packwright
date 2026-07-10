@@ -72,6 +72,7 @@ public class VanillaIds {
 	public static final Identifier ACACIA_LOG = vanillaId("acacia_log");
 	public static final Identifier DARK_OAK_LOG = vanillaId("dark_oak_log");
 	public static final Identifier MANGROVE_LOG = vanillaId("mangrove_log");
+	public static final Identifier POPLAR_LOG = vanillaId("poplar_log");
 	public static final Identifier CHERRY_LOG = vanillaId("cherry_log");
 	public static final Identifier PALE_OAK_LOG = vanillaId("pale_oak_log");
 	public static final Identifier CRIMSON_STEM = vanillaId("crimson_stem");
@@ -425,6 +426,9 @@ public class VanillaIds {
 	public static final Identifier CHERRY_LEAVES = vanillaId("cherry_leaves");
 	public static final Identifier PALE_OAK_LEAVES = vanillaId("pale_oak_leaves");
 	public static final Identifier AZALEA_LEAVES = vanillaId("azalea_leaves");
+	public static final Identifier RED_POPLAR_LEAVES = vanillaId("red_poplar_leaves");
+	public static final Identifier YELLOW_POPLAR_LEAVES = vanillaId("yellow_poplar_leaves");
+	public static final Identifier ORANGE_POPLAR_LEAVES = vanillaId("orange_poplar_leaves");
 	public static final Identifier FLOWERING_AZALEA_LEAVES = vanillaId("flowering_azalea_leaves");
 
 	// Flowers

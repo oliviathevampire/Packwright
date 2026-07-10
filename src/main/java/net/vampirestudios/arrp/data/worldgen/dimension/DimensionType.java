@@ -36,6 +36,8 @@ public class DimensionType {
 					.forGetter(dt -> dt.infiniburn),
 			Codec.FLOAT.fieldOf("ambient_light").orElse(0.0F)
 					.forGetter(dt -> dt.ambientLight),
+			Codec.BOOL.fieldOf("has_ender_dragon_fight").orElse(false)
+					.forGetter(dt -> dt.hasEnderDragonFight),
 			Codec.unboundedMap(Identifier.CODEC, EnvironmentAttributeValue.CODEC)
 					.optionalFieldOf("attributes", Collections.emptyMap())
 					.forGetter(dt -> dt.attributes == null ? Collections.emptyMap() : dt.attributes),
@@ -50,7 +52,7 @@ public class DimensionType {
 	).apply(instance, (hasSkylight, hasCeiling, coordinateScale,
 					   monsterLightOpt, blockLimitOpt,
 					   minY, height, logicalHeight,
-					   infiniburn, ambientLight,
+					   infiniburn, ambientLight, hasEnderDragonFight,
 					   attributesMap, timelinesOpt,
 					   skyboxOpt, cardinalOpt, hasFixedTimeOpt) -> {
 
@@ -65,6 +67,7 @@ public class DimensionType {
 		t.logicalHeight = logicalHeight;
 		t.infiniburn = infiniburn;
 		t.ambientLight = ambientLight;
+		t.hasEnderDragonFight = hasEnderDragonFight;
 		t.attributes = new LinkedHashMap<>(attributesMap);
 		t.timelines = timelinesOpt.orElse(null);
 		t.skybox = skyboxOpt.orElse(null);
@@ -88,6 +91,7 @@ public class DimensionType {
 
 	private String infiniburn = vanillaTagId("infiniburn_overworld");
 	private float ambientLight = 0.0F;
+	private boolean hasEnderDragonFight = false;
 
 	private Map<Identifier, EnvironmentAttributeValue> attributes = new LinkedHashMap<>();
 	private TimelinesRef timelines;
@@ -158,6 +162,12 @@ public class DimensionType {
 		return this;
 	}
 
+	/** whether an ender dragon fight can exist in this dimension (required since 26.1) */
+	public DimensionType hasEnderDragonFight(boolean value) {
+		this.hasEnderDragonFight = value;
+		return this;
+	}
+
 	// ---- attributes ----
 
 	public DimensionType attribute(Identifier key, boolean value) {
@@ -203,7 +213,16 @@ public class DimensionType {
 	public DimensionType skyLightFactor(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_FACTOR, value); }
 	public DimensionType skyLightLevel(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_LEVEL, value); }
 	public DimensionType waterEvaporates(boolean value) { return attribute(EnvironmentAttributes.WATER_EVAPORATES, value); }
-	public DimensionType bedRule(String value) { return attribute(EnvironmentAttributes.BED_RULE, value); }
+	/** bed rule as an object value; {@code explodes} was renamed to {@code destroy_on_use} in 26.3 */
+	public DimensionType bedRule(EnvironmentAttributes.BedRuleCondition canSetSpawn,
+			EnvironmentAttributes.BedRuleCondition canSleep, boolean destroyOnUse) {
+		com.google.gson.JsonObject rule = new com.google.gson.JsonObject();
+		rule.addProperty("can_set_spawn", canSetSpawn.getId());
+		rule.addProperty("can_sleep", canSleep.getId());
+		rule.addProperty("destroy_on_use", destroyOnUse);
+		this.attributes.put(EnvironmentAttributes.BED_RULE, EnvironmentAttributeValue.ofJson(rule));
+		return this;
+	}
 	public DimensionType respawnAnchorWorks(boolean value) { return attribute(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, value); }
 	public DimensionType netherPortalSpawnsPiglins(boolean value) { return attribute(EnvironmentAttributes.NETHER_PORTAL_SPAWNS_PIGLINS, value); }
 	public DimensionType fastLava(boolean value) { return attribute(EnvironmentAttributes.FAST_LAVA, value); }

@@ -57,7 +57,8 @@ public class ProcessorList {
 	public static class Rule {
 		public static final Codec<Rule> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Test.CODEC.fieldOf("input_predicate").forGetter(x -> x.inputPredicate),
-				Test.CODEC.optionalFieldOf("location_predicate", Test.alwaysTrue()).forGetter(x -> x.locationPredicate),
+				// required by the game; fieldOf+orElse always encodes it
+				Test.CODEC.fieldOf("location_predicate").orElse(Test.alwaysTrue()).forGetter(x -> x.locationPredicate),
 				State.CODEC.fieldOf("output_state").forGetter(x -> x.outputState)
 		).apply(i, (input, location, output) -> new Rule().inputPredicate(input).locationPredicate(location).outputState(output)));
 

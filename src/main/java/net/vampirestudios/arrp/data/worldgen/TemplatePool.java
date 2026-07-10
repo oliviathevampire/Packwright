@@ -13,7 +13,8 @@ import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
 
 public class TemplatePool {
 	public static final Codec<TemplatePool> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Identifier.CODEC.optionalFieldOf("fallback", Identifier.withDefaultNamespace("empty")).forGetter(x -> x.fallback),
+			// fallback is required by the game; fieldOf+orElse always encodes it
+			Identifier.CODEC.fieldOf("fallback").orElse(Identifier.withDefaultNamespace("empty")).forGetter(x -> x.fallback),
 			Element.CODEC.listOf().fieldOf("elements").forGetter(x -> x.elements)
 	).apply(i, (fallback, elements) -> new TemplatePool().fallback(fallback).elements(elements)));
 
@@ -64,8 +65,9 @@ public class TemplatePool {
 		public static final Codec<Element> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("element_type").forGetter(x -> x.elementType),
 				Identifier.CODEC.optionalFieldOf("location").forGetter(x -> x.location),
-				Identifier.CODEC.optionalFieldOf("processors", Identifier.withDefaultNamespace("empty")).forGetter(x -> x.processors),
-				Projection.CODEC.optionalFieldOf("projection", Projection.RIGID).forGetter(x -> x.projection),
+				// required by the game; fieldOf+orElse always encodes them
+				Identifier.CODEC.fieldOf("processors").orElse(Identifier.withDefaultNamespace("empty")).forGetter(x -> x.processors),
+				Projection.CODEC.fieldOf("projection").orElse(Projection.RIGID).forGetter(x -> x.projection),
 				Codec.INT.fieldOf("weight").forGetter(x -> x.weight)
 		).apply(i, (elementType, location, processors, projection, weight) -> new Element().elementType(elementType).location(location).processors(processors).projection(projection).weight(weight)));
 

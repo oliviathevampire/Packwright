@@ -1,44 +1,47 @@
 package net.vampirestudios.arrp.api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.mojang.datafixers.util.Either;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JavaOps;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.StringRepresentable;
-import net.vampirestudios.arrp.JsonSerializers;
-import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
-import net.vampirestudios.arrp.data.advancement.Advancement;
 import net.vampirestudios.arrp.assets.animation.Animation;
 import net.vampirestudios.arrp.assets.blockstates.BlockState;
-import net.vampirestudios.arrp.data.entity.*;
 import net.vampirestudios.arrp.assets.equipment.EquipmentModel;
 import net.vampirestudios.arrp.assets.equipment.TrimMaterial;
 import net.vampirestudios.arrp.assets.equipment.TrimPattern;
 import net.vampirestudios.arrp.assets.item.ItemModelDefinition;
 import net.vampirestudios.arrp.assets.lang.Lang;
-import net.vampirestudios.arrp.data.loot.LootTable;
 import net.vampirestudios.arrp.assets.models.Model;
+import net.vampirestudios.arrp.assets.timeline.Timeline;
+import net.vampirestudios.arrp.data.advancement.Advancement;
+import net.vampirestudios.arrp.data.entity.*;
+import net.vampirestudios.arrp.data.loot.Condition;
+import net.vampirestudios.arrp.data.loot.LootFunction;
+import net.vampirestudios.arrp.data.loot.LootTable;
+import net.vampirestudios.arrp.data.loot.NumberProvider;
 import net.vampirestudios.arrp.data.recipe.Recipe;
 import net.vampirestudios.arrp.data.registry.*;
 import net.vampirestudios.arrp.data.tags.Tag;
-import net.vampirestudios.arrp.assets.timeline.Timeline;
 import net.vampirestudios.arrp.data.worldgen.*;
+import net.vampirestudios.arrp.data.worldgen.material.MaterialCondition;
+import net.vampirestudios.arrp.data.worldgen.material.MaterialRule;
 import net.vampirestudios.arrp.data.worldgen.biome.Biome;
 import net.vampirestudios.arrp.data.worldgen.dimension.Dimension;
 import net.vampirestudios.arrp.data.worldgen.dimension.DimensionType;
-import net.vampirestudios.arrp.data.worldgen.feature.ConfiguredFeature;
+import net.vampirestudios.arrp.data.worldgen.feature.Feature;
 import net.vampirestudios.arrp.data.worldgen.feature.PlacedFeature;
 import net.vampirestudios.arrp.data.worldgen.noise.NoiseSettings;
 import net.vampirestudios.arrp.data.worldgen.structure.Structure;
 import net.vampirestudios.arrp.data.worldgen.structure.StructureSet;
+import net.vampirestudios.arrp.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.arrp.util.CallableFunction;
 import org.jetbrains.annotations.Contract;
-import org.joml.Vector3f;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -58,19 +61,6 @@ import java.util.zip.ZipOutputStream;
  * @see RRPCallback
  */
 public interface RuntimeResourcePack extends PackResources {
-
-	/**
-	 * The GSONs used to serialize objects to JSON.
-	 */
-	Gson GSON = new GsonBuilder()
-			.registerTypeHierarchyAdapter(Identifier.class, JsonSerializers.IDENTIFIER)
-			.registerTypeHierarchyAdapter(StringRepresentable.class, JsonSerializers.STRING_IDENTIFIABLE)
-			.registerTypeHierarchyAdapter(Vector3f.class, JsonSerializers.VECTOR_3F)
-			.registerTypeHierarchyAdapter(Either.class, JsonSerializers.EITHER)
-			.enableComplexMapKeySerialization()
-			.disableHtmlEscaping()
-			.setPrettyPrinting()
-			.create();
 	/**
 	 * create a new runtime resource pack with the default supported resource pack version
 	 */
@@ -98,6 +88,20 @@ public interface RuntimeResourcePack extends PackResources {
 
 	static Identifier id(String namespace, String string) {return Identifier.tryBuild(namespace, string);}
 
+	/**
+	 * serializes the value with the resource type's codec and adds it at
+	 * {@code <side>/<namespace>/<directory>/<path>.<extension>}
+	 * <p>
+	 * this is the generic entry point behind all the {@code addX} convenience methods; use it with
+	 * a constant from {@link ResourceTypes}, or with a custom {@link ResourceType} for content this
+	 * library has no dedicated method for
+	 *
+	 * @param type  the resource type describing directory, pack side and codec
+	 * @param id    the identifier of the resource; directory prefix and file extension are appended automatically
+	 * @param value the value to serialize
+	 * @return the serialized resource
+	 */
+	<T> byte[] add(ResourceType<T> type, Identifier id, T value);
 
 	/**
 	 * reads, clones, and recolors the texture at the given path, and puts the newly created image in the given id.
@@ -118,7 +122,9 @@ public interface RuntimeResourcePack extends PackResources {
 	 * <p>
 	 * ex. addLang(MyMod.id("en_us"), lang().translate("something.something", "test"))
 	 */
-	byte[] addLang(Identifier identifier, Lang lang);
+	default byte[] addLang(Identifier identifier, Lang lang) {
+		return this.add(ResourceTypes.LANG, identifier, lang);
+	}
 
 	/**
 	 * Multiple calls to this method with the same identifier will merge them into one lang file
@@ -128,34 +134,72 @@ public interface RuntimeResourcePack extends PackResources {
 	/**
 	 * adds a loot table
 	 */
-	byte[] addLootTable(Identifier identifier, LootTable table);
+	default byte[] addLootTable(Identifier identifier, LootTable table) {
+		return this.add(ResourceTypes.LOOT_TABLE, identifier, table);
+	}
 
-	byte[] addEnchantment(Identifier id, Enchantment enchantment);
+	default byte[] addEnchantment(Identifier id, Enchantment enchantment) {
+		return this.add(ResourceTypes.ENCHANTMENT, id, enchantment);
+	}
 
-	byte[] addWolfVariant(Identifier id, WolfVariant variant);
+	default byte[] addWolfVariant(Identifier id, WolfVariant variant) {
+		return this.add(ResourceTypes.WOLF_VARIANT, id, variant);
+	}
 
-	byte[] addZombieNautilusVariant(Identifier id, ZombieNautilusVariant variant);
+	default byte[] addZombieNautilusVariant(Identifier id, ZombieNautilusVariant variant) {
+		return this.add(ResourceTypes.ZOMBIE_NAUTILUS_VARIANT, id, variant);
+	}
 
-	byte[] addChickenVariant(Identifier id, ChickenVariant variant);
-	byte[] addCowVariant(Identifier id, CowVariant variant);
-	byte[] addPigVariant(Identifier id, PigVariant variant);
-	byte[] addWolfSoundVariant(Identifier id, WolfSoundVariant variant);
+	default byte[] addChickenVariant(Identifier id, ChickenVariant variant) {
+		return this.add(ResourceTypes.CHICKEN_VARIANT, id, variant);
+	}
 
-	byte[] addCatSoundVariant(Identifier id, CatSoundVariant variant);
+	default byte[] addCowVariant(Identifier id, CowVariant variant) {
+		return this.add(ResourceTypes.COW_VARIANT, id, variant);
+	}
 
-	byte[] addChickenSoundVariant(Identifier id, ChickenSoundVariant variant);
+	default byte[] addPigVariant(Identifier id, PigVariant variant) {
+		return this.add(ResourceTypes.PIG_VARIANT, id, variant);
+	}
 
-	byte[] addCowSoundVariant(Identifier id, CowSoundVariant variant);
+	default byte[] addWolfSoundVariant(Identifier id, WolfSoundVariant variant) {
+		return this.add(ResourceTypes.WOLF_SOUND_VARIANT, id, variant);
+	}
 
-	byte[] addPigSoundVariant(Identifier id, PigSoundVariant variant);
+	default byte[] addCatSoundVariant(Identifier id, CatSoundVariant variant) {
+		return this.add(ResourceTypes.CAT_SOUND_VARIANT, id, variant);
+	}
 
-	byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, SimpleMobVariant variant);
+	default byte[] addChickenSoundVariant(Identifier id, ChickenSoundVariant variant) {
+		return this.add(ResourceTypes.CHICKEN_SOUND_VARIANT, id, variant);
+	}
 
-	byte[] addCatVariant(Identifier id, SimpleMobVariant variant);
+	default byte[] addCowSoundVariant(Identifier id, CowSoundVariant variant) {
+		return this.add(ResourceTypes.COW_SOUND_VARIANT, id, variant);
+	}
 
-	byte[] addFrogVariant(Identifier id, SimpleMobVariant variant);
+	default byte[] addPigSoundVariant(Identifier id, PigSoundVariant variant) {
+		return this.add(ResourceTypes.PIG_SOUND_VARIANT, id, variant);
+	}
 
-	byte[] addPaintingVariant(Identifier id, PaintingVariant variant);
+	/**
+	 * adds a mob variant under the given variant folder, e.g. {@code cat_variant} or {@code frog_variant}
+	 */
+	default byte[] addSimpleMobVariant(Identifier variantFolder, Identifier id, SimpleMobVariant variant) {
+		return this.add(ResourceType.data(variantFolder.getPath(), SimpleMobVariant.CODEC), id, variant);
+	}
+
+	default byte[] addCatVariant(Identifier id, SimpleMobVariant variant) {
+		return this.add(ResourceTypes.CAT_VARIANT, id, variant);
+	}
+
+	default byte[] addFrogVariant(Identifier id, SimpleMobVariant variant) {
+		return this.add(ResourceTypes.FROG_VARIANT, id, variant);
+	}
+
+	default byte[] addPaintingVariant(Identifier id, PaintingVariant variant) {
+		return this.add(ResourceTypes.PAINTING_VARIANT, id, variant);
+	}
 
 	/**
 	 * adds an async resource, this is evaluated off-thread, this does not hold all resource retrieval unlike
@@ -202,7 +246,33 @@ public interface RuntimeResourcePack extends PackResources {
 	/**
 	 * add a simple pack.mcmeta using the provided pack format version
 	 */
+	/** current data pack format major version (26.3 = {@code 110.0}) */
+	int DATA_PACK_FORMAT = 110;
+	/** current resource pack format major version (26.3 = {@code 91.0}) */
+	int RESOURCE_PACK_FORMAT = 91;
+
+	/**
+	 * writes a legacy {@code pack.mcmeta} with a single integer {@code pack_format}
+	 *
+	 * @see #addPackMcmeta(String, int, int)
+	 */
 	byte[] addPackMcmeta(String description, int packFormat);
+
+	/**
+	 * writes a {@code pack.mcmeta} in the modern format, with {@code min_format} and
+	 * {@code max_format} both set to {@code [formatMajor, formatMinor]}
+	 */
+	byte[] addPackMcmeta(String description, int formatMajor, int formatMinor);
+
+	/** writes a {@code pack.mcmeta} for the current data pack format ({@value #DATA_PACK_FORMAT}.0) */
+	default byte[] addDataPackMcmeta(String description) {
+		return this.addPackMcmeta(description, DATA_PACK_FORMAT, 0);
+	}
+
+	/** writes a {@code pack.mcmeta} for the current resource pack format ({@value #RESOURCE_PACK_FORMAT}.0) */
+	default byte[] addResourcePackMcmeta(String description) {
+		return this.addPackMcmeta(description, RESOURCE_PACK_FORMAT, 0);
+	}
 
 	/**
 	 * add a clientside resource
@@ -215,71 +285,111 @@ public interface RuntimeResourcePack extends PackResources {
 	byte[] addData(Identifier path, byte[] data);
 
 	/**
-	 * add a model, Items should go in item/... and Blocks in block/... ex. mymod:items/my_item ".json" is
-	 * automatically
-	 * appended to the path
+	 * add an advancement; ".json" is automatically appended to the path
 	 */
-	byte[] addAdvancement(Advancement model, Identifier path);
+	default byte[] addAdvancement(Advancement advancement, Identifier path) {
+		return this.add(ResourceTypes.ADVANCEMENT, path, advancement);
+	}
 
 	/**
 	 * add a model, Items should go in item/... and Blocks in block/... ex. mymod:items/my_item ".json" is
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addModel(Model model, Identifier path);
+	default byte[] addModel(Model model, Identifier path) {
+		return this.add(ResourceTypes.MODEL, path, model);
+	}
 
 	/**
 	 * add a item model info, Goes in items/. mymod:items/my_item ".json" is
 	 * automatically
 	 * appended to the path
 	 */
-	byte[] addItemModelInfo(ItemModelDefinition model, Identifier path);
+	default byte[] addItemModelInfo(ItemModelDefinition model, Identifier path) {
+		return this.add(ResourceTypes.ITEM_MODEL_DEFINITION, path, model);
+	}
 
 
 	/**
 	 * Write a vanilla-style equipment‐model JSON to
 	 * assets/<namespace>/equipment/<path>.json
 	 */
-	byte[] addEquipmentModel(EquipmentModel model, Identifier path);
+	default byte[] addEquipmentModel(EquipmentModel model, Identifier path) {
+		return this.add(ResourceTypes.EQUIPMENT_MODEL, path, model);
+	}
 
-	byte[] addTrimMaterial(Identifier id, TrimMaterial material);
+	default byte[] addTrimMaterial(Identifier id, TrimMaterial material) {
+		return this.add(ResourceTypes.TRIM_MATERIAL, id, material);
+	}
 
-	byte[] addTrimPattern(Identifier id, TrimPattern pattern);
+	default byte[] addTrimPattern(Identifier id, TrimPattern pattern) {
+		return this.add(ResourceTypes.TRIM_PATTERN, id, pattern);
+	}
 
-	byte[] addBannerPattern(Identifier id, BannerPattern pattern);
+	default byte[] addBannerPattern(Identifier id, BannerPattern pattern) {
+		return this.add(ResourceTypes.BANNER_PATTERN, id, pattern);
+	}
 
-	byte[] addDecoratedPotPattern(Identifier id, DecoratedPotPattern pattern);
+	default byte[] addDecoratedPotPattern(Identifier id, DecoratedPotPattern pattern) {
+		return this.add(ResourceTypes.DECORATED_POT_PATTERN, id, pattern);
+	}
 
-	byte[] addDamageType(Identifier id, DamageType damageType);
+	default byte[] addDamageType(Identifier id, DamageType damageType) {
+		return this.add(ResourceTypes.DAMAGE_TYPE, id, damageType);
+	}
 
-	byte[] addInstrument(Identifier id, Instrument instrument);
+	default byte[] addInstrument(Identifier id, Instrument instrument) {
+		return this.add(ResourceTypes.INSTRUMENT, id, instrument);
+	}
 
-	byte[] addJukeboxSong(Identifier id, JukeboxSong song);
+	default byte[] addJukeboxSong(Identifier id, JukeboxSong song) {
+		return this.add(ResourceTypes.JUKEBOX_SONG, id, song);
+	}
 
-	byte[] addConfiguredCarver(Identifier id, ConfiguredCarver configuredCarver);
+	default byte[] addCarver(Identifier id, Carver carver) {
+		return this.add(ResourceTypes.CARVER, id, carver);
+	}
 
-	byte[] addProcessorList(Identifier id, ProcessorList processorList);
+	default byte[] addProcessorList(Identifier id, ProcessorList processorList) {
+		return this.add(ResourceTypes.PROCESSOR_LIST, id, processorList);
+	}
 
-	byte[] addTemplatePool(Identifier id, TemplatePool templatePool);
+	default byte[] addTemplatePool(Identifier id, TemplatePool templatePool) {
+		return this.add(ResourceTypes.TEMPLATE_POOL, id, templatePool);
+	}
 
-	byte[] addWorldPreset(Identifier id, WorldPreset worldPreset);
+	default byte[] addWorldPreset(Identifier id, WorldPreset worldPreset) {
+		return this.add(ResourceTypes.WORLD_PRESET, id, worldPreset);
+	}
 
-	byte[] addFlatLevelGeneratorPreset(Identifier id, FlatLevelGeneratorPreset preset);
+	default byte[] addFlatLevelGeneratorPreset(Identifier id, FlatLevelGeneratorPreset preset) {
+		return this.add(ResourceTypes.FLAT_LEVEL_GENERATOR_PRESET, id, preset);
+	}
 
-	byte[] addTradeSet(Identifier id, TradeSet tradeSet);
+	default byte[] addTradeSet(Identifier id, TradeSet tradeSet) {
+		return this.add(ResourceTypes.TRADE_SET, id, tradeSet);
+	}
 
-	byte[] addVillagerTrade(Identifier id, VillagerTrade trade);
+	default byte[] addVillagerTrade(Identifier id, VillagerTrade trade) {
+		return this.add(ResourceTypes.VILLAGER_TRADE, id, trade);
+	}
 
-	byte[] addDialog(Identifier id, Dialog dialog);
+	default byte[] addDialog(Identifier id, Dialog dialog) {
+		return this.add(ResourceTypes.DIALOG, id, dialog);
+	}
 
-	byte[] addWorldClock(Identifier id, WorldClock clock);
+	default byte[] addWorldClock(Identifier id, WorldClock clock) {
+		return this.add(ResourceTypes.WORLD_CLOCK, id, clock);
+	}
 
 	/**
 	 * adds a blockstate json
 	 * <p>
 	 * ".json" is automatically appended to the path
 	 */
-	byte[] addBlockState(BlockState state, Identifier path);
+	default byte[] addBlockState(BlockState state, Identifier path) {
+		return this.add(ResourceTypes.BLOCK_STATE, path, state);
+	}
 
 	/**
 	 * adds a texture png
@@ -300,7 +410,9 @@ public interface RuntimeResourcePack extends PackResources {
 	 * <p>
 	 * ".json" is automatically appended to the path
 	 */
-	byte[] addTag(Identifier id, Tag tag);
+	default byte[] addTag(Identifier id, Tag tag) {
+		return this.add(ResourceTypes.TAG, id, tag);
+	}
 
 	/**
 	 * add a recipe
@@ -311,7 +423,9 @@ public interface RuntimeResourcePack extends PackResources {
 	 * @param recipe the recipe to add
 	 * @return the new resource
 	 */
-	byte[] addRecipe(Identifier id, Recipe recipe);
+	default byte[] addRecipe(Identifier id, Recipe recipe) {
+		return this.add(ResourceTypes.RECIPE, id, recipe);
+	}
 
 	byte[] addRecipe(Identifier id, RecipeBuilder recipe);
 
@@ -323,28 +437,111 @@ public interface RuntimeResourcePack extends PackResources {
 		tags.forEach(this::addTag);
 	}
 
-	byte[] addTimeline(Identifier id, Timeline timeline);
+	default byte[] addTimeline(Identifier id, Timeline timeline) {
+		return this.add(ResourceTypes.TIMELINE, id, timeline);
+	}
 
-	byte[] addBiome(Identifier id, Biome biome);
+	default byte[] addBiome(Identifier id, Biome biome) {
+		return this.add(ResourceTypes.BIOME, id, biome);
+	}
 
-	byte[] addDimension(Identifier id, Dimension dimension);
+	default byte[] addDimension(Identifier id, Dimension dimension) {
+		return this.add(ResourceTypes.DIMENSION, id, dimension);
+	}
 
-	byte[] addDimensionType(Identifier id, DimensionType dimensionType);
+	default byte[] addDimensionType(Identifier id, DimensionType dimensionType) {
+		return this.add(ResourceTypes.DIMENSION_TYPE, id, dimensionType);
+	}
 
-	byte[] addConfiguredFeature(Identifier id, ConfiguredFeature configuredFeature);
+	default byte[] addFeature(Identifier id, Feature feature) {
+		return this.add(ResourceTypes.FEATURE, id, feature);
+	}
 
-	byte[] addPlacedFeature(Identifier id, PlacedFeature placedFeature);
+	default byte[] addPlacedFeature(Identifier id, PlacedFeature placedFeature) {
+		return this.add(ResourceTypes.PLACED_FEATURE, id, placedFeature);
+	}
 
-	byte[] addNoiseSettings(Identifier id, NoiseSettings noiseSettings);
+	default byte[] addNoiseSettings(Identifier id, NoiseSettings noiseSettings) {
+		return this.add(ResourceTypes.NOISE_SETTINGS, id, noiseSettings);
+	}
 
-	byte[] addStructure(Identifier id, Structure structure);
+	default byte[] addNoise(Identifier id, JsonElement noise) {
+		return this.add(ResourceTypes.NOISE, id, noise);
+	}
 
-	byte[] addStructureSet(Identifier id, StructureSet structureSet);
+	default byte[] addDensityFunction(Identifier id, JsonElement densityFunction) {
+		return this.add(ResourceTypes.DENSITY_FUNCTION, id, densityFunction);
+	}
+
+	/** adds a reusable loot condition to the {@code predicate} registry */
+	default byte[] addPredicate(Identifier id, Condition predicate) {
+		return this.add(ResourceTypes.PREDICATE, id, predicate);
+	}
+
+	/** adds a reusable loot function to the {@code item_modifier} registry */
+	default byte[] addItemModifier(Identifier id, LootFunction modifier) {
+		return this.add(ResourceTypes.ITEM_MODIFIER, id, modifier);
+	}
+
+	default byte[] addChatType(Identifier id, JsonElement chatType) {
+		return this.add(ResourceTypes.CHAT_TYPE, id, chatType);
+	}
+
+	default byte[] addEnchantmentProvider(Identifier id, JsonElement enchantmentProvider) {
+		return this.add(ResourceTypes.ENCHANTMENT_PROVIDER, id, enchantmentProvider);
+	}
+
+	/** adds a reusable slot source (since 26.3) */
+	default byte[] addSlotSource(Identifier id, JsonElement slotSource) {
+		return this.add(ResourceTypes.SLOT_SOURCE, id, slotSource);
+	}
+
+	/**
+	 * adds a function at {@code data/<namespace>/function/<path>.mcfunction},
+	 * one command per list entry
+	 */
+	default byte[] addMcFunction(Identifier id, java.util.List<String> commands) {
+		byte[] bytes = (String.join("\n", commands) + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+		return this.addData(Identifier.fromNamespaceAndPath(id.getNamespace(), "function/" + id.getPath() + ".mcfunction"), bytes);
+	}
+
+	/** adds an element of the {@code number_provider} registry (since 26.3) */
+	default byte[] addNumberProvider(Identifier id, JsonElement numberProvider) {
+		return this.add(ResourceTypes.NUMBER_PROVIDER, id, numberProvider);
+	}
+
+	/** adds an element of the {@code number_provider} registry (since 26.3) */
+	default byte[] addNumberProvider(Identifier id, NumberProvider numberProvider) {
+		return addNumberProvider(id, new Dynamic<>(JavaOps.INSTANCE, numberProvider.value()).convert(JsonOps.INSTANCE).getValue());
+	}
+
+	default byte[] addMaterialRule(Identifier id, JsonElement materialRule) {
+		return this.add(ResourceTypes.MATERIAL_RULE, id, materialRule);
+	}
+
+	default byte[] addMaterialRule(Identifier id, MaterialRule materialRule) {
+		return addMaterialRule(id, MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, materialRule).getOrThrow());
+	}
+
+	default byte[] addMaterialCondition(Identifier id, JsonElement materialCondition) {
+		return this.add(ResourceTypes.MATERIAL_CONDITION, id, materialCondition);
+	}
+
+	default byte[] addMaterialCondition(Identifier id, MaterialCondition materialCondition) {
+		return addMaterialCondition(id, MaterialCondition.CODEC.encodeStart(JsonOps.INSTANCE, materialCondition).getOrThrow());
+	}
+
+	default byte[] addStructure(Identifier id, Structure structure) {
+		return this.add(ResourceTypes.STRUCTURE, id, structure);
+	}
+
+	default byte[] addStructureSet(Identifier id, StructureSet structureSet) {
+		return this.add(ResourceTypes.STRUCTURE_SET, id, structureSet);
+	}
 
 	/**
 	 * invokes the action on the RRP executor, RRPs are thread-safe you can create expensive assets here, all resources
-	 * are blocked until all async tasks are completed invokes the action on the RRP executor, RRPs are thread-safe you
-	 * can create expensive assets here, all resources are blocked until all async tasks are completed
+	 * are blocked until all async tasks are completed
 	 * <p>
 	 * calling an this function from itself will result in a infinite loop
 	 *
@@ -352,13 +549,12 @@ public interface RuntimeResourcePack extends PackResources {
 	 */
 	Future<?> async(Consumer<RuntimeResourcePack> action);
 
-	Path DEFAULT_OUTPUT = Path.of("rrp.debug");
-
 	/**
-	 * forcefully dump all assets and data
+	 * forcefully dump all assets and data into the configured dump directory
+	 * ({@code dump_directory} in {@code config/arrp.properties}, {@code rrp.debug} by default)
 	 */
 	default void dump() {
-		this.dump(DEFAULT_OUTPUT);
+		this.dump(RuntimeResourcePackImpl.CONFIG.dumpDirectory);
 	}
 
 	void dumpDirect(Path path);

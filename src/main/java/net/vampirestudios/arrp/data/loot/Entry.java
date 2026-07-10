@@ -1,92 +1,143 @@
 package net.vampirestudios.arrp.data.loot;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.vampirestudios.arrp.data.predicate.PredicateBuilder;
+import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Entry {
-	public static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Codec.STRING.optionalFieldOf("type").forGetter(e -> java.util.Optional.ofNullable(e.type)),
-			Codec.STRING.optionalFieldOf("name").forGetter(e -> java.util.Optional.ofNullable(e.name)),
-			Codec.BOOL.optionalFieldOf("expand").forGetter(e -> java.util.Optional.ofNullable(e.expand)),
-			LootFunction.CODEC.listOf().optionalFieldOf("functions").forGetter(e -> java.util.Optional.ofNullable(e.functions)),
-			Condition.CODEC.listOf().optionalFieldOf("conditions").forGetter(e -> java.util.Optional.ofNullable(e.conditions)),
-			Codec.INT.optionalFieldOf("weight").forGetter(e -> java.util.Optional.ofNullable(e.weight)),
-			Codec.INT.optionalFieldOf("quality").forGetter(e -> java.util.Optional.ofNullable(e.quality)),
-			// recursive: children
-			Codec.lazyInitialized(() -> Entry.CODEC).listOf().optionalFieldOf("children")
-					.forGetter(e -> java.util.Optional.ofNullable(e.children))
-	).apply(i, (otype, oname, oexp, ofunc, ocond, oweight, oqual, och) -> {
-		Entry e = new Entry();
-		e.type = otype.orElse(null);
-		e.name = oname.orElse(null);
-		e.expand = oexp.orElse(null);
-		e.functions = ofunc.orElse(null);
-		e.conditions = ocond.orElse(null);
-		e.weight = oweight.orElse(null);
-		e.quality = oqual.orElse(null);
-		e.children = och.orElse(null);
-		return e;
-	}));
-	private String type;
-	private String name;
-	private List<Entry> children;
-	private Boolean expand;
-	private List<LootFunction> functions;
-	private List<Condition> conditions;
-	private Integer weight;
-	private Integer quality;
+/**
+ * A loot pool entry. The vanilla entry types have typed factories ({@link #item(Identifier)},
+ * {@link #alternatives(Entry...)}, {@link #lootTable(Identifier)}, ...); modded entry types
+ * can be built with {@link #of(String)} and the inherited {@code parameter} methods.
+ */
+public class Entry extends PredicateBuilder<Entry> {
+	public static final Codec<Entry> CODEC = codecOf(Entry::new, "type", "Loot entry");
 
 	/**
 	 * @see LootTable#entry()
 	 */
-	public Entry() {}
+	public Entry() {
+	}
+
+	// ---------- factories ----------
+
+	/**
+	 * an entry of the given type, e.g. {@code "minecraft:item"} or a modded id
+	 */
+	public static Entry of(String type) {
+		return new Entry().type(type);
+	}
+
+	/**
+	 * drops the given item ({@code minecraft:item})
+	 */
+	public static Entry item(String item) {
+		return of("minecraft:item").name(item);
+	}
+
+	public static Entry item(Identifier item) {
+		return item(item.toString());
+	}
+
+	/**
+	 * drops items from a tag ({@code minecraft:tag})
+	 *
+	 * @param expand true to make one weighted sub-entry per item in the tag,
+	 *               false to drop every item in the tag
+	 */
+	public static Entry tag(String tag, boolean expand) {
+		return of("minecraft:tag").name(tag).expand(expand);
+	}
+
+	/**
+	 * rolls another loot table ({@code minecraft:loot_table})
+	 */
+	public static Entry lootTable(Identifier table) {
+		return of("minecraft:loot_table").parameter("value", table);
+	}
+
+	/**
+	 * drops loot from the {@code minecraft:dynamic} drop source, e.g. {@code "minecraft:contents"}
+	 */
+	public static Entry dynamic(String name) {
+		return of("minecraft:dynamic").name(name);
+	}
+
+	/**
+	 * drops nothing ({@code minecraft:empty})
+	 */
+	public static Entry empty() {
+		return of("minecraft:empty");
+	}
+
+	/**
+	 * uses the first child whose conditions pass ({@code minecraft:alternatives})
+	 */
+	public static Entry alternatives(Entry... children) {
+		return of("minecraft:alternatives").children(children);
+	}
+
+	/**
+	 * uses all children ({@code minecraft:group})
+	 */
+	public static Entry group(Entry... children) {
+		return of("minecraft:group").children(children);
+	}
+
+	/**
+	 * uses children until one fails its conditions ({@code minecraft:sequence})
+	 */
+	public static Entry sequence(Entry... children) {
+		return of("minecraft:sequence").children(children);
+	}
+
+	// ---------- builder ----------
 
 	public Entry type(String type) {
-		this.type = type;
-		return this;
+		return parameter("type", type);
+	}
+
+	public Entry type(Identifier type) {
+		return parameter("type", type);
 	}
 
 	public Entry name(String name) {
-		this.name = name;
-		return this;
+		return parameter("name", name);
+	}
+
+	public Entry name(Identifier name) {
+		return parameter("name", name);
 	}
 
 	public Entry child(Entry child) {
 		if (this == child) {
 			throw new IllegalArgumentException("Can't add entry as its own child!");
 		}
-		if (this.children == null) {
-			this.children = new ArrayList<>();
+		subList("children").add(child.asMap());
+		return this;
+	}
+
+	public Entry children(Entry... children) {
+		for (Entry child : children) {
+			child(child);
 		}
-		this.children.add(child);
 		return this;
 	}
 
 	public Entry expand(Boolean expand) {
-		this.expand = expand;
-		return this;
+		return parameter("expand", expand);
 	}
 
 	public Entry function(LootFunction function) {
-		if (this.functions == null) {
-			this.functions = new ArrayList<>();
-		}
-		this.functions.add(function);
+		subList("functions").add(function.asMap());
 		return this;
 	}
 
 	public Entry function(String function) {
-	    return function(LootTable.function(function));
-    }
+		return function(LootTable.function(function));
+	}
 
 	public Entry condition(Condition condition) {
-		if(this.conditions == null) {
-			this.conditions = new ArrayList<>();
-		}
-		this.conditions.add(condition);
+		subList("conditions").add(condition.asMap());
 		return this;
 	}
 
@@ -95,12 +146,10 @@ public class Entry {
 	}
 
 	public Entry weight(Integer weight) {
-		this.weight = weight;
-		return this;
+		return parameter("weight", weight);
 	}
 
 	public Entry quality(Integer quality) {
-		this.quality = quality;
-		return this;
+		return parameter("quality", quality);
 	}
 }

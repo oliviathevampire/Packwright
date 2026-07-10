@@ -1,19 +1,23 @@
 package net.vampirestudios.arrp.data.worldgen;
 
+import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 
 import java.util.Optional;
 
 /**
  * Single Environment Attribute value.
  *
- * Encoded as JSON primitives via Codec:
+ * Encoded as JSON via Codec:
  *  - boolean
  *  - number (double)
  *  - string
+ *  - free-form JSON (for object-valued attributes like {@code minecraft:gameplay/bed_rule})
  */
 public abstract class EnvironmentAttributeValue {
 
@@ -26,6 +30,8 @@ public abstract class EnvironmentAttributeValue {
                 return DataResult.success(ops.createDouble(n.value));
             } else if (value instanceof StringValue s) {
                 return DataResult.success(ops.createString(s.value));
+            } else if (value instanceof JsonValue j) {
+                return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, j.value).convert(ops).getValue());
             }
             return DataResult.error(() -> "Unknown EnvironmentAttributeValue subclass: " + value.getClass());
         }
@@ -44,12 +50,16 @@ public abstract class EnvironmentAttributeValue {
                 return DataResult.success(Pair.of(ofNumber(numOpt.get().doubleValue()), input));
             }
 
-            // fallback to string
+            // then string
             Optional<String> strOpt = ops.getStringValue(input).result();
-			return strOpt.map(s -> DataResult.success(Pair.of(ofString(s), input)))
-					.orElseGet(() -> DataResult.error(() -> "Unsupported attribute value (not bool/number/string)"));
+            if (strOpt.isPresent()) {
+                return DataResult.success(Pair.of(ofString(strOpt.get()), input));
+            }
 
-		}
+            // fallback: keep any other shape (objects, lists) as raw JSON
+            JsonElement json = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
+            return DataResult.success(Pair.of(ofJson(json), input));
+        }
     };
 
     // Factory methods
@@ -63,6 +73,11 @@ public abstract class EnvironmentAttributeValue {
 
     public static EnvironmentAttributeValue ofString(String value) {
         return new StringValue(value);
+    }
+
+    /** for object-valued attributes, e.g. bed rules */
+    public static EnvironmentAttributeValue ofJson(JsonElement value) {
+        return new JsonValue(value);
     }
 
     // Concrete variants
@@ -88,6 +103,14 @@ public abstract class EnvironmentAttributeValue {
 
         public StringValue(String value) {
             this.value = value;
+        }
+    }
+
+    public static final class JsonValue extends EnvironmentAttributeValue {
+        public final JsonElement value;
+
+        public JsonValue(JsonElement value) {
+            this.value = value.deepCopy();
         }
     }
 }
