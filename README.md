@@ -1,34 +1,67 @@
-# ARRP
-Advanced Runtime resource packs (for fabric)
+# Packwright
 
-Ever thought having to make 4 jsons for a single block was outrageous? Or why every single item needed it's own json too? Or wanted to create items from templates dynamically depending on the mods loaded without having to pack tons of assets into your mod?
+**Build data packs and resource packs at runtime, for Fabric.**
 
-Well RRP is for you then! RRP allows modders to generate assets and data on the fly, you could in theory write an entire mod with blocks and items with nothing but .java files and your mod json! You can make your own json templates so you don't have to make a json file for every single item you add, and even automate it if you're lazy like I am. No need to clutter your project with hundreds of basic json files.
+Packwright lets mods generate everything a pack can contain — block/item models, blockstates,
+languages, loot tables, recipes, advancements, tags, predicates, item modifiers, enchantments,
+dialogs, entity variants, and complete worldgen (biomes, dimensions, features, carvers, material
+rules, structures, noise settings) — from plain Java builders. No JSON files, no clutter: in
+theory an entire content mod can ship nothing but `.java` files and its mod json.
 
-# FAQ
-### Is this compatible with resource packs?
-yes, RRP uses a resource pack internally, hence the name, and it's the second to last priority resource pack next to minecraft itself,
-however this means RRP cannot override mod assets, but it can override vanilla ones.
+Packwright is a heavily rewritten fork of [ARRP](https://github.com/Devan-Kerman/RRP)
+(Advanced Runtime Resource Packs) by HalfOf2/Devan-Kerman. The runtime-pack core remains,
+but the builder API, codecs, registries and worldgen support were written from scratch for
+modern Minecraft (26.x data pack formats).
 
-## Adding ARRP
-Gradle:
+## Adding Packwright
+
 ```groovy
-// should work for both groovy and kotlin DSL
-repositories {
-	maven {
-		url = uri("https://ueaj.dev/maven")
-		// for 0.4.2 and older
-		// url uri("https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master/")
-	}
-}
-
+// works for both Groovy and Kotlin DSL
 dependencies {
-    modImplementation("net.vampirestudios:arrp:0.12.0+build.1")
+    modImplementation("net.vampirestudios:packwright:1.0.0+build.1")
 }
 ```
 
-## Using ARRP
-https://github.com/Devan-Kerman/ARRP/wiki
+## Quick start
 
-[This repository is licenced under the MPLv2 Licence](https://github.com/Devan-Kerman/ARRP/blob/master/LICENSE)
+```java
+RuntimeResourcePack pack = RuntimeResourcePack.create("mymod:pack");
+pack.addLootTable(Identifier.of("mymod", "blocks/ruby_ore"), LootTable.block()
+        .pool(Pool.of().rolls(1)
+                .entry(Entry.item("mymod:ruby"))
+                .condition(Condition.survivesExplosion())));
+PackwrightCallback.BEFORE_VANILLA.register(resources -> resources.add(pack));
+```
 
+Every generated pack can also be dumped to disk as a regular, ready-to-use datapack —
+see the `dump()` methods and the examples in `src/test/java/test/` (a complete custom
+dimension lives in `EmberWastesWorldgen`).
+
+## Configuration
+
+`config/packwright.properties` (created on first run, every key overridable per run
+with `-Dpackwright.<key>=<value>`):
+
+| key | default | description |
+|---|---|---|
+| `threads` | half your cores | worker threads for resource generation |
+| `dump_on_close` | `false` | dump every pack's contents when it closes |
+| `dump_directory` | `packwright.debug` | where dumps are written |
+| `debug_performance` | `false` | log lock-wait times |
+| `pretty_json` | `true` | pretty-print generated JSON |
+
+## FAQ
+
+### Is this compatible with resource packs?
+Yes — Packwright injects packs through the vanilla pack system, right above Minecraft's
+own priority. Generated packs can override vanilla assets, but not other mods' assets.
+
+### Migrating from ARRP?
+Rename imports from `net.vampirestudios.arrp` to `net.vampirestudios.packwright`,
+`RRPCallback` → `PackwrightCallback`, and the `rrp:pregen` entrypoint key to
+`packwright:pregen`. Your old `rrp.properties`/`arrp.properties` config migrates
+automatically. See [CHANGELOG.md](CHANGELOG.md) for the full list.
+
+## License
+
+[MPLv2](LICENSE) — same license as the original ARRP.

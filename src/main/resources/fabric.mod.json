@@ -1,33 +1,33 @@
 {
   "schemaVersion": 1,
-  "id": "advanced_runtime_resource_pack",
+  "id": "packwright",
   "version": "${version}",
-  "name": "Runtime Resource Pack",
-  "description": "A mod that allows mods to generate assets/data on the fly",
+  "name": "Packwright",
+  "description": "Build data packs and resource packs at runtime - assets, loot, recipes, registries and full worldgen, no JSON files required. A heavily rewritten fork of ARRP.",
   "authors": [
-    "HalfOf2", "OliviaTheVampire"
+    "OliviaTheVampire", "HalfOf2"
   ],
   "contact": {
-    "homepage": "https://github.com/oliviathevampire/ARRP#readme",
-    "issues": "https://github.com/oliviathevampire/ARRP/issues",
-    "sources": "https://github.com/oliviathevampire/ARRP"
+    "homepage": "https://github.com/oliviathevampire/Packwright#readme",
+    "issues": "https://github.com/oliviathevampire/Packwright/issues",
+    "sources": "https://github.com/oliviathevampire/Packwright"
   },
   "license": "MPLv2",
-  "icon": "assets/arrp/icon.png",
+  "icon": "assets/packwright/icon.png",
   "environment": "*",
   "entrypoints": {
-    "preLaunch": ["net.vampirestudios.arrp.ARRP"]
+    "preLaunch": ["net.vampirestudios.packwright.Packwright"]
   },
   "mixins": [
-    "arrp.mixins.json"
+    "packwright.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.18.4",
-    "minecraft": ">=26.2-"
+    "fabricloader": ">=0.19.3",
+    "minecraft": ">=26.3- <26.4"
   },
   "custom": {
     "modmenu": {
       "badges": [ "library" ]
-    }  
+    }
   }
 }

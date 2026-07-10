@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "net.vampirestudios.packwright.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"FileResourcePackProviderMixin",
+		"MultiPackResourceManagerMixin",
+		"ShapedRecipeBuilderAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

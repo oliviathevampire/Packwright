@@ -15,3 +15,9 @@ run
 tokens.properties
 /logs
 /aaaa
+
+# packwright dumps
+/dumps
+/packwright.debug
+/rrp.debug
+/worktrees

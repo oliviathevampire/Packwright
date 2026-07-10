@@ -2,7 +2,7 @@ package test;
 
 import net.minecraft.resources.Identifier;
 
-import static net.vampirestudios.arrp.util.ResourceHelpers.vanillaId;
+import static net.vampirestudios.packwright.util.ResourceHelpers.vanillaId;
 
 public interface VillagerActivity {
 	Identifier CORE = vanillaId("core");

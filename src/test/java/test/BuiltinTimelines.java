@@ -5,10 +5,10 @@ import net.minecraft.world.attribute.modifier.BooleanModifier;
 import net.minecraft.world.attribute.modifier.ColorModifier;
 import net.minecraft.world.attribute.modifier.FloatModifier;
 import net.minecraft.world.level.MoonPhase;
-import net.vampirestudios.arrp.assets.timeline.Timeline;
-import net.vampirestudios.arrp.data.worldgen.ClockTimeMarkers;
-import net.vampirestudios.arrp.data.worldgen.EnvironmentAttributes;
-import net.vampirestudios.arrp.util.JsonBytes;
+import net.vampirestudios.packwright.assets.timeline.Timeline;
+import net.vampirestudios.packwright.data.worldgen.ClockTimeMarkers;
+import net.vampirestudios.packwright.data.worldgen.EnvironmentAttributes;
+import net.vampirestudios.packwright.util.JsonBytes;
 
 import static net.minecraft.world.timeline.Timelines.NIGHT_CLOUD_COLOR_MULTIPLIER;
 
