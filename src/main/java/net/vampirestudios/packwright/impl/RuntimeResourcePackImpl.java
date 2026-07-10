@@ -9,7 +9,7 @@ import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.AbstractPackMetadataResources;
+import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackSource;
@@ -24,8 +24,8 @@ import net.vampirestudios.packwright.assets.lang.Lang;
 import net.vampirestudios.packwright.mixin.ShapedRecipeBuilderAccessor;
 import net.vampirestudios.packwright.util.CallableFunction;
 import net.vampirestudios.packwright.util.CountingInputStream;
-import net.vampirestudios.packwright.util.JsonBytes;
 import net.vampirestudios.packwright.util.GrowableByteBuffer;
+import net.vampirestudios.packwright.util.JsonBytes;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -49,7 +49,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @ApiStatus.Internal
-public class RuntimeResourcePackImpl extends AbstractPackMetadataResources implements RuntimeResourcePack {
+public class RuntimeResourcePackImpl extends AbstractPackResources implements RuntimeResourcePack {
 	public static final PackwrightConfig CONFIG = PackwrightConfig.get();
 	public static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(
 			CONFIG.threads,

@@ -9,6 +9,8 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 
 public class Feature {
+	// 26.2 format: the configuration is nested under a "config" field
+	// (26.3 inlined it into the root object)
 	public static final Codec<Feature> CODEC = new Codec<>() {
 		@Override
 		public <T> DataResult<Pair<Feature, T>> decode(DynamicOps<T> ops, T input) {
@@ -21,8 +23,9 @@ public class Feature {
 				return DataResult.error(() -> "Feature is missing type");
 			}
 
-			JsonObject properties = object.deepCopy();
-			properties.remove("type");
+			JsonObject properties = object.has("config") && object.get("config").isJsonObject()
+					? object.getAsJsonObject("config").deepCopy()
+					: new JsonObject();
 			return DataResult.success(Pair.of(new Feature(typeElement.getAsString(), new FeatureProperties(properties)), input));
 		}
 
@@ -30,9 +33,7 @@ public class Feature {
 		public <T> DataResult<T> encode(Feature feature, DynamicOps<T> ops, T prefix) {
 			JsonObject object = new JsonObject();
 			if (feature.type != null) object.addProperty("type", feature.type);
-			for (var entry : feature.properties.asJsonObject().entrySet()) {
-				object.add(entry.getKey(), entry.getValue());
-			}
+			object.add("config", feature.properties.asJsonObject().deepCopy());
 			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, object).convert(ops).getValue());
 		}
 	};

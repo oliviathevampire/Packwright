@@ -139,10 +139,8 @@ public class SkyIslandsWorldgen {
 	 * ---------------------------------------------------------- */
 
 	/**
-	 * The surface pipeline (formerly the {@code surface_rule} field, renamed to
-	 * {@code material_rule} in 26.3): grass on exposed floors, dirt just beneath,
-	 * stone everywhere else. Also usable standalone as a {@code worldgen/material_rule}
-	 * registry entry via {@code pack.addMaterialRule(...)}.
+	 * The surface pipeline ({@code surface_rule} in noise settings): grass on exposed
+	 * floors, dirt just beneath, stone everywhere else.
 	 */
 	public static MaterialRule buildSkyIslandsSurfaceRule() {
 		return MaterialRule.sequence(
@@ -170,9 +168,7 @@ public class SkyIslandsWorldgen {
 				.disableMobGeneration(false)
 				// solid below y=32, air above y=96
 				.simpleNoiseRouterGradient(32, 96)
-				// inline material rule; alternatively reference a registry entry:
-				// .materialRule(myModId("sky_islands_surface"))
-				.materialRule(buildSkyIslandsSurfaceRule());
+				.surfaceRule(buildSkyIslandsSurfaceRule());
 	}
 
 	public static void dumpSkyIslandsNoiseSettingsJson() {
@@ -261,21 +257,17 @@ public class SkyIslandsWorldgen {
 				.rarityFilter(3)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
-				.offset(IntProvider.uniform(-2, 2), IntProvider.constant(1), IntProvider.uniform(-2, 2))
+				.randomOffset(IntProvider.uniform(0, 2), IntProvider.constant(1))
 				.environmentScan("down", PlacedFeature.BlockPredicate.wouldSurvive("minecraft:dandelion"), 4)
 				.biomeFilter();
 	}
 
 	/**
-	 * random_patch was removed in 26.1; projected_random_patchy_square (26.3) is the
-	 * replacement for scattered vegetation patches
+	 * random_patch was removed in 26.1, so flower "patches" are just single flowers
+	 * scattered by count placement
 	 */
 	public static Feature buildSkyIslandsFlowerPatchFeature() {
-		return Features.projectedRandomPatchySquare(vanillaId("dandelion"))
-				.projectThrough(PlacedFeature.BlockPredicate.replaceable())
-				.size(IntProvider.uniform(2, 6))
-				.maxProjectionHeight(2)
-				.build();
+		return Features.simpleBlock(vanillaId("dandelion")).build();
 	}
 
 	public static void dumpSkyIslandsFeatureExamplesJson() {
@@ -313,8 +305,8 @@ public class SkyIslandsWorldgen {
 		System.out.println(JsonBytes.encodeToPrettyString(Feature.CODEC, buildSkyIslandsNetherVegetationFeature()));
 		System.out.println("Feature JSON (my_mod:sky_islands_delta):");
 		System.out.println(JsonBytes.encodeToPrettyString(Feature.CODEC, buildSkyIslandsDeltaFeature()));
-		System.out.println("Feature JSON (my_mod:sky_islands_stepped_column_cluster):");
-		System.out.println(JsonBytes.encodeToPrettyString(Feature.CODEC, buildSkyIslandsSteppedColumnClusterFeature()));
+		System.out.println("Feature JSON (my_mod:sky_islands_basalt_columns):");
+		System.out.println(JsonBytes.encodeToPrettyString(Feature.CODEC, buildSkyIslandsBasaltColumnsFeature()));
 		System.out.println("Feature JSON (my_mod:sky_islands_fill_layer):");
 		System.out.println(JsonBytes.encodeToPrettyString(Feature.CODEC, buildSkyIslandsFillLayerFeature()));
 		System.out.println("Feature JSON (my_mod:sky_islands_sea_pickle):");
@@ -409,10 +401,10 @@ public class SkyIslandsWorldgen {
 				.build();
 	}
 
-	public static Feature buildSkyIslandsSteppedColumnClusterFeature() {
-		return Features.steppedColumnCluster(vanillaId("basalt"))
-				.clusterReach(IntProvider.uniform(1, 2))
-				.height(IntProvider.uniform(4, 8))
+	public static Feature buildSkyIslandsBasaltColumnsFeature() {
+		return Features.feature("minecraft:basalt_columns")
+				.property("reach", IntProvider.CODEC, IntProvider.uniform(1, 2))
+				.property("height", IntProvider.CODEC, IntProvider.uniform(4, 8))
 				.build();
 	}
 
@@ -478,7 +470,6 @@ public class SkyIslandsWorldgen {
 
 	public static void registerAll(RuntimeResourcePack pack) {
 		pack.addTimeline(myModId("sky_islands_sky_cycle"), buildSkyIslandsSkyTimeline());
-		pack.addMaterialRule(myModId("sky_islands_surface"), buildSkyIslandsSurfaceRule());
 		pack.addNoiseSettings(myModId("sky_islands"), buildSkyIslandsNoiseSettings());
 		pack.addBiome(myModId("sky_islands_biome"), buildSkyIslandsBiome());
 		pack.addDimensionType(myModId("sky_islands_type"), buildSkyIslandsDimensionType());

@@ -3,8 +3,6 @@ package net.vampirestudios.packwright.api;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import com.google.gson.JsonElement;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JavaOps;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.resources.Identifier;
@@ -24,13 +22,10 @@ import net.vampirestudios.packwright.data.entity.*;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.LootTable;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.tags.Tag;
 import net.vampirestudios.packwright.data.worldgen.*;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
 import net.vampirestudios.packwright.data.worldgen.biome.Biome;
 import net.vampirestudios.packwright.data.worldgen.dimension.Dimension;
 import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
@@ -243,10 +238,10 @@ public interface RuntimeResourcePack extends PackResources {
 	 */
 	byte[] addRootResource(String path, byte[] data);
 
-	/** current data pack format major version (26.3 = {@code 110.0}) */
-	int DATA_PACK_FORMAT = 110;
-	/** current resource pack format major version (26.3 = {@code 91.0}) */
-	int RESOURCE_PACK_FORMAT = 91;
+	/** current data pack format major version (26.2 = {@code 107.0}) */
+	int DATA_PACK_FORMAT = 107;
+	/** current resource pack format major version (26.2 = {@code 88.0}) */
+	int RESOURCE_PACK_FORMAT = 88;
 
 	/**
 	 * writes a legacy {@code pack.mcmeta} with a single integer {@code pack_format}
@@ -488,11 +483,6 @@ public interface RuntimeResourcePack extends PackResources {
 		return this.add(ResourceTypes.ENCHANTMENT_PROVIDER, id, enchantmentProvider);
 	}
 
-	/** adds a reusable slot source (since 26.3) */
-	default byte[] addSlotSource(Identifier id, JsonElement slotSource) {
-		return this.add(ResourceTypes.SLOT_SOURCE, id, slotSource);
-	}
-
 	/**
 	 * adds a function at {@code data/<namespace>/function/<path>.mcfunction},
 	 * one command per list entry
@@ -500,32 +490,6 @@ public interface RuntimeResourcePack extends PackResources {
 	default byte[] addMcFunction(Identifier id, java.util.List<String> commands) {
 		byte[] bytes = (String.join("\n", commands) + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
 		return this.addData(Identifier.fromNamespaceAndPath(id.getNamespace(), "function/" + id.getPath() + ".mcfunction"), bytes);
-	}
-
-	/** adds an element of the {@code number_provider} registry (since 26.3) */
-	default byte[] addNumberProvider(Identifier id, JsonElement numberProvider) {
-		return this.add(ResourceTypes.NUMBER_PROVIDER, id, numberProvider);
-	}
-
-	/** adds an element of the {@code number_provider} registry (since 26.3) */
-	default byte[] addNumberProvider(Identifier id, NumberProvider numberProvider) {
-		return addNumberProvider(id, new Dynamic<>(JavaOps.INSTANCE, numberProvider.value()).convert(JsonOps.INSTANCE).getValue());
-	}
-
-	default byte[] addMaterialRule(Identifier id, JsonElement materialRule) {
-		return this.add(ResourceTypes.MATERIAL_RULE, id, materialRule);
-	}
-
-	default byte[] addMaterialRule(Identifier id, MaterialRule materialRule) {
-		return addMaterialRule(id, MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, materialRule).getOrThrow());
-	}
-
-	default byte[] addMaterialCondition(Identifier id, JsonElement materialCondition) {
-		return this.add(ResourceTypes.MATERIAL_CONDITION, id, materialCondition);
-	}
-
-	default byte[] addMaterialCondition(Identifier id, MaterialCondition materialCondition) {
-		return addMaterialCondition(id, MaterialCondition.CODEC.encodeStart(JsonOps.INSTANCE, materialCondition).getOrThrow());
 	}
 
 	default byte[] addStructure(Identifier id, Structure structure) {

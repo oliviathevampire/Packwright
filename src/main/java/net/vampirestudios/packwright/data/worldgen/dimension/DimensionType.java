@@ -213,13 +213,13 @@ public class DimensionType {
 	public DimensionType skyLightFactor(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_FACTOR, value); }
 	public DimensionType skyLightLevel(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_LEVEL, value); }
 	public DimensionType waterEvaporates(boolean value) { return attribute(EnvironmentAttributes.WATER_EVAPORATES, value); }
-	/** bed rule as an object value; {@code explodes} was renamed to {@code destroy_on_use} in 26.3 */
+	/** bed rule as an object value */
 	public DimensionType bedRule(EnvironmentAttributes.BedRuleCondition canSetSpawn,
-			EnvironmentAttributes.BedRuleCondition canSleep, boolean destroyOnUse) {
+			EnvironmentAttributes.BedRuleCondition canSleep, boolean explodes) {
 		com.google.gson.JsonObject rule = new com.google.gson.JsonObject();
 		rule.addProperty("can_set_spawn", canSetSpawn.getId());
 		rule.addProperty("can_sleep", canSleep.getId());
-		rule.addProperty("destroy_on_use", destroyOnUse);
+		rule.addProperty("explodes", explodes);
 		this.attributes.put(EnvironmentAttributes.BED_RULE, EnvironmentAttributeValue.ofJson(rule));
 		return this;
 	}

@@ -81,6 +81,8 @@ public class StructureSet {
 		return placement(placement);
 	}
 
+	/** @deprecated the {@code dimension_origin} placement type only exists in Minecraft 26.3+ */
+	@Deprecated
 	public StructureSet dimensionOriginPlacement() {
 		JsonObject placement = new JsonObject();
 		placement.addProperty("type", "minecraft:dimension_origin");

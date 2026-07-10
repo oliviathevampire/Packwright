@@ -1,6 +1,9 @@
 package net.vampirestudios.packwright.mixin;
 
-import net.minecraft.server.packs.*;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackSelectionConfig;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.FolderRepositorySource;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.Pack.Metadata;
@@ -22,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 @Mixin(FolderRepositorySource.class)
 public class FileResourcePackProviderMixin {
@@ -47,13 +49,13 @@ public class FileResourcePackProviderMixin {
 					pack.location(),
 					new ResourcesSupplier() {
 						@Override
-						public PackMetadataResources openMetadata(PackLocationInfo location) {
+						public PackResources openPrimary(PackLocationInfo location) {
 							return pack;
 						}
 
 						@Override
-						public Stream<PackResources> openResources(PackLocationInfo location, Metadata metadata) {
-							return Stream.of(pack);
+						public PackResources openFull(PackLocationInfo location, Metadata metadata) {
+							return pack;
 						}
 					},
 					this.packType,

@@ -35,8 +35,6 @@ import net.vampirestudios.packwright.data.loot.Pool;
 import net.vampirestudios.packwright.data.recipe.*;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.worldgen.*;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
 import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.packwright.util.JsonBytes;
 
@@ -232,7 +230,6 @@ public class PackwrightPreTest {
 				Instrument.instrument()
 						.soundEvent(vanillaId("item.goat_horn.sound.0"))
 						.useDuration(7.0F)
-						.durabilityDamage(1)
 						.range(64.0F)
 						.description("Small Horn")
 		);
@@ -247,28 +244,30 @@ public class PackwrightPreTest {
 		pack.addCarver(
 				myModId("small_cave"),
 				Carver.cave()
-						.probability(0.05F)
-						.y(HeightProvider.uniform(VerticalAnchor.absolute(8), VerticalAnchor.absolute(180)))
-						// quadratic bias towards 0 tunnels per seed chunk (26.3 int provider type)
-						.count(IntProvider.veryBiasedToBottom(0, 3))
-						.thickness(FloatProvider.uniform(0.5F, 1.5F))
-						.weirdThicknessBias(true)
-						.roomVerticalRadiusMultiplier(FloatProvider.constant(1.0F))
+						.config(Carver.Config.config()
+								.probability(0.05F)
+								.y(HeightProvider.uniform(VerticalAnchor.absolute(8), VerticalAnchor.absolute(180)))
+								.yScale(1.0F)
+								.lavaLevel(VerticalAnchor.aboveBottom(8))
+								.replaceableTag(vanillaId("overworld_carver_replaceables")))
 		);
 		pack.addCarver(
 				myModId("canyon"),
 				Carver.canyon()
-						.probability(0.01F)
-						.y(HeightProvider.uniform(VerticalAnchor.absolute(10), VerticalAnchor.absolute(67)))
-						.shape(Carver.CanyonShape.canyonShape()
-								.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
-								.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
-								.thickness(FloatProvider.trapezoid(0.0F, 6.0F, 2.0F))
+						.config(Carver.Config.config()
+								.probability(0.01F)
+								.y(HeightProvider.uniform(VerticalAnchor.absolute(10), VerticalAnchor.absolute(67)))
 								.yScale(3.0F)
-								.verticalRadiusCenterFactor(0.0F)
-								.verticalRadiusDefaultFactor(1.0F)
-								.widthSmoothness(3))
-						.verticalRotation(FloatProvider.uniform(-0.125F, 0.125F))
+								.lavaLevel(VerticalAnchor.aboveBottom(8))
+								.replaceableTag(vanillaId("overworld_carver_replaceables"))
+								.verticalRotation(FloatProvider.uniform(-0.125F, 0.125F))
+								.shape(Carver.CanyonShape.canyonShape()
+										.distanceFactor(FloatProvider.uniform(0.75F, 1.0F))
+										.horizontalRadiusFactor(FloatProvider.uniform(0.75F, 1.0F))
+										.thickness(FloatProvider.trapezoid(0.0F, 6.0F, 2.0F))
+										.verticalRadiusCenterFactor(0.0F)
+										.verticalRadiusDefaultFactor(1.0F)
+										.widthSmoothness(3)))
 		);
 		pack.addProcessorList(
 				myModId("mossy_replace"),
@@ -359,72 +358,7 @@ public class PackwrightPreTest {
 								})
 				)
 		);
-		// data-driven brewing (since 26.3): a vanilla-style potion recipe, matching only
-		// awkward potions in the bottle slots via a potion_contents predicate
-		pack.addRecipe(
-				customId("example", "brew_luck"),
-				Recipe.brewing(
-						BrewingRecipe.PotionIngredient.of(vanillaId("potion"))
-								.potion(vanillaId("awkward")),
-						BrewingRecipe.PotionIngredient.of(vanillaId("rabbit_foot")),
-						Result.result(vanillaId("potion"))
-								.components(components -> {
-									JsonObject contents = new JsonObject();
-									contents.addProperty("potion", "minecraft:luck");
-									components.add("minecraft:potion_contents", contents);
-								})
-				)
-		);
-		// brewing is no longer limited to potions - any items may be used in any slot
-		pack.addRecipe(
-				customId("example", "brew_sponge"),
-				Recipe.brewing(
-						BrewingRecipe.PotionIngredient.of(vanillaId("wet_sponge")),
-						BrewingRecipe.PotionIngredient.of(vanillaId("blaze_powder")),
-						Result.result(vanillaId("sponge"))
-				)
-		);
-
-		// reusable number providers in the number_provider registry (since 26.3),
-		// e.g. for the minecraft:compostable component's "layers" field
-		pack.addNumberProvider(
-				myModId("compostable/golden"),
-				NumberProvider.weightedList(List.of(
-						NumberProvider.weighted(NumberProvider.constant(1), 9),
-						NumberProvider.weighted(NumberProvider.constant(2), 1)
-				))
-		);
-		pack.addNumberProvider(
-				myModId("lucky_bonus"),
-				NumberProvider.numberDispatcher(
-						NumberProvider.constant(0),
-						List.of(
-								NumberProvider.dispatchCase(Condition.randomChance(0.05F), NumberProvider.uniform(3, 5)),
-								NumberProvider.dispatchCase(Condition.randomChance(0.25F), NumberProvider.constant(1))
-						)
-				)
-		);
-
-		// material rules & conditions (since 26.3): the pipeline that used to live in the
-		// noise settings' surface_rule field, now reusable as registry entries
-		pack.addMaterialCondition(
-				myModId("above_sea_level"),
-				MaterialCondition.yAbove(VerticalAnchor.absolute(63), 0, false)
-		);
-		pack.addMaterialRule(
-				myModId("desert_surface"),
-				MaterialRule.sequence(
-						MaterialRule.condition(
-								MaterialCondition.biome(vanillaId("desert")),
-								MaterialRule.condition(
-										MaterialCondition.stoneDepth(0, true, "floor"),
-										MaterialRule.block(vanillaId("red_sand")))),
-						MaterialRule.block(VanillaIds.STONE)
-				)
-		);
-
-		// block loot with 26.3 loot features: the tool/can_silk_touch vanilla predicate
-		// referenced instead of an inlined check, and a conditional_value number provider
+		// block loot using a reusable predicate reference
 		pack.addLootTable(
 				myModId("blocks/gilded_stone"),
 				LootTable.block().pool(Pool.of().rolls(1)
@@ -432,10 +366,7 @@ public class PackwrightPreTest {
 								Entry.item(vanillaId("gilded_stone"))
 										.condition(Condition.reference(vanillaId("tool/can_silk_touch"))),
 								Entry.item(vanillaId("gold_nugget"))
-										.function(LootFunction.setCount(NumberProvider.conditionalValue(
-												Condition.randomChance(0.1F),
-												NumberProvider.uniform(2, 4),
-												NumberProvider.constant(1))))
+										.function(LootFunction.setCount(NumberProvider.uniform(1, 3)))
 						))
 						.condition(Condition.survivesExplosion())
 				)
@@ -790,9 +721,7 @@ public class PackwrightPreTest {
 					.set(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, -13621215)
 					.set(EnvironmentAttributes.DEFAULT_DRIPSTONE_PARTICLE, vanillaId("pointed_dripstone_lava"))
 					.bedRule(EnvironmentAttributes.BedRuleCondition.NEVER,
-							EnvironmentAttributes.BedRuleCondition.NEVER, true, true)
-					.strawBedRule(EnvironmentAttributes.BedRuleCondition.ALWAYS,
-							EnvironmentAttributes.BedRuleCondition.WHEN_DARK, false, null)
+							EnvironmentAttributes.BedRuleCondition.NEVER, true)
 					.set(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, true)
 					.set(EnvironmentAttributes.WATER_EVAPORATES, true)
 					.set(EnvironmentAttributes.FAST_LAVA, true)

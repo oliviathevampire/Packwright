@@ -87,16 +87,12 @@ public final class ResourceTypes {
 	public static final ResourceType<WorldClock> WORLD_CLOCK = ResourceType.data("world_clock", WorldClock.CODEC);
 	// the registry is minecraft:timeline, so its data folder is singular
 	public static final ResourceType<Timeline> TIMELINE = ResourceType.data("timeline", Timeline.CODEC);
-	/** reusable number providers referenced by e.g. the {@code minecraft:compostable} component (since 26.3) */
-	public static final ResourceType<JsonElement> NUMBER_PROVIDER = ResourceType.data("number_provider", Codecs.JSON);
 	/** reusable loot conditions, referenced via {@code minecraft:reference} conditions */
 	public static final ResourceType<Condition> PREDICATE = ResourceType.data("predicate", Condition.CODEC);
 	/** reusable loot functions, applied via {@code /item modify} or {@code minecraft:reference} functions */
 	public static final ResourceType<LootFunction> ITEM_MODIFIER = ResourceType.data("item_modifier", LootFunction.CODEC);
 	public static final ResourceType<JsonElement> CHAT_TYPE = ResourceType.data("chat_type", Codecs.JSON);
 	public static final ResourceType<JsonElement> ENCHANTMENT_PROVIDER = ResourceType.data("enchantment_provider", Codecs.JSON);
-	/** reusable slot sources for {@code /item} and {@code /execute if slots|items} (since 26.3) */
-	public static final ResourceType<JsonElement> SLOT_SOURCE = ResourceType.data("slot_source", Codecs.JSON);
 
 	// entity variants
 	public static final ResourceType<WolfVariant> WOLF_VARIANT = ResourceType.data("wolf_variant", WolfVariant.CODEC);
@@ -117,14 +113,12 @@ public final class ResourceTypes {
 	public static final ResourceType<Biome> BIOME = ResourceType.data("worldgen/biome", Biome.CODEC);
 	public static final ResourceType<Dimension> DIMENSION = ResourceType.data("dimension", Dimension.CODEC);
 	public static final ResourceType<DimensionType> DIMENSION_TYPE = ResourceType.data("dimension_type", DimensionType.CODEC);
-	public static final ResourceType<Feature> FEATURE = ResourceType.data("worldgen/feature", Feature.CODEC);
+	public static final ResourceType<Feature> FEATURE = ResourceType.data("worldgen/configured_feature", Feature.CODEC);
 	public static final ResourceType<PlacedFeature> PLACED_FEATURE = ResourceType.data("worldgen/placed_feature", PlacedFeature.CODEC);
-	public static final ResourceType<Carver> CARVER = ResourceType.data("worldgen/carver", Carver.CODEC);
+	public static final ResourceType<Carver> CARVER = ResourceType.data("worldgen/configured_carver", Carver.CODEC);
 	public static final ResourceType<NoiseSettings> NOISE_SETTINGS = ResourceType.data("worldgen/noise_settings", NoiseSettings.CODEC);
 	public static final ResourceType<JsonElement> NOISE = ResourceType.data("worldgen/noise", Codecs.JSON);
 	public static final ResourceType<JsonElement> DENSITY_FUNCTION = ResourceType.data("worldgen/density_function", Codecs.JSON);
-	public static final ResourceType<JsonElement> MATERIAL_RULE = ResourceType.data("worldgen/material_rule", Codecs.JSON);
-	public static final ResourceType<JsonElement> MATERIAL_CONDITION = ResourceType.data("worldgen/material_condition", Codecs.JSON);
 	public static final ResourceType<Structure> STRUCTURE = ResourceType.data("worldgen/structure", Structure.CODEC);
 	public static final ResourceType<StructureSet> STRUCTURE_SET = ResourceType.data("worldgen/structure_set", StructureSet.CODEC);
 	public static final ResourceType<ProcessorList> PROCESSOR_LIST = ResourceType.data("worldgen/processor_list", ProcessorList.CODEC);

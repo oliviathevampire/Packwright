@@ -42,8 +42,6 @@ public class EnvironmentAttributes {
     public static final Identifier CAN_START_RAID = vanillaId("gameplay/can_start_raid");
     public static final Identifier WATER_EVAPORATES = vanillaId("gameplay/water_evaporates");
     public static final Identifier BED_RULE = vanillaId("gameplay/bed_rule");
-    /** same format as {@link #BED_RULE}, but used for the straw bed (since 26.3) */
-    public static final Identifier STRAW_BED_RULE = vanillaId("gameplay/straw_bed_rule");
     public static final Identifier RESPAWN_ANCHOR_WORKS = vanillaId("gameplay/respawn_anchor_works");
     public static final Identifier NETHER_PORTAL_SPAWNS_PIGLINS = vanillaId("gameplay/nether_portal_spawns_piglin");
     public static final Identifier FAST_LAVA = vanillaId("gameplay/fast_lava");
@@ -133,14 +131,11 @@ public class EnvironmentAttributes {
         }
     }
 
-    private static com.google.gson.JsonObject bedRuleValue(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
+    private static com.google.gson.JsonObject bedRuleValue(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean explodes) {
         com.google.gson.JsonObject rule = new com.google.gson.JsonObject();
         rule.addProperty("can_set_spawn", canSetSpawn.getId());
         rule.addProperty("can_sleep", canSleep.getId());
-        rule.addProperty("destroy_on_use", destroyOnUse);
-        if (destroyOnLeave != null) {
-            rule.addProperty("destroy_on_leave", destroyOnLeave);
-        }
+        rule.addProperty("explodes", explodes);
         return rule;
     }
 
@@ -172,17 +167,10 @@ public class EnvironmentAttributes {
     public EnvironmentAttributes canStartRaid(boolean value) { return set(CAN_START_RAID, value); }
     public EnvironmentAttributes waterEvaporates(boolean value) { return set(WATER_EVAPORATES, value); }
     /**
-     * bed rule as an object value with the fields the game requires;
-     * {@code explodes} was renamed to {@code destroy_on_use} in 26.3
-     *
-     * @param destroyOnLeave optional, may be null
+     * bed rule as an object value with the fields the game requires
      */
-    public EnvironmentAttributes bedRule(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
-        return set(BED_RULE, bedRuleValue(canSetSpawn, canSleep, destroyOnUse, destroyOnLeave));
-    }
-
-    public EnvironmentAttributes strawBedRule(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean destroyOnUse, Boolean destroyOnLeave) {
-        return set(STRAW_BED_RULE, bedRuleValue(canSetSpawn, canSleep, destroyOnUse, destroyOnLeave));
+    public EnvironmentAttributes bedRule(BedRuleCondition canSetSpawn, BedRuleCondition canSleep, boolean explodes) {
+        return set(BED_RULE, bedRuleValue(canSetSpawn, canSleep, explodes));
     }
     public EnvironmentAttributes respawnAnchorWorks(boolean value) { return set(RESPAWN_ANCHOR_WORKS, value); }
     public EnvironmentAttributes netherPortalSpawnsPiglins(boolean value) { return set(NETHER_PORTAL_SPAWNS_PIGLINS, value); }

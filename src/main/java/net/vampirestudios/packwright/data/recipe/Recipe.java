@@ -52,12 +52,6 @@ public abstract class Recipe {
 		return new StonecuttingRecipe(ingredient, result);
 	}
 
-	/** a data-driven brewing stand recipe (since 26.3); any items may be used in any slot */
-	public static BrewingRecipe brewing(final BrewingRecipe.PotionIngredient input,
-			final BrewingRecipe.PotionIngredient reagent, final Result output) {
-		return new BrewingRecipe(input, reagent, output);
-	}
-
 	// crafting
 
 	public static ShapedRecipe shaped(final Pattern pattern, final Keys keys, final Result result) {

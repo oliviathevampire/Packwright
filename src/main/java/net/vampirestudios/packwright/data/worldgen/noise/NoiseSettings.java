@@ -32,7 +32,7 @@ public class NoiseSettings {
 	private JsonObject noise;
 	private JsonArray spawnTarget;
 	private JsonObject spawnDensity;
-	private JsonElement materialRule;
+	private JsonElement surfaceRule;
 	// required by the game; defaulted so a bare settings object still parses
 	private boolean aquifersEnabled = false;
 	private boolean oreVeinsEnabled = false;
@@ -56,7 +56,7 @@ public class NoiseSettings {
 		this.noise = null;
 		this.spawnTarget = null;
 		this.spawnDensity = null;
-		this.materialRule = null;
+		this.surfaceRule = null;
 		this.extra.entrySet().clear();
 
 		if (json == null) return this;
@@ -82,8 +82,8 @@ public class NoiseSettings {
 		if (json.has("spawn_density") && json.get("spawn_density").isJsonObject()) {
 			this.spawnDensity = json.getAsJsonObject("spawn_density").deepCopy();
 		}
-		if (json.has("material_rule")) {
-			this.materialRule = json.get("material_rule").deepCopy();
+		if (json.has("surface_rule")) {
+			this.surfaceRule = json.get("surface_rule").deepCopy();
 		}
 		if (json.has("aquifers_enabled") && json.get("aquifers_enabled").isJsonPrimitive()) {
 			this.aquifersEnabled = json.get("aquifers_enabled").getAsBoolean();
@@ -117,13 +117,10 @@ public class NoiseSettings {
 	public NoiseSettings noise(JsonObject v) { this.noise = v == null ? null : v.deepCopy(); return this; }
 	public NoiseSettings spawnTarget(JsonArray v) { this.spawnTarget = v == null ? null : v.deepCopy(); return this; }
 	public NoiseSettings spawnDensity(JsonObject v) { this.spawnDensity = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings materialRule(JsonElement v) { this.materialRule = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings materialRule(Identifier id) {
-		this.materialRule = id == null ? null : new JsonPrimitive(id.toString());
-		return this;
-	}
-	public NoiseSettings materialRule(MaterialRule rule) {
-		this.materialRule = rule == null ? null : MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, rule).getOrThrow();
+	public NoiseSettings surfaceRule(JsonElement v) { this.surfaceRule = v == null ? null : v.deepCopy(); return this; }
+	// 26.2 has no worldgen/material_rule registry, so rules are always inline
+	public NoiseSettings surfaceRule(MaterialRule rule) {
+		this.surfaceRule = rule == null ? null : MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, rule).getOrThrow();
 		return this;
 	}
 
@@ -212,7 +209,7 @@ public class NoiseSettings {
 		// spawn_target and the three booleans are required by the game
 		out.add("spawn_target", this.spawnTarget != null ? this.spawnTarget.deepCopy() : new JsonArray());
 		if (this.spawnDensity != null) out.add("spawn_density", this.spawnDensity.deepCopy());
-		if (this.materialRule != null) out.add("material_rule", this.materialRule.deepCopy());
+		if (this.surfaceRule != null) out.add("surface_rule", this.surfaceRule.deepCopy());
 		out.addProperty("aquifers_enabled", this.aquifersEnabled);
 		out.addProperty("ore_veins_enabled", this.oreVeinsEnabled);
 		out.addProperty("disable_mob_generation", this.disableMobGeneration);
@@ -232,7 +229,7 @@ public class NoiseSettings {
 				|| "noise".equals(key)
 				|| "spawn_target".equals(key)
 				|| "spawn_density".equals(key)
-				|| "material_rule".equals(key)
+				|| "surface_rule".equals(key)
 				|| "aquifers_enabled".equals(key)
 				|| "ore_veins_enabled".equals(key)
 				|| "disable_mob_generation".equals(key)

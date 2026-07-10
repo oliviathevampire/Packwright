@@ -6,7 +6,6 @@ import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.util.JsonBytes;
 
@@ -18,7 +17,7 @@ import static net.vampirestudios.packwright.util.ResourceHelpers.customId;
 
 /**
  * Examples for the smaller data registries: reusable predicates and item modifiers,
- * chat types, enchantment providers, slot sources (26.3) and plain mcfunctions.
+ * chat types, enchantment providers and plain mcfunctions.
  * Everything is registered into one pack and dumped as its own datapack.
  */
 public class DataRegistryExamples {
@@ -105,20 +104,6 @@ public class DataRegistryExamples {
 	}
 
 	/* ----------------------------------------------------------
-	 * 5) Slot source (26.3): reusable slot selections for /item
-	 *    and "/execute if slots|items", referenced inline with
-	 *    minecraft:reference.
-	 * ---------------------------------------------------------- */
-
-	/** the whole hotbar of the targeted entity */
-	public static JsonObject buildHotbarSlotSource() {
-		JsonObject slotSource = new JsonObject();
-		slotSource.addProperty("type", "minecraft:slot_range");
-		slotSource.addProperty("slots", "hotbar.*");
-		return slotSource;
-	}
-
-	/* ----------------------------------------------------------
 	 * 6) Functions: plain .mcfunction files.
 	 * ---------------------------------------------------------- */
 
@@ -132,17 +117,6 @@ public class DataRegistryExamples {
 	}
 
 	/* ----------------------------------------------------------
-	 * 7) Number provider registry entry reused by the examples
-	 * ---------------------------------------------------------- */
-
-	public static NumberProvider buildStormBonusProvider() {
-		return NumberProvider.conditionalValue(
-				buildThunderingPredicate(),
-				NumberProvider.uniform(2, 3),
-				NumberProvider.constant(1));
-	}
-
-	/* ----------------------------------------------------------
 	 * Register + dump
 	 * ---------------------------------------------------------- */
 
@@ -153,9 +127,7 @@ public class DataRegistryExamples {
 		pack.addItemModifier(myModId("trophy"), buildTrophyModifier());
 		pack.addChatType(myModId("whisper"), buildWhisperChatType());
 		pack.addEnchantmentProvider(myModId("ember_blade"), buildEmberBladeEnchantments());
-		pack.addSlotSource(myModId("hotbar"), buildHotbarSlotSource());
 		pack.addMcFunction(myModId("greet"), buildGreetFunction());
-		pack.addNumberProvider(myModId("storm_bonus"), buildStormBonusProvider());
 	}
 
 	public static void main() {
@@ -171,8 +143,6 @@ public class DataRegistryExamples {
 		System.out.println(buildWhisperChatType());
 		System.out.println("Enchantment Provider JSON (mymod:ember_blade):");
 		System.out.println(buildEmberBladeEnchantments());
-		System.out.println("Slot Source JSON (mymod:hotbar):");
-		System.out.println(buildHotbarSlotSource());
 		System.out.println("Function (mymod:greet):");
 		buildGreetFunction().forEach(System.out::println);
 

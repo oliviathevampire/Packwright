@@ -100,7 +100,7 @@ public class EmberWastesWorldgen {
 
 	/* ----------------------------------------------------------
 	 * 3) Noise settings: mymod:ember_wastes
-	 *    References the material rule registry entry by ID.
+	 *    The surface rule is inline (26.2 has no material rule registry).
 	 * ---------------------------------------------------------- */
 
 	public static NoiseSettings buildNoiseSettings() {
@@ -115,38 +115,40 @@ public class EmberWastesWorldgen {
 				.oreVeinsEnabled(false)
 				// flat wastes: solid below y=44, air above y=72
 				.simpleNoiseRouterGradient(44, 72)
-				// ID reference into the worldgen/material_rule registry (since 26.3)
-				.materialRule(myModId("ember_wastes_surface"));
+				.surfaceRule(buildSurfaceRule());
 	}
 
 	/* ----------------------------------------------------------
 	 * 4) Carvers: mymod:ember_tubes / mymod:ember_rifts
-	 *    26.3 flattened carver format, no replaceable/lava_level.
+	 *    26.2 carver format: config nested, yScale/lava_level/replaceable.
 	 * ---------------------------------------------------------- */
 
 	public static Carver buildLavaTubesCarver() {
 		return Carver.cave()
-				.probability(0.1F)
-				.y(HeightProvider.uniform(VerticalAnchor.aboveBottom(8), VerticalAnchor.absolute(120)))
-				.count(IntProvider.veryBiasedToBottom(1, 4))
-				.thickness(FloatProvider.uniform(0.8F, 1.6F))
-				.weirdThicknessBias(true)
-				.roomVerticalRadiusMultiplier(FloatProvider.constant(0.6F));
+				.config(Carver.Config.config()
+						.probability(0.1F)
+						.y(HeightProvider.uniform(VerticalAnchor.aboveBottom(8), VerticalAnchor.absolute(120)))
+						.yScale(0.6F)
+						.lavaLevel(VerticalAnchor.aboveBottom(8))
+						.replaceableTag(vanillaId("overworld_carver_replaceables")));
 	}
 
 	public static Carver buildRiftsCarver() {
 		return Carver.canyon()
-				.probability(0.02F)
-				.y(HeightProvider.uniform(VerticalAnchor.absolute(20), VerticalAnchor.absolute(70)))
-				.verticalRotation(FloatProvider.uniform(-0.05F, 0.05F))
-				.shape(Carver.CanyonShape.canyonShape()
-						.distanceFactor(FloatProvider.uniform(0.8F, 1.0F))
-						.horizontalRadiusFactor(FloatProvider.uniform(0.7F, 1.0F))
-						.thickness(FloatProvider.trapezoid(0.0F, 8.0F, 3.0F))
+				.config(Carver.Config.config()
+						.probability(0.02F)
+						.y(HeightProvider.uniform(VerticalAnchor.absolute(20), VerticalAnchor.absolute(70)))
 						.yScale(4.0F)
-						.verticalRadiusCenterFactor(0.0F)
-						.verticalRadiusDefaultFactor(1.0F)
-						.widthSmoothness(2));
+						.lavaLevel(VerticalAnchor.aboveBottom(8))
+						.replaceableTag(vanillaId("overworld_carver_replaceables"))
+						.verticalRotation(FloatProvider.uniform(-0.05F, 0.05F))
+						.shape(Carver.CanyonShape.canyonShape()
+								.distanceFactor(FloatProvider.uniform(0.8F, 1.0F))
+								.horizontalRadiusFactor(FloatProvider.uniform(0.7F, 1.0F))
+								.thickness(FloatProvider.trapezoid(0.0F, 8.0F, 3.0F))
+								.verticalRadiusCenterFactor(0.0F)
+								.verticalRadiusDefaultFactor(1.0F)
+								.widthSmoothness(2)));
 	}
 
 	/* ----------------------------------------------------------
@@ -169,13 +171,11 @@ public class EmberWastesWorldgen {
 				.biomeFilter();
 	}
 
-	/** clusters of stepped basalt columns rising from the crust */
+	/** clusters of basalt columns rising from the crust (26.2's basalt_columns type) */
 	public static Feature buildBasaltSpiresFeature() {
-		return Features.steppedColumnCluster(vanillaId("basalt"))
-				.columnReach(IntProvider.uniform(0, 2))
-				.columnCount(IntProvider.uniform(2, 8))
-				.clusterReach(IntProvider.uniform(2, 3))
-				.height(IntProvider.uniform(4, 9)) // capped at 10 by the game
+		return Features.feature("minecraft:basalt_columns")
+				.property("reach", IntProvider.CODEC, IntProvider.uniform(1, 3))
+				.property("height", IntProvider.CODEC, IntProvider.uniform(4, 9))
 				.build();
 	}
 
@@ -203,18 +203,15 @@ public class EmberWastesWorldgen {
 
 	/**
 	 * scattered dead bushes clinging to the ash; random_patch was removed in 26.1,
-	 * projected_random_patchy_square (26.3) is the replacement for scattered vegetation
+	 * so this places single bushes and lets the placement modifiers do the scattering
 	 */
 	public static Feature buildAshScrubFeature() {
-		return Features.projectedRandomPatchySquare(vanillaId("dead_bush"))
-				.projectThrough(PlacedFeature.BlockPredicate.replaceable())
-				.size(IntProvider.uniform(3, 6))
-				.maxProjectionHeight(4)
-				.build();
+		return Features.simpleBlock(vanillaId("dead_bush")).build();
 	}
 
 	public static PlacedFeature buildAshScrubPlaced() {
 		return PlacedFeature.placed(buildAshScrubFeature())
+				.count(IntProvider.uniform(2, 6))
 				.rarityFilter(2)
 				.inSquare()
 				.heightmap("MOTION_BLOCKING")
@@ -269,9 +266,7 @@ public class EmberWastesWorldgen {
 						.respawnAnchorWorks(true)
 						// nether-style: no spawn point, no sleeping, bed explodes on use
 						.bedRule(EnvironmentAttributes.BedRuleCondition.NEVER,
-								EnvironmentAttributes.BedRuleCondition.NEVER, true, null)
-						.strawBedRule(EnvironmentAttributes.BedRuleCondition.NEVER,
-								EnvironmentAttributes.BedRuleCondition.NEVER, true, null)
+								EnvironmentAttributes.BedRuleCondition.NEVER, true)
 						.monstersBurn(false)
 						.fastLava(true)
 						.canStartRaid(false)
@@ -298,9 +293,10 @@ public class EmberWastesWorldgen {
 	}
 
 	public static StructureSet buildSanctumStructureSet() {
+		// 26.2 has no dimension_origin placement type; use a sparse random spread instead
 		return StructureSet.set()
 				.addStructure(myModId("obsidian_sanctum"), 1)
-				.dimensionOriginPlacement();
+				.randomSpreadPlacement(94251327, 48, 24);
 	}
 
 	/** an empty start pool so the jigsaw structure's reference resolves */
@@ -325,8 +321,6 @@ public class EmberWastesWorldgen {
 
 	public static void registerAll(RuntimeResourcePack pack) {
 		pack.addTimeline(myModId("ember_wastes_sky_cycle"), buildSkyCycle());
-		pack.addMaterialCondition(myModId("near_lava_sea"), buildNearLavaSeaCondition());
-		pack.addMaterialRule(myModId("ember_wastes_surface"), buildSurfaceRule());
 		pack.addNoiseSettings(myModId("ember_wastes"), buildNoiseSettings());
 		pack.addCarver(myModId("ember_tubes"), buildLavaTubesCarver());
 		pack.addCarver(myModId("ember_rifts"), buildRiftsCarver());

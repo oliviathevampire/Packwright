@@ -96,12 +96,12 @@ public class PlacedFeature {
 		return heightRange(HeightProvider.uniform(minInclusive, maxInclusive));
 	}
 
-	public PlacedFeature offset(int x, int y, int z) {
-		return offset(IntProvider.constant(x), IntProvider.constant(y), IntProvider.constant(z));
+	public PlacedFeature randomOffset(int xzSpread, int ySpread) {
+		return randomOffset(IntProvider.constant(xzSpread), IntProvider.constant(ySpread));
 	}
 
-	public PlacedFeature offset(IntProvider x, IntProvider y, IntProvider z) {
-		return modifier(new OffsetPlacement(x, y, z));
+	public PlacedFeature randomOffset(IntProvider xzSpread, IntProvider ySpread) {
+		return modifier(new RandomOffsetPlacement(xzSpread, ySpread));
 	}
 
 	public PlacedFeature surfaceWaterDepthFilter(int maxWaterDepth) {
@@ -149,7 +149,7 @@ public class PlacedFeature {
 						case "in_square" -> InSquarePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "heightmap" -> HeightmapPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "height_range" -> HeightRangePlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-						case "offset" -> OffsetPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+						case "random_offset" -> RandomOffsetPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "surface_water_depth_filter" -> SurfaceWaterDepthFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "block_predicate_filter" -> BlockPredicateFilterPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 						case "environment_scan" -> EnvironmentScanPlacement.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
@@ -167,7 +167,7 @@ public class PlacedFeature {
 				if (input instanceof InSquarePlacement inSquare) return InSquarePlacement.CODEC.codec().encode(inSquare, ops, prefix);
 				if (input instanceof HeightmapPlacement heightmap) return HeightmapPlacement.CODEC.codec().encode(heightmap, ops, prefix);
 				if (input instanceof HeightRangePlacement heightRange) return HeightRangePlacement.CODEC.codec().encode(heightRange, ops, prefix);
-				if (input instanceof OffsetPlacement offset) return OffsetPlacement.CODEC.codec().encode(offset, ops, prefix);
+				if (input instanceof RandomOffsetPlacement offset) return RandomOffsetPlacement.CODEC.codec().encode(offset, ops, prefix);
 				if (input instanceof SurfaceWaterDepthFilterPlacement waterDepth) return SurfaceWaterDepthFilterPlacement.CODEC.codec().encode(waterDepth, ops, prefix);
 				if (input instanceof BlockPredicateFilterPlacement predicateFilter) return BlockPredicateFilterPlacement.CODEC.codec().encode(predicateFilter, ops, prefix);
 				if (input instanceof EnvironmentScanPlacement environmentScan) return EnvironmentScanPlacement.CODEC.codec().encode(environmentScan, ops, prefix);
@@ -218,13 +218,12 @@ public class PlacedFeature {
 		).apply(i, (type, height) -> new HeightRangePlacement(height)));
 	}
 
-	public record OffsetPlacement(IntProvider x, IntProvider y, IntProvider z) implements PlacementModifier {
-		public static final MapCodec<OffsetPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-				Codec.STRING.fieldOf("type").forGetter(v -> "minecraft:offset"),
-				IntProvider.CODEC.fieldOf("x").forGetter(OffsetPlacement::x),
-				IntProvider.CODEC.fieldOf("y").forGetter(OffsetPlacement::y),
-				IntProvider.CODEC.fieldOf("z").forGetter(OffsetPlacement::z)
-		).apply(i, (type, x, y, z) -> new OffsetPlacement(x, y, z)));
+	public record RandomOffsetPlacement(IntProvider xzSpread, IntProvider ySpread) implements PlacementModifier {
+		public static final MapCodec<RandomOffsetPlacement> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+				Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:random_offset"),
+				IntProvider.CODEC.fieldOf("xz_spread").forGetter(RandomOffsetPlacement::xzSpread),
+				IntProvider.CODEC.fieldOf("y_spread").forGetter(RandomOffsetPlacement::ySpread)
+		).apply(i, (type, xzSpread, ySpread) -> new RandomOffsetPlacement(xzSpread, ySpread)));
 	}
 
 	public record SurfaceWaterDepthFilterPlacement(int maxWaterDepth) implements PlacementModifier {

@@ -31,7 +31,7 @@ public final class Features {
 
 	/**
 	 * @deprecated the {@code random_patch} feature type was removed from the game in 26.1;
-	 * use {@link #projectedRandomPatchySquare(Identifier)} for scattered vegetation
+	 * place single blocks and scatter them with count/rarity placement modifiers instead
 	 */
 	@Deprecated
 	public static RandomPatchFeatureBuilder randomPatch(PlacedFeature feature) {
@@ -124,22 +124,32 @@ public final class Features {
 		return new DeltaFeatureBuilder().contents(contents).rim(rim);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static SteppedColumnClusterFeatureBuilder steppedColumnCluster(Identifier block) {
 		return new SteppedColumnClusterFeatureBuilder().block(block);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static SingleBlockPillarFeatureBuilder singleBlockPillar(Identifier block) {
 		return new SingleBlockPillarFeatureBuilder().block(block);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static RandomNeighborSpreadFeatureBuilder randomNeighborSpread(Identifier block) {
 		return new RandomNeighborSpreadFeatureBuilder().block(block);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static OverlayFeatureBuilder overlay(Identifier... features) {
 		return new OverlayFeatureBuilder().features(features);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static ProjectedRandomPatchySquareFeatureBuilder projectedRandomPatchySquare(Identifier block) {
 		return new ProjectedRandomPatchySquareFeatureBuilder().block(block);
 	}
@@ -163,6 +173,8 @@ public final class Features {
 				.placementProbabilityPerValidPosition(probability);
 	}
 
+	/** @deprecated this feature type only exists in Minecraft 26.3+; not usable on this branch */
+	@Deprecated
 	public static EndPodiumFeatureBuilder endPodium(boolean active) {
 		return new EndPodiumFeatureBuilder().active(active);
 	}
