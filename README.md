@@ -11,14 +11,14 @@ theory an entire content mod can ship nothing but `.java` files and its mod json
 Packwright is a heavily rewritten fork of [ARRP](https://github.com/Devan-Kerman/RRP)
 (Advanced Runtime Resource Packs) by HalfOf2/Devan-Kerman. The runtime-pack core remains,
 but the builder API, codecs, registries and worldgen support were written from scratch for
-modern Minecraft (26.x data pack formats).
+modern Minecraft. This branch targets Minecraft 26.2.
 
 ## Adding Packwright
 
 ```groovy
 // works for both Groovy and Kotlin DSL
 dependencies {
-    modImplementation("net.vampirestudios:packwright:1.0.0+build.1")
+    modImplementation("net.vampirestudios:packwright:1.0.0+build.1-26.2")
 }
 ```
 
