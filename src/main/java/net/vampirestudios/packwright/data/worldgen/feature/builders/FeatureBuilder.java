@@ -2,7 +2,6 @@ package net.vampirestudios.packwright.data.worldgen.feature.builders;
 
 import net.vampirestudios.packwright.data.worldgen.feature.*;
 
-import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import net.minecraft.resources.Identifier;
 
@@ -11,11 +10,6 @@ public class FeatureBuilder {
 
 	public FeatureBuilder(String type) {
 		this.feature = Feature.of(type);
-	}
-
-	public FeatureBuilder property(String key, JsonElement value) {
-		feature.property(key, value);
-		return this;
 	}
 
 	public FeatureBuilder property(String key, Object value) {

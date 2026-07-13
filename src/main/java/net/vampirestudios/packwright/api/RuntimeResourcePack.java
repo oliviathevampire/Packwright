@@ -2,22 +2,21 @@ package net.vampirestudios.packwright.api;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
-import com.google.gson.JsonElement;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JavaOps;
-import com.mojang.serialization.JsonOps;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.vampirestudios.packwright.assets.animation.Animation;
+import net.vampirestudios.packwright.assets.atlas.Atlas;
 import net.vampirestudios.packwright.assets.blockstates.BlockState;
 import net.vampirestudios.packwright.assets.equipment.EquipmentModel;
 import net.vampirestudios.packwright.assets.equipment.TrimMaterial;
 import net.vampirestudios.packwright.assets.equipment.TrimPattern;
+import net.vampirestudios.packwright.assets.font.Font;
 import net.vampirestudios.packwright.assets.item.ItemModelDefinition;
 import net.vampirestudios.packwright.assets.lang.Lang;
 import net.vampirestudios.packwright.assets.models.Model;
+import net.vampirestudios.packwright.assets.texture.TextureMeta;
 import net.vampirestudios.packwright.assets.timeline.Timeline;
 import net.vampirestudios.packwright.data.advancement.Advancement;
 import net.vampirestudios.packwright.data.entity.*;
@@ -29,18 +28,21 @@ import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.tags.Tag;
 import net.vampirestudios.packwright.data.worldgen.*;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
-import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
 import net.vampirestudios.packwright.data.worldgen.biome.Biome;
 import net.vampirestudios.packwright.data.worldgen.dimension.Dimension;
 import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.packwright.data.worldgen.feature.Feature;
 import net.vampirestudios.packwright.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
+import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
+import net.vampirestudios.packwright.data.worldgen.noise.DensityFunction;
+import net.vampirestudios.packwright.data.worldgen.noise.NoiseParameters;
 import net.vampirestudios.packwright.data.worldgen.noise.NoiseSettings;
 import net.vampirestudios.packwright.data.worldgen.structure.Structure;
 import net.vampirestudios.packwright.data.worldgen.structure.StructureSet;
 import net.vampirestudios.packwright.impl.RuntimeResourcePackImpl;
 import net.vampirestudios.packwright.util.CallableFunction;
+import net.vampirestudios.packwright.util.ImageUtils;
 import org.jetbrains.annotations.Contract;
 
 import java.awt.image.BufferedImage;
@@ -102,6 +104,14 @@ public interface RuntimeResourcePack extends PackResources {
 	 * @return the serialized resource
 	 */
 	<T> byte[] add(ResourceType<T> type, Identifier id, T value);
+
+//	<T> byte[] add(PackResourceKey<T> key, T value);
+//
+//	boolean contains(PackResourceKey<?> key);
+//
+//	void remove(PackResourceKey<?> key);
+//
+//	<T> Optional<T> getValue(PackResourceKey<T> key);
 
 	/**
 	 * reads, clones, and recolors the texture at the given path, and puts the newly created image in the given id.
@@ -396,11 +406,109 @@ public interface RuntimeResourcePack extends PackResources {
 	byte[] addTexture(Identifier id, BufferedImage image);
 
 	/**
+	 * adds a texture png together with its animation mcmeta
+	 *
+	 * @see #addAnimation(Identifier, Animation)
+	 */
+	default byte[] addTexture(Identifier id, BufferedImage image, Animation animation) {
+		this.addAnimation(id, animation);
+		return this.addTexture(id, image);
+	}
+
+	/**
+	 * adds a texture png together with its full mcmeta
+	 *
+	 * @see #addTextureMeta(Identifier, TextureMeta)
+	 */
+	default byte[] addTexture(Identifier id, BufferedImage image, TextureMeta meta) {
+		this.addTextureMeta(id, meta);
+		return this.addTexture(id, image);
+	}
+
+	/**
+	 * stitches the given equally-sized frames vertically into one animation
+	 * strip and adds it together with the animation mcmeta
+	 *
+	 * @see ImageUtils#stitchFrames(BufferedImage...)
+	 */
+	default byte[] addAnimatedTexture(Identifier id, Animation animation, BufferedImage... frames) {
+		return this.addTexture(id, ImageUtils.stitchFrames(frames), animation);
+	}
+
+	/**
+	 * adds a texture recolored from the given source image; a convenience for
+	 * {@code addTexture(id, ImageUtils.recolor(source, pixel))}
+	 *
+	 * @see #addRecoloredImage(Identifier, InputStream, IntUnaryOperator)
+	 * @see ImageUtils#recolor(BufferedImage, IntUnaryOperator)
+	 */
+	default byte[] addRecoloredTexture(Identifier id, BufferedImage source, IntUnaryOperator pixel) {
+		return this.addTexture(id, ImageUtils.recolor(source, pixel));
+	}
+
+	/**
+	 * adds a texture created by multiplying the source's color channels with
+	 * the given color — the usual way to make colored variants of a white or
+	 * grayscale template
+	 *
+	 * @param color RGB color, e.g. {@code 0xFF8800}
+	 * @see ImageUtils#tint(BufferedImage, int)
+	 */
+	default byte[] addTintedTexture(Identifier id, BufferedImage source, int color) {
+		return this.addTexture(id, ImageUtils.tint(source, color));
+	}
+
+	/**
+	 * adds a texture created by mapping the grayscale template's luminance
+	 * onto the given color ramp (index 0 = darkest)
+	 *
+	 * @see ImageUtils#grayscaleToPalette(BufferedImage, int[])
+	 */
+	default byte[] addPaletteSwappedTexture(Identifier id, BufferedImage grayscaleTemplate, int[] palette) {
+		return this.addTexture(id, ImageUtils.grayscaleToPalette(grayscaleTemplate, palette));
+	}
+
+	/**
 	 * adds an animation json
 	 * <p>
 	 * ".png.mcmeta" is automatically appended to the path
 	 */
 	byte[] addAnimation(Identifier id, Animation animation);
+
+	/**
+	 * adds a full texture mcmeta, which can combine the {@code animation},
+	 * {@code texture}, {@code gui} and {@code villager} sections
+	 * <p>
+	 * ".png.mcmeta" is automatically appended to the path
+	 */
+	byte[] addTextureMeta(Identifier id, TextureMeta meta);
+
+	/**
+	 * adds an atlas configuration at {@code assets/<namespace>/atlases/<path>.json};
+	 * atlas files of the same name are merged across packs, so sources are usually
+	 * added to a vanilla atlas id like {@code minecraft:blocks}
+	 * <p>
+	 * ".json" is automatically appended to the path
+	 */
+	default byte[] addAtlas(Identifier id, Atlas atlas) {
+		return this.add(ResourceTypes.ATLAS, id, atlas);
+	}
+
+	/**
+	 * adds a font definition at {@code assets/<namespace>/font/<path>.json}
+	 * <p>
+	 * ".json" is automatically appended to the path
+	 */
+	default byte[] addFont(Identifier id, Font font) {
+		return this.add(ResourceTypes.FONT, id, font);
+	}
+
+	/**
+	 * sets the pack icon by writing the image to {@code pack.png}
+	 */
+	default byte[] setIcon(BufferedImage icon) {
+		return this.addRootResource("pack.png", ImageUtils.toPngBytes(icon));
+	}
 
 	/**
 	 * add a tag under the id
@@ -462,11 +570,11 @@ public interface RuntimeResourcePack extends PackResources {
 		return this.add(ResourceTypes.NOISE_SETTINGS, id, noiseSettings);
 	}
 
-	default byte[] addNoise(Identifier id, JsonElement noise) {
+	default byte[] addNoise(Identifier id, NoiseParameters noise) {
 		return this.add(ResourceTypes.NOISE, id, noise);
 	}
 
-	default byte[] addDensityFunction(Identifier id, JsonElement densityFunction) {
+	default byte[] addDensityFunction(Identifier id, DensityFunction densityFunction) {
 		return this.add(ResourceTypes.DENSITY_FUNCTION, id, densityFunction);
 	}
 
@@ -480,16 +588,16 @@ public interface RuntimeResourcePack extends PackResources {
 		return this.add(ResourceTypes.ITEM_MODIFIER, id, modifier);
 	}
 
-	default byte[] addChatType(Identifier id, JsonElement chatType) {
+	default byte[] addChatType(Identifier id, ChatType chatType) {
 		return this.add(ResourceTypes.CHAT_TYPE, id, chatType);
 	}
 
-	default byte[] addEnchantmentProvider(Identifier id, JsonElement enchantmentProvider) {
+	default byte[] addEnchantmentProvider(Identifier id, EnchantmentProvider enchantmentProvider) {
 		return this.add(ResourceTypes.ENCHANTMENT_PROVIDER, id, enchantmentProvider);
 	}
 
 	/** adds a reusable slot source (since 26.3) */
-	default byte[] addSlotSource(Identifier id, JsonElement slotSource) {
+	default byte[] addSlotSource(Identifier id, SlotSource slotSource) {
 		return this.add(ResourceTypes.SLOT_SOURCE, id, slotSource);
 	}
 
@@ -503,29 +611,16 @@ public interface RuntimeResourcePack extends PackResources {
 	}
 
 	/** adds an element of the {@code number_provider} registry (since 26.3) */
-	default byte[] addNumberProvider(Identifier id, JsonElement numberProvider) {
+	default byte[] addNumberProvider(Identifier id, NumberProvider numberProvider) {
 		return this.add(ResourceTypes.NUMBER_PROVIDER, id, numberProvider);
 	}
 
-	/** adds an element of the {@code number_provider} registry (since 26.3) */
-	default byte[] addNumberProvider(Identifier id, NumberProvider numberProvider) {
-		return addNumberProvider(id, new Dynamic<>(JavaOps.INSTANCE, numberProvider.value()).convert(JsonOps.INSTANCE).getValue());
-	}
-
-	default byte[] addMaterialRule(Identifier id, JsonElement materialRule) {
+	default byte[] addMaterialRule(Identifier id, MaterialRule materialRule) {
 		return this.add(ResourceTypes.MATERIAL_RULE, id, materialRule);
 	}
 
-	default byte[] addMaterialRule(Identifier id, MaterialRule materialRule) {
-		return addMaterialRule(id, MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, materialRule).getOrThrow());
-	}
-
-	default byte[] addMaterialCondition(Identifier id, JsonElement materialCondition) {
-		return this.add(ResourceTypes.MATERIAL_CONDITION, id, materialCondition);
-	}
-
 	default byte[] addMaterialCondition(Identifier id, MaterialCondition materialCondition) {
-		return addMaterialCondition(id, MaterialCondition.CODEC.encodeStart(JsonOps.INSTANCE, materialCondition).getOrThrow());
+		return this.add(ResourceTypes.MATERIAL_CONDITION, id, materialCondition);
 	}
 
 	default byte[] addStructure(Identifier id, Structure structure) {

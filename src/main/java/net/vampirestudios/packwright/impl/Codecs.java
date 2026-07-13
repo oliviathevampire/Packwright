@@ -1,10 +1,7 @@
 // Codecs.java
 package net.vampirestudios.packwright.impl;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
 
 import java.util.Objects;
@@ -21,16 +18,6 @@ public final class Codecs {
 				.xmap(e -> e.map(java.util.List::of, l -> l),
 						l -> l.size() == 1 ? Either.left(l.getFirst()) : Either.right(l));
 	}
-
-	public static final Codec<JsonElement> JSON = new Codec<>() {
-		@Override public <T> DataResult<T> encode(JsonElement v, DynamicOps<T> ops, T prefix) {
-			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, v).convert(ops).getValue());
-		}
-		@Override public <T> DataResult<Pair<JsonElement, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			return DataResult.success(Pair.of(el, input));
-		}
-	};
 
 	public static <B, T> Codec<B> tagged(
 			String tagKey,
@@ -119,11 +106,6 @@ public final class Codecs {
 				}
 		);
 	}
-
-	public static final Codec<JsonObject> JSON_OBJECT = Codec.PASSTHROUGH.xmap(
-			dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue().getAsJsonObject(),
-			object -> new Dynamic<>(JsonOps.INSTANCE, object)
-	);
 
 	/**
 	 * Like {@link #tagged} but returns a {@link MapCodec} so the tag key and all

@@ -1,5 +1,9 @@
 package net.vampirestudios.packwright.data.loot;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JavaOps;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +17,10 @@ import java.util.Map;
  * and reusable providers live in the {@code number_provider} data registry.
  */
 public final class NumberProvider {
+	public static final Codec<NumberProvider> CODEC = Codec.PASSTHROUGH.xmap(
+			dynamic -> new NumberProvider(dynamic.convert(JavaOps.INSTANCE).getValue()),
+			provider -> new Dynamic<>(JavaOps.INSTANCE, provider.value));
+
 	private final Object value;
 
 	private NumberProvider(Object value) {

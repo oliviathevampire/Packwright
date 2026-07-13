@@ -1,9 +1,8 @@
 package net.vampirestudios.packwright.impl;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -21,18 +20,19 @@ import net.vampirestudios.packwright.api.ResourceType;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.assets.animation.Animation;
 import net.vampirestudios.packwright.assets.lang.Lang;
+import net.vampirestudios.packwright.assets.texture.TextureMeta;
 import net.vampirestudios.packwright.mixin.ShapedRecipeBuilderAccessor;
 import net.vampirestudios.packwright.util.CallableFunction;
 import net.vampirestudios.packwright.util.CountingInputStream;
-import net.vampirestudios.packwright.util.JsonBytes;
 import net.vampirestudios.packwright.util.GrowableByteBuffer;
+import net.vampirestudios.packwright.util.JsonBytes;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.ApiStatus;
+import org.jspecify.annotations.NonNull;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -55,17 +55,11 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 			CONFIG.threads,
 			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("Packwright-Workers-%s").build()
 	);
-	public static final Gson GSON;
-
 	// if it works, don't touch it
 	static final Set<String> KEY_WARNINGS = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	public static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger("Packwright");
 
 	static {
-		GsonBuilder gson = new GsonBuilder().disableHtmlEscaping();
-		if (CONFIG.prettyJson) gson.setPrettyPrinting();
-		GSON = gson.create();
-
 		KEY_WARNINGS.add("filter");
 		KEY_WARNINGS.add("language");
 	}
@@ -183,15 +177,12 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 
 	@Override
 	public byte[] addPackMcmeta(String description, int packFormat) {
-		String json = """
-				{
-				  "pack": {
-				"""
-				+ "    \"description\": " + GSON.toJson(description) + ",\n"
-				+ "    \"pack_format\": " + packFormat + "\n"
-				+ "  }\n"
-				+ "}";
-		return this.addRootResource("pack.mcmeta", json.getBytes(StandardCharsets.UTF_8));
+		JsonObject packSection = new JsonObject();
+		packSection.addProperty("description", description);
+		packSection.addProperty("pack_format", packFormat);
+		JsonObject root = new JsonObject();
+		root.add("pack", packSection);
+		return this.addRootResource("pack.mcmeta", toJsonBytes(root));
 	}
 
 	@Override
@@ -205,7 +196,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 		packSection.add("max_format", format.deepCopy());
 		JsonObject root = new JsonObject();
 		root.add("pack", packSection);
-		return this.addRootResource("pack.mcmeta", GSON.toJson(root).getBytes(StandardCharsets.UTF_8));
+		return this.addRootResource("pack.mcmeta", toJsonBytes(root));
 	}
 
 	@Override
@@ -231,7 +222,14 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 
 	@Override
 	public byte[] addAnimation(Identifier id, Animation animation) {
-		return this.addAsset(fix(id, "textures", "png.mcmeta"), toJsonBytes(animation));
+		// the mcmeta needs the section wrapper: {"animation": {...}}
+		return this.addTextureMeta(id, TextureMeta.meta().animation(animation));
+	}
+
+	@Override
+	public byte[] addTextureMeta(Identifier id, TextureMeta meta) {
+		return this.addAsset(fix(id, "textures", "png.mcmeta"),
+				toJsonBytes(JsonBytes.toJsonElement(TextureMeta.CODEC, meta)));
 	}
 
 	@Override
@@ -366,13 +364,13 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 	}
 
 	/**
-	 * pack.png and that's about it I think/hope
+	 * pack.png and that's about it, I think/hope
 	 *
 	 * @param segments the name of the file, can't be a path tho
 	 * @return the pack.png image as a stream
 	 */
 	@Override
-	public IoSupplier<InputStream> getRootResource(String... segments) {
+	public IoSupplier<InputStream> getRootResource(String @NonNull ... segments) {
 		this.lock();
 		try {
 			Supplier<byte[]> supplier = this.root.get(Arrays.asList(segments));
@@ -386,7 +384,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 	}
 
 	@Override
-	public IoSupplier<InputStream> getResource(PackType type, Identifier id) {
+	public IoSupplier<InputStream> getResource(@NonNull PackType type, @NonNull Identifier id) {
 		this.lock();
 		try {
 			Supplier<byte[]> supplier = this.getSys(type).get(id);
@@ -401,13 +399,13 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 	}
 
 	@Override
-	public void listResources(PackType type, String namespace, String prefix, ResourceOutput consumer) {
+	public void listResources(@NonNull PackType type, @NonNull String namespace, @NonNull String prefix, @NonNull ResourceOutput consumer) {
 		this.lock();
 		try {
 			for (Identifier identifier : this.getSys(type).keySet()) {
 				Supplier<byte[]> supplier = this.getSys(type).get(identifier);
 				if (supplier == null) {
-					//LOGGER.warn("No resource found for " + identifier);
+					LOGGER.warn("No resource found for {}", identifier);
 					continue;
 				}
 				IoSupplier<InputStream> inputSupplier = () -> new ByteArrayInputStream(supplier.get());
@@ -421,7 +419,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 	}
 
 	@Override
-	public Set<String> getNamespaces(PackType type) {
+	public @NonNull Set<String> getNamespaces(@NonNull PackType type) {
 		this.lock();
 		try {
 			Set<String> namespaces = new HashSet<>();
@@ -450,16 +448,8 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 		}
 	}
 
-	private static byte[] toJsonBytes(Object object) {
-		GrowableByteBuffer buffer = new GrowableByteBuffer();
-		OutputStreamWriter writer = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
-		GSON.toJson(object, writer);
-		try {
-			writer.close();
-		} catch (IOException e) {
-			throw new PackwrightException("Failed to serialize resource to JSON bytes", e);
-		}
-		return buffer.toByteArray();
+	private static byte[] toJsonBytes(JsonElement element) {
+		return CONFIG.prettyJson ? JsonBytes.toPrettyBytes(element) : JsonBytes.toBytes(element);
 	}
 
 	private static Identifier fix(Identifier identifier, String prefix, String append) {
@@ -486,7 +476,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 				long start = System.currentTimeMillis();
 				this.waiting.lock();
 				long end = System.currentTimeMillis();
-				LOGGER.warn("waited " + (end - start) + "ms for lock in Packwright: " + this.id);
+				LOGGER.warn("{}{}", "waited " + (end - start) + "ms for lock in Packwright: ", this.id);
 			} else {
 				this.waiting.lock();
 			}
@@ -504,7 +494,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 					output.write(data);
 				}
 			} else {
-				LOGGER.error("Packwright contains out-of-directory location! \"" + namespace + "/" + path + "\"");
+				LOGGER.error("{}\"", "Packwright contains out-of-directory location! \"" + namespace + "/" + path);
 			}
 
 		} catch (IOException e) {

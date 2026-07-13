@@ -1,14 +1,16 @@
 package net.vampirestudios.packwright.data.predicate;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.resources.Identifier;
 
 import java.util.Map;
 
 /**
- * An entity predicate, as used by {@code minecraft:entity_properties} and
- * {@code minecraft:damage_source_properties}.
+ * An entity predicate, as used by {@code minecraft:entity_properties},
+ * {@code minecraft:damage_source_properties}, and advancement criteria.
  */
 public class EntityPredicate extends PredicateBuilder<EntityPredicate> {
+	public static final Codec<EntityPredicate> CODEC = codecOf(EntityPredicate::new, null, "Entity predicate");
 
 	public static EntityPredicate of() {
 		return new EntityPredicate();

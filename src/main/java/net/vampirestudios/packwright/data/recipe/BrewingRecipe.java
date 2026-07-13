@@ -1,6 +1,5 @@
 package net.vampirestudios.packwright.data.recipe;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
@@ -55,11 +54,11 @@ public final class BrewingRecipe extends Recipe {
 	public static final class PotionIngredient {
 		public static final Codec<PotionIngredient> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Identifier.CODEC.fieldOf("item").forGetter(x -> x.item),
-				Result.JSON_OBJECT_CODEC.optionalFieldOf("potion_contents").forGetter(x -> Optional.ofNullable(x.potionContents))
+				PotionContentsPredicate.CODEC.optionalFieldOf("potion_contents").forGetter(x -> Optional.ofNullable(x.potionContents))
 		).apply(i, (item, potionContents) -> new PotionIngredient(item).potionContents(potionContents.orElse(null))));
 
 		private final Identifier item;
-		private JsonObject potionContents;
+		private PotionContentsPredicate potionContents;
 
 		private PotionIngredient(Identifier item) {
 			this.item = item;
@@ -76,8 +75,8 @@ public final class BrewingRecipe extends Recipe {
 		/**
 		 * a {@code minecraft:potion_contents} data component predicate the item must match
 		 */
-		public PotionIngredient potionContents(JsonObject potionContents) {
-			this.potionContents = potionContents == null ? null : potionContents.deepCopy();
+		public PotionIngredient potionContents(PotionContentsPredicate potionContents) {
+			this.potionContents = potionContents;
 			return this;
 		}
 
@@ -85,17 +84,15 @@ public final class BrewingRecipe extends Recipe {
 		 * shortcut for matching a single potion type, e.g. {@code minecraft:water}
 		 */
 		public PotionIngredient potion(Identifier potion) {
-			JsonObject contents = new JsonObject();
-			contents.addProperty("potion", potion.toString());
-			return potionContents(contents);
+			return potionContents(PotionContentsPredicate.potion(potion));
 		}
 
 		public Identifier getItem() {
 			return item;
 		}
 
-		public JsonObject getPotionContents() {
-			return potionContents == null ? null : potionContents.deepCopy();
+		public PotionContentsPredicate getPotionContents() {
+			return potionContents;
 		}
 	}
 }

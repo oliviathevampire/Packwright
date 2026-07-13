@@ -1,6 +1,5 @@
 package test;
 
-import com.google.gson.JsonObject;
 import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -26,18 +25,14 @@ import net.vampirestudios.packwright.assets.item.tints.TintTeam;
 import net.vampirestudios.packwright.assets.lang.Lang;
 import net.vampirestudios.packwright.assets.models.Model;
 import net.vampirestudios.packwright.data.entity.*;
-import net.vampirestudios.packwright.data.loot.Condition;
-import net.vampirestudios.packwright.data.loot.Entry;
-import net.vampirestudios.packwright.data.loot.LootFunction;
-import net.vampirestudios.packwright.data.loot.LootTable;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
-import net.vampirestudios.packwright.data.loot.Pool;
+import net.vampirestudios.packwright.data.loot.*;
 import net.vampirestudios.packwright.data.recipe.*;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.worldgen.*;
+import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
 import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
-import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
+import net.vampirestudios.packwright.util.DynamicMap;
 import net.vampirestudios.packwright.util.JsonBytes;
 
 import java.nio.file.Path;
@@ -332,7 +327,7 @@ public class PackwrightPreTest {
 				Recipe.shapeless(
 						Ingredients.ingredients().addFabricCustom(
 								vanillaId("diamond_pickaxe"),
-								components -> components.addProperty("minecraft:damage", 0)
+								components -> components.set("minecraft:damage", 0)
 						),
 						Result.result(vanillaId("diamond_block"))
 				).group("test").category("misc")
@@ -354,8 +349,8 @@ public class PackwrightPreTest {
 								.addItem(vanillaId("gold_ingot")),
 						Result.result(vanillaId("golden_sword"))
 								.components(builder -> {
-									builder.addProperty("minecraft:damage", 3);
-									builder.addProperty("minecraft:rarity", "RARE");
+									builder.set("minecraft:damage", 3);
+									builder.set("minecraft:rarity", "RARE");
 								})
 				)
 		);
@@ -368,11 +363,8 @@ public class PackwrightPreTest {
 								.potion(vanillaId("awkward")),
 						BrewingRecipe.PotionIngredient.of(vanillaId("rabbit_foot")),
 						Result.result(vanillaId("potion"))
-								.components(components -> {
-									JsonObject contents = new JsonObject();
-									contents.addProperty("potion", "minecraft:luck");
-									components.add("minecraft:potion_contents", contents);
-								})
+								.components(components -> components.set("minecraft:potion_contents",
+										DynamicMap.object().set("potion", "minecraft:luck")))
 				)
 		);
 		// brewing is no longer limited to potions - any items may be used in any slot
@@ -782,23 +774,21 @@ public class PackwrightPreTest {
 					.monstersBurn(true)
 					.villagerActivity("minecraft:work");
 			EnvironmentAttributes environmentAttributes1 = new EnvironmentAttributes()
-					.set(EnvironmentAttributes.FOG_START_DISTANCE, 10.0F)
-					.set(EnvironmentAttributes.FOG_END_DISTANCE, 96.0F)
-					.set(EnvironmentAttributes.SKY_LIGHT_COLOR, Timelines.NIGHT_SKY_LIGHT_COLOR)
-					.set(EnvironmentAttributes.SKY_LIGHT_LEVEL, 4.0F)
-					.set(EnvironmentAttributes.SKY_LIGHT_FACTOR, 0.0F)
-					.set(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, -13621215)
+					.fogStartDistance(10.0F)
+					.fogEndDistance(96.0F)
+					.skyLightColor(Timelines.NIGHT_SKY_LIGHT_COLOR)
+					.skyLightLevel(4.0F)
+					.skyLightFactor(0.0F)
+					.ambientLightColor(-13621215)
 					.set(EnvironmentAttributes.DEFAULT_DRIPSTONE_PARTICLE, vanillaId("pointed_dripstone_lava"))
-					.bedRule(EnvironmentAttributes.BedRuleCondition.NEVER,
-							EnvironmentAttributes.BedRuleCondition.NEVER, true, true)
-					.strawBedRule(EnvironmentAttributes.BedRuleCondition.ALWAYS,
-							EnvironmentAttributes.BedRuleCondition.WHEN_DARK, false, null)
-					.set(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, true)
-					.set(EnvironmentAttributes.WATER_EVAPORATES, true)
-					.set(EnvironmentAttributes.FAST_LAVA, true)
-					.set(EnvironmentAttributes.PIGLINS_ZOMBIFY, false)
-					.set(EnvironmentAttributes.CAN_START_RAID, false)
-					.set(EnvironmentAttributes.SNOW_GOLEM_MELTS, true);
+					.bedRule(BedRule.DESTROY_ON_USE)
+					.strawBedRule(BedRule.DESTROY_ON_USE)
+					.respawnAnchorWorks(true)
+					.waterEvaporates(true)
+					.fastLava(true)
+					.piglinsZombify(false)
+					.canStartRaid(false)
+					.snowGolemMelts(true);
 			System.out.println(JsonBytes.encodeToPrettyString(EnvironmentAttributes.CODEC, environmentAttributes));
 			System.out.println(JsonBytes.encodeToPrettyString(WorldClock.CODEC, WorldClock.worldClock()));
 

@@ -1,13 +1,12 @@
 package net.vampirestudios.packwright.data.worldgen;
 
-import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.JavaOps;
 
 /**
- * Opaque "any JSON value" used for environment attributes.
+ * Opaque "any value" used for environment attributes.
  *
  * Backed by Codec.PASSTHROUGH, so it can represent:
  *  - primitives (bool/number/string)
@@ -19,7 +18,7 @@ import com.mojang.serialization.JsonOps;
 public record AttributeValue(Dynamic<?> value) {
 
 	/**
-	 * Serialized as "whatever JSON is inside".
+	 * Serialized as "whatever value is inside".
 	 *
 	 * Example JSON:
 	 *   true
@@ -54,15 +53,14 @@ public record AttributeValue(Dynamic<?> value) {
 	}
 
 	/**
-	 * Generic constructor: encode a value with a codec into JSON
-	 * and wrap it as a AttributeValue.
+	 * Generic constructor: encode a value with a codec and wrap it as an AttributeValue.
 	 */
 	public static <T> AttributeValue ofEncoded(Codec<T> codec, T value) {
-		DataResult<JsonElement> encoded = codec.encodeStart(JsonOps.INSTANCE, value);
-		JsonElement raw = encoded.getOrThrow(msg -> {
+		DataResult<Object> encoded = codec.encodeStart(JavaOps.INSTANCE, value);
+		Object raw = encoded.getOrThrow(msg -> {
 			throw new IllegalArgumentException("Failed to encode attribute value: " + msg);
 		});
-		return new AttributeValue(new Dynamic<>(JsonOps.INSTANCE, raw));
+		return new AttributeValue(new Dynamic<>(JavaOps.INSTANCE, raw));
 	}
 
 	/** Raw dynamic value (for advanced use). */

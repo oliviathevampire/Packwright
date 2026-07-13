@@ -1,13 +1,14 @@
 package test;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.NumberProvider;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
+import net.vampirestudios.packwright.data.registry.ChatType;
+import net.vampirestudios.packwright.data.registry.EnchantmentProvider;
+import net.vampirestudios.packwright.data.registry.SlotSource;
 import net.vampirestudios.packwright.util.JsonBytes;
 
 import java.nio.file.Path;
@@ -69,26 +70,12 @@ public class DataRegistryExamples {
 	 *    and how they are narrated.
 	 * ---------------------------------------------------------- */
 
-	public static JsonObject buildWhisperChatType() {
-		JsonObject chat = new JsonObject();
-		chat.addProperty("translation_key", "chat.type.mymod.whisper");
-		JsonArray parameters = new JsonArray();
-		parameters.add("sender");
-		parameters.add("content");
-		chat.add("parameters", parameters);
-		JsonObject style = new JsonObject();
-		style.addProperty("color", "gray");
-		style.addProperty("italic", true);
-		chat.add("style", style);
-
-		JsonObject narration = new JsonObject();
-		narration.addProperty("translation_key", "chat.type.text.narrate");
-		narration.add("parameters", parameters.deepCopy());
-
-		JsonObject chatType = new JsonObject();
-		chatType.add("chat", chat);
-		chatType.add("narration", narration);
-		return chatType;
+	public static ChatType buildWhisperChatType() {
+		return ChatType.chatType(
+				ChatType.Decoration.of("chat.type.mymod.whisper", "sender", "content")
+						.style(ChatType.Style.style().color("gray").italic(true)),
+				ChatType.Decoration.of("chat.type.text.narrate", "sender", "content")
+		);
 	}
 
 	/* ----------------------------------------------------------
@@ -96,12 +83,8 @@ public class DataRegistryExamples {
 	 *    spawned equipment and similar contexts.
 	 * ---------------------------------------------------------- */
 
-	public static JsonObject buildEmberBladeEnchantments() {
-		JsonObject provider = new JsonObject();
-		provider.addProperty("type", "minecraft:single");
-		provider.addProperty("enchantment", "minecraft:fire_aspect");
-		provider.addProperty("level", 2);
-		return provider;
+	public static EnchantmentProvider buildEmberBladeEnchantments() {
+		return EnchantmentProvider.single(Identifier.withDefaultNamespace("fire_aspect"), 2);
 	}
 
 	/* ----------------------------------------------------------
@@ -111,11 +94,8 @@ public class DataRegistryExamples {
 	 * ---------------------------------------------------------- */
 
 	/** the whole hotbar of the targeted entity */
-	public static JsonObject buildHotbarSlotSource() {
-		JsonObject slotSource = new JsonObject();
-		slotSource.addProperty("type", "minecraft:slot_range");
-		slotSource.addProperty("slots", "hotbar.*");
-		return slotSource;
+	public static SlotSource buildHotbarSlotSource() {
+		return SlotSource.slotRange("hotbar.*");
 	}
 
 	/* ----------------------------------------------------------
@@ -168,11 +148,11 @@ public class DataRegistryExamples {
 		System.out.println("Item Modifier JSON (mymod:trophy):");
 		System.out.println(JsonBytes.encodeToPrettyString(LootFunction.CODEC, buildTrophyModifier()));
 		System.out.println("Chat Type JSON (mymod:whisper):");
-		System.out.println(buildWhisperChatType());
+		System.out.println(JsonBytes.encodeToPrettyString(ChatType.CODEC, buildWhisperChatType()));
 		System.out.println("Enchantment Provider JSON (mymod:ember_blade):");
-		System.out.println(buildEmberBladeEnchantments());
+		System.out.println(JsonBytes.encodeToPrettyString(EnchantmentProvider.CODEC, buildEmberBladeEnchantments()));
 		System.out.println("Slot Source JSON (mymod:hotbar):");
-		System.out.println(buildHotbarSlotSource());
+		System.out.println(JsonBytes.encodeToPrettyString(SlotSource.CODEC, buildHotbarSlotSource()));
 		System.out.println("Function (mymod:greet):");
 		buildGreetFunction().forEach(System.out::println);
 

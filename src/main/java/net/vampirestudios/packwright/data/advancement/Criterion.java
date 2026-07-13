@@ -1,65 +1,86 @@
 package net.vampirestudios.packwright.data.advancement;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.predicate.DamagePredicate;
+import net.vampirestudios.packwright.data.predicate.EntityPredicate;
+import net.vampirestudios.packwright.data.predicate.ItemPredicate;
+import net.vampirestudios.packwright.data.predicate.LocationPredicate;
+
+import java.util.Map;
 
 public final class Criterion {
-	private String trigger;
-	private JsonElement conditions;
-
-	private static final Codec<JsonElement> JSON = new Codec<>() {
-		@Override public <T> DataResult<T> encode(JsonElement v, DynamicOps<T> ops, T prefix) {
-			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, v).convert(ops).getValue());
+	public static final Codec<Criterion> CODEC = new Codec<>() {
+		@Override
+		public <T> DataResult<T> encode(Criterion c, DynamicOps<T> ops, T prefix) {
+			String trigger = c.conditions.getTrigger();
+			Codec<CriterionConditions> codec = CriterionConditions.codecFor(trigger);
+			if (codec == null) return DataResult.error(() -> "No conditions codec registered for trigger: " + trigger);
+			DataResult<T> conditionsResult = codec.encodeStart(ops, c.conditions);
+			return conditionsResult.flatMap(conditionsValue ->
+					ops.mergeToMap(prefix, ops.createString("trigger"), ops.createString(trigger))
+							.flatMap(withTrigger -> ops.mergeToMap(withTrigger, ops.createString("conditions"), conditionsValue)));
 		}
-		@Override public <T> DataResult<Pair<JsonElement, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			return DataResult.success(Pair.of(el, input));
+
+		@Override
+		public <T> DataResult<Pair<Criterion, T>> decode(DynamicOps<T> ops, T input) {
+			return ops.getMap(input).flatMap(map -> {
+				T triggerNode = map.get("trigger");
+				if (triggerNode == null) return DataResult.error(() -> "missing 'trigger'");
+				var triggerRes = ops.getStringValue(triggerNode);
+				if (triggerRes.result().isEmpty()) return DataResult.error(() -> "'trigger' must be a string");
+				String trigger = triggerRes.result().get();
+
+				Codec<CriterionConditions> codec = CriterionConditions.codecFor(trigger);
+				if (codec == null) return DataResult.error(() -> "Unknown trigger: " + trigger);
+
+				T conditionsNode = map.get("conditions") == null ? ops.emptyMap() : map.get("conditions");
+				return codec.parse(ops, conditionsNode).map(conditions -> Pair.of(new Criterion(conditions), input));
+			});
 		}
 	};
 
-	public static final Codec<Criterion> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Codec.STRING.fieldOf("trigger").forGetter(c -> c.trigger),
-			JSON.optionalFieldOf("conditions").forGetter(c -> java.util.Optional.ofNullable(c.conditions))
-	).apply(i, (t, cond) -> {
-		Criterion c = new Criterion();
-		c.trigger = t;
-		c.conditions = cond.orElse(null);
-		return c;
-	}));
+	private final CriterionConditions conditions;
 
-	public static Criterion of(String trigger) { Criterion c = new Criterion(); c.trigger = trigger; return c; }
-	public Criterion conditions(JsonElement e) { this.conditions = e; return this; }
-
-	public String getTrigger() { return trigger; }
-	public JsonElement getConditions() { return conditions; }
-
-	public static Criterion inventoryChanged(AdvConditions.ItemPredicate... anyOf) {
-		return Criterion.of("minecraft:inventory_changed").conditions(AdvConditions.inventoryChanged(anyOf));
+	public Criterion(CriterionConditions conditions) {
+		this.conditions = conditions;
 	}
 
-	public static Criterion recipeUnlocked(String recipeId) {
-		return Criterion.of("minecraft:recipe_unlocked").conditions(AdvConditions.recipeUnlocked(recipeId));
+	public CriterionConditions getConditions() {
+		return conditions;
 	}
 
-	public static Criterion placedBlock(String blockId, java.util.Map<String,String> state) {
-		return Criterion.of("minecraft:placed_block").conditions(AdvConditions.placedOrEnterBlock("block", blockId, state));
+	public String getTrigger() {
+		return conditions.getTrigger();
 	}
 
-	public static Criterion enterBlock(String blockId, java.util.Map<String,String> state) {
-		return Criterion.of("minecraft:enter_block").conditions(AdvConditions.placedOrEnterBlock("block", blockId, state));
+	public static Criterion inventoryChanged(ItemPredicate... anyOf) {
+		return new Criterion(InventoryChangedConditions.inventoryChanged(anyOf));
 	}
 
-	public static Criterion location(AdvConditions.LocationPredicate loc) {
-		return Criterion.of("minecraft:location").conditions(AdvConditions.location(loc));
+	public static Criterion recipeUnlocked(Identifier recipeId) {
+		return new Criterion(RecipeUnlockedConditions.recipeUnlocked(recipeId));
 	}
 
-	public static Criterion playerKilledEntity(AdvConditions.EntityPredicate entity, AdvConditions.DamagePredicate dmg) {
-		return Criterion.of("minecraft:player_killed_entity").conditions(AdvConditions.playerKilledEntity(entity, dmg));
+	public static Criterion placedBlock(Identifier blockId, Map<String, String> state) {
+		return new Criterion(PlacedBlockConditions.placedBlock(blockId, state));
 	}
 
-	public static Criterion tick() { return Criterion.of("minecraft:tick"); }
-	public static Criterion impossible() { return Criterion.of("minecraft:impossible"); }
+	public static Criterion enterBlock(Identifier blockId, Map<String, String> state) {
+		return new Criterion(PlacedBlockConditions.enterBlock(blockId, state));
+	}
+
+	public static Criterion location(LocationPredicate loc) {
+		return new Criterion(LocationConditions.location(loc));
+	}
+
+	public static Criterion playerKilledEntity(EntityPredicate entity, DamagePredicate dmg) {
+		return new Criterion(PlayerKilledEntityConditions.playerKilledEntity(entity, dmg));
+	}
+
+	public static Criterion tick() { return new Criterion(EmptyConditions.tick()); }
+	public static Criterion impossible() { return new Criterion(EmptyConditions.impossible()); }
 }

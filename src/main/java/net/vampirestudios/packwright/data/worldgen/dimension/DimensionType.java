@@ -7,6 +7,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
+import net.vampirestudios.packwright.data.worldgen.BedRule;
 import net.vampirestudios.packwright.data.worldgen.EnvironmentAttributeValue;
 import net.vampirestudios.packwright.data.worldgen.EnvironmentAttributes;
 
@@ -191,11 +192,16 @@ public class DimensionType {
 		return this;
 	}
 
+	public <T> DimensionType attribute(Identifier key, Codec<T> codec, T value) {
+		if (key != null && value != null) {
+			this.attributes.put(key, EnvironmentAttributeValue.ofEncoded(codec, value));
+		}
+		return this;
+	}
+
 	public DimensionType attributes(EnvironmentAttributes attributes) {
 		if (attributes != null) {
-			for (Map.Entry<Identifier, EnvironmentAttributeValue> entry : attributes.getValues().entrySet()) {
-				this.attributes.put(entry.getKey(), entry.getValue());
-			}
+			this.attributes.putAll(attributes.getValues());
 		}
 		return this;
 	}
@@ -213,15 +219,12 @@ public class DimensionType {
 	public DimensionType skyLightFactor(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_FACTOR, value); }
 	public DimensionType skyLightLevel(float value) { return attribute(EnvironmentAttributes.SKY_LIGHT_LEVEL, value); }
 	public DimensionType waterEvaporates(boolean value) { return attribute(EnvironmentAttributes.WATER_EVAPORATES, value); }
-	/** bed rule as an object value; {@code explodes} was renamed to {@code destroy_on_use} in 26.3 */
-	public DimensionType bedRule(EnvironmentAttributes.BedRuleCondition canSetSpawn,
-			EnvironmentAttributes.BedRuleCondition canSleep, boolean destroyOnUse) {
-		com.google.gson.JsonObject rule = new com.google.gson.JsonObject();
-		rule.addProperty("can_set_spawn", canSetSpawn.getId());
-		rule.addProperty("can_sleep", canSleep.getId());
-		rule.addProperty("destroy_on_use", destroyOnUse);
-		this.attributes.put(EnvironmentAttributes.BED_RULE, EnvironmentAttributeValue.ofJson(rule));
-		return this;
+	public DimensionType bedRule(BedRule rule) {
+		return attribute(EnvironmentAttributes.BED_RULE, BedRule.CODEC, rule);
+	}
+
+	public DimensionType strawBedRule(BedRule rule) {
+		return attribute(EnvironmentAttributes.STRAW_BED_RULE, BedRule.CODEC, rule);
 	}
 	public DimensionType respawnAnchorWorks(boolean value) { return attribute(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, value); }
 	public DimensionType netherPortalSpawnsPiglins(boolean value) { return attribute(EnvironmentAttributes.NETHER_PORTAL_SPAWNS_PIGLINS, value); }

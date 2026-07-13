@@ -1,14 +1,17 @@
 package net.vampirestudios.packwright.data.predicate;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An item predicate, as used by {@code minecraft:match_tool} and entity equipment checks.
+ * An item predicate, as used by {@code minecraft:match_tool}, entity equipment checks,
+ * and the {@code minecraft:inventory_changed} advancement criterion.
  */
 public class ItemPredicate extends PredicateBuilder<ItemPredicate> {
+	public static final Codec<ItemPredicate> CODEC = codecOf(ItemPredicate::new, null, "Item predicate");
 
 	public static ItemPredicate of() {
 		return new ItemPredicate();

@@ -1,153 +1,115 @@
 package net.vampirestudios.packwright.data.worldgen.noise;
 
-import com.google.gson.*;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.worldgen.WorldgenBlockState;
+import net.vampirestudios.packwright.data.worldgen.dimension.Parameters;
 import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * A {@code worldgen/noise_settings} file, fully typed: blocks are
+ * {@link WorldgenBlockState}s, the router is a {@link NoiseRouter} of
+ * {@link DensityFunction}s, and spawn targets are climate {@link Parameters} points.
+ */
 public class NoiseSettings {
 
-	public static final Codec<NoiseSettings> CODEC = new Codec<>() {
-		@Override
-		public <T> DataResult<T> encode(NoiseSettings settings, DynamicOps<T> ops, T prefix) {
-			JsonObject json = settings.toJson();
-			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, json).convert(ops).getValue());
-		}
-
-		@Override
-		public <T> DataResult<Pair<NoiseSettings, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			if (!el.isJsonObject()) {
-				return DataResult.error(() -> "Noise settings must be an object");
-			}
-			return DataResult.success(Pair.of(fromJson(el.getAsJsonObject()), input));
-		}
-	};
+	public static final Codec<NoiseSettings> CODEC = RecordCodecBuilder.create(i -> i.group(
+			Codec.INT.optionalFieldOf("sea_level").forGetter(x -> Optional.ofNullable(x.seaLevel)),
+			Codec.BOOL.optionalFieldOf("legacy_random_source").forGetter(x -> Optional.ofNullable(x.legacyRandomSource)),
+			WorldgenBlockState.CODEC.optionalFieldOf("default_block").forGetter(x -> Optional.ofNullable(x.defaultBlock)),
+			WorldgenBlockState.CODEC.optionalFieldOf("default_fluid").forGetter(x -> Optional.ofNullable(x.defaultFluid)),
+			NoiseShape.CODEC.optionalFieldOf("noise").forGetter(x -> Optional.ofNullable(x.noise)),
+			// spawn_target is required by the game; fieldOf+orElse always encodes it
+			Parameters.CODEC.listOf().fieldOf("spawn_target").orElse(List.of()).forGetter(x -> List.copyOf(x.spawnTarget)),
+			// a material rule is either a worldgen/material_rule registry id or an inline rule
+			Codec.either(Identifier.CODEC, MaterialRule.CODEC).optionalFieldOf("material_rule").forGetter(NoiseSettings::materialRuleEither),
+			// the three flags are required by the game; fieldOf+orElse always encodes them
+			Codec.BOOL.fieldOf("aquifers_enabled").orElse(false).forGetter(x -> x.aquifersEnabled),
+			Codec.BOOL.fieldOf("ore_veins_enabled").orElse(false).forGetter(x -> x.oreVeinsEnabled),
+			Codec.BOOL.fieldOf("disable_mob_generation").orElse(false).forGetter(x -> x.disableMobGeneration),
+			NoiseRouter.CODEC.optionalFieldOf("noise_router").forGetter(x -> Optional.ofNullable(x.noiseRouter))
+	).apply(i, (seaLevel, legacyRandomSource, defaultBlock, defaultFluid, noise, spawnTarget, materialRule,
+				aquifersEnabled, oreVeinsEnabled, disableMobGeneration, noiseRouter) -> {
+		NoiseSettings out = new NoiseSettings();
+		out.seaLevel = seaLevel.orElse(null);
+		out.legacyRandomSource = legacyRandomSource.orElse(null);
+		out.defaultBlock = defaultBlock.orElse(null);
+		out.defaultFluid = defaultFluid.orElse(null);
+		out.noise = noise.orElse(null);
+		out.spawnTarget = new ArrayList<>(spawnTarget);
+		materialRule.ifPresent(either -> either.ifLeft(id -> out.materialRuleId = id).ifRight(rule -> out.materialRule = rule));
+		out.aquifersEnabled = aquifersEnabled;
+		out.oreVeinsEnabled = oreVeinsEnabled;
+		out.disableMobGeneration = disableMobGeneration;
+		out.noiseRouter = noiseRouter.orElse(null);
+		return out;
+	}));
 
 	private Integer seaLevel;
 	private Boolean legacyRandomSource;
-	private JsonObject defaultBlock;
-	private JsonObject defaultFluid;
-	private JsonObject noise;
-	private JsonArray spawnTarget;
-	private JsonObject spawnDensity;
-	private JsonElement materialRule;
+	private WorldgenBlockState defaultBlock;
+	private WorldgenBlockState defaultFluid;
+	private NoiseShape noise;
+	private List<Parameters> spawnTarget = new ArrayList<>();
+	private Identifier materialRuleId;
+	private MaterialRule materialRule;
 	// required by the game; defaulted so a bare settings object still parses
 	private boolean aquifersEnabled = false;
 	private boolean oreVeinsEnabled = false;
 	private boolean disableMobGeneration = false;
-	private JsonObject noiseRouter;
-	private final JsonObject extra = new JsonObject();
+	private NoiseRouter noiseRouter;
 
 	public static NoiseSettings settings() {
 		return new NoiseSettings();
 	}
 
-	public static NoiseSettings fromJson(JsonObject json) {
-		return new NoiseSettings().json(json);
-	}
-
-	public NoiseSettings json(JsonObject json) {
-		this.seaLevel = null;
-		this.legacyRandomSource = null;
-		this.defaultBlock = null;
-		this.defaultFluid = null;
-		this.noise = null;
-		this.spawnTarget = null;
-		this.spawnDensity = null;
-		this.materialRule = null;
-		this.extra.entrySet().clear();
-
-		if (json == null) return this;
-
-		if (json.has("sea_level") && json.get("sea_level").isJsonPrimitive()) {
-			this.seaLevel = json.get("sea_level").getAsInt();
-		}
-		if (json.has("legacy_random_source") && json.get("legacy_random_source").isJsonPrimitive()) {
-			this.legacyRandomSource = json.get("legacy_random_source").getAsBoolean();
-		}
-		if (json.has("default_block") && json.get("default_block").isJsonObject()) {
-			this.defaultBlock = json.getAsJsonObject("default_block").deepCopy();
-		}
-		if (json.has("default_fluid") && json.get("default_fluid").isJsonObject()) {
-			this.defaultFluid = json.getAsJsonObject("default_fluid").deepCopy();
-		}
-		if (json.has("noise") && json.get("noise").isJsonObject()) {
-			this.noise = json.getAsJsonObject("noise").deepCopy();
-		}
-		if (json.has("spawn_target") && json.get("spawn_target").isJsonArray()) {
-			this.spawnTarget = json.getAsJsonArray("spawn_target").deepCopy();
-		}
-		if (json.has("spawn_density") && json.get("spawn_density").isJsonObject()) {
-			this.spawnDensity = json.getAsJsonObject("spawn_density").deepCopy();
-		}
-		if (json.has("material_rule")) {
-			this.materialRule = json.get("material_rule").deepCopy();
-		}
-		if (json.has("aquifers_enabled") && json.get("aquifers_enabled").isJsonPrimitive()) {
-			this.aquifersEnabled = json.get("aquifers_enabled").getAsBoolean();
-		}
-		if (json.has("ore_veins_enabled") && json.get("ore_veins_enabled").isJsonPrimitive()) {
-			this.oreVeinsEnabled = json.get("ore_veins_enabled").getAsBoolean();
-		}
-		if (json.has("disable_mob_generation") && json.get("disable_mob_generation").isJsonPrimitive()) {
-			this.disableMobGeneration = json.get("disable_mob_generation").getAsBoolean();
-		}
-		if (json.has("noise_router") && json.get("noise_router").isJsonObject()) {
-			this.noiseRouter = json.getAsJsonObject("noise_router").deepCopy();
-		}
-
-		for (String key : json.keySet()) {
-			if (!isKnown(key)) {
-				JsonElement value = json.get(key);
-				if (value != null) this.extra.add(key, value.deepCopy());
-			}
-		}
-
-		return this;
+	private Optional<Either<Identifier, MaterialRule>> materialRuleEither() {
+		if (this.materialRuleId != null) return Optional.of(Either.left(this.materialRuleId));
+		if (this.materialRule != null) return Optional.of(Either.right(this.materialRule));
+		return Optional.empty();
 	}
 
 	// Core setters
 
 	public NoiseSettings seaLevel(int v) { this.seaLevel = v; return this; }
 	public NoiseSettings legacyRandomSource(boolean v) { this.legacyRandomSource = v; return this; }
-	public NoiseSettings defaultBlock(JsonObject v) { this.defaultBlock = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings defaultFluid(JsonObject v) { this.defaultFluid = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings noise(JsonObject v) { this.noise = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings spawnTarget(JsonArray v) { this.spawnTarget = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings spawnDensity(JsonObject v) { this.spawnDensity = v == null ? null : v.deepCopy(); return this; }
-	public NoiseSettings materialRule(JsonElement v) { this.materialRule = v == null ? null : v.deepCopy(); return this; }
+	public NoiseSettings defaultBlock(WorldgenBlockState v) { this.defaultBlock = v; return this; }
+	public NoiseSettings defaultFluid(WorldgenBlockState v) { this.defaultFluid = v; return this; }
+	public NoiseSettings noise(NoiseShape v) { this.noise = v; return this; }
+	public NoiseSettings spawnTarget(List<Parameters> v) { this.spawnTarget = v == null ? new ArrayList<>() : new ArrayList<>(v); return this; }
+	public NoiseSettings addSpawnTarget(Parameters v) { this.spawnTarget.add(v); return this; }
+
+	/** reference a {@code worldgen/material_rule} registry entry by id */
 	public NoiseSettings materialRule(Identifier id) {
-		this.materialRule = id == null ? null : new JsonPrimitive(id.toString());
+		this.materialRuleId = id;
+		this.materialRule = null;
 		return this;
 	}
+
+	/** an inline material rule */
 	public NoiseSettings materialRule(MaterialRule rule) {
-		this.materialRule = rule == null ? null : MaterialRule.CODEC.encodeStart(JsonOps.INSTANCE, rule).getOrThrow();
+		this.materialRule = rule;
+		this.materialRuleId = null;
 		return this;
 	}
 
 	public NoiseSettings aquifersEnabled(boolean v) { this.aquifersEnabled = v; return this; }
 	public NoiseSettings oreVeinsEnabled(boolean v) { this.oreVeinsEnabled = v; return this; }
 	public NoiseSettings disableMobGeneration(boolean v) { this.disableMobGeneration = v; return this; }
-	public NoiseSettings noiseRouter(JsonObject v) { this.noiseRouter = v == null ? null : v.deepCopy(); return this; }
+	public NoiseSettings noiseRouter(NoiseRouter v) { this.noiseRouter = v; return this; }
 
 	/**
 	 * a minimal noise router: every routing density function is {@code 0} except
 	 * {@code final_density}, which shapes the terrain (positive = solid, negative = air)
 	 */
-	public NoiseSettings simpleNoiseRouter(JsonElement finalDensity) {
-		JsonObject router = new JsonObject();
-		for (String key : new String[]{
-				"barrier", "fluid_level_floodedness", "fluid_level_spread", "lava",
-				"temperature", "vegetation", "continents", "erosion", "depth", "ridges",
-				"preliminary_surface_level", "initial_density_without_jaggedness",
-				"vein_toggle", "vein_ridged", "vein_gap"
-		}) {
-			router.addProperty(key, 0);
-		}
-		router.add("final_density", finalDensity.deepCopy());
-		return noiseRouter(router);
+	public NoiseSettings simpleNoiseRouter(DensityFunction finalDensity) {
+		return noiseRouter(NoiseRouter.simple(finalDensity));
 	}
 
 	/**
@@ -155,87 +117,51 @@ public class NoiseSettings {
 	 * {@code fromY}, air above {@code toY}, producing flat terrain in between
 	 */
 	public NoiseSettings simpleNoiseRouterGradient(int fromY, int toY) {
-		JsonObject gradient = new JsonObject();
-		gradient.addProperty("type", "minecraft:y_clamped_gradient");
-		gradient.addProperty("from_y", fromY);
-		gradient.addProperty("to_y", toY);
-		gradient.addProperty("from_value", 1.0);
-		gradient.addProperty("to_value", -1.0);
-		return simpleNoiseRouter(gradient);
-	}
-
-	public NoiseSettings extra(String key, JsonElement value) {
-		if (key != null && value != null && !isKnown(key)) {
-			this.extra.add(key, value.deepCopy());
-		}
-		return this;
+		return simpleNoiseRouter(DensityFunctions.yClampedGradient(fromY, toY, 1.0, -1.0));
 	}
 
 	// Convenience helpers
 
 	public NoiseSettings defaultBlockId(Identifier id) {
-		if (id == null) {
-			this.defaultBlock = null;
-			return this;
-		}
-		JsonObject obj = new JsonObject();
-		obj.addProperty("Name", id.toString());
-		return defaultBlock(obj);
+		this.defaultBlock = id == null ? null : WorldgenBlockState.blockState(id);
+		return this;
 	}
 
 	public NoiseSettings defaultFluidId(Identifier id) {
-		if (id == null) {
-			this.defaultFluid = null;
-			return this;
-		}
-		JsonObject obj = new JsonObject();
-		obj.addProperty("Name", id.toString());
-		return defaultFluid(obj);
+		this.defaultFluid = id == null ? null : WorldgenBlockState.blockState(id);
+		return this;
 	}
 
 	public NoiseSettings noiseSimple(int minY, int height, int sizeHorizontal, int sizeVertical) {
-		JsonObject n = new JsonObject();
-		n.addProperty("min_y", minY);
-		n.addProperty("height", height);
-		n.addProperty("size_horizontal", sizeHorizontal);
-		n.addProperty("size_vertical", sizeVertical);
-		return noise(n);
+		return noise(NoiseShape.of(minY, height, sizeHorizontal, sizeVertical));
 	}
 
-	public JsonObject toJson() {
-		JsonObject out = new JsonObject();
-		if (this.seaLevel != null) out.addProperty("sea_level", this.seaLevel);
-		if (this.legacyRandomSource != null) out.addProperty("legacy_random_source", this.legacyRandomSource);
-		if (this.defaultBlock != null) out.add("default_block", this.defaultBlock.deepCopy());
-		if (this.defaultFluid != null) out.add("default_fluid", this.defaultFluid.deepCopy());
-		if (this.noise != null) out.add("noise", this.noise.deepCopy());
-		// spawn_target and the three booleans are required by the game
-		out.add("spawn_target", this.spawnTarget != null ? this.spawnTarget.deepCopy() : new JsonArray());
-		if (this.spawnDensity != null) out.add("spawn_density", this.spawnDensity.deepCopy());
-		if (this.materialRule != null) out.add("material_rule", this.materialRule.deepCopy());
-		out.addProperty("aquifers_enabled", this.aquifersEnabled);
-		out.addProperty("ore_veins_enabled", this.oreVeinsEnabled);
-		out.addProperty("disable_mob_generation", this.disableMobGeneration);
-		if (this.noiseRouter != null) out.add("noise_router", this.noiseRouter.deepCopy());
-		for (String key : this.extra.keySet()) {
-			JsonElement value = this.extra.get(key);
-			if (value != null) out.add(key, value.deepCopy());
+	/** the {@code noise} block: vertical range and sampling cell sizes */
+	public static class NoiseShape {
+		public static final Codec<NoiseShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+				Codec.INT.fieldOf("min_y").forGetter(x -> x.minY),
+				Codec.INT.fieldOf("height").forGetter(x -> x.height),
+				Codec.INT.fieldOf("size_horizontal").forGetter(x -> x.sizeHorizontal),
+				Codec.INT.fieldOf("size_vertical").forGetter(x -> x.sizeVertical)
+		).apply(i, NoiseShape::of));
+
+		private int minY;
+		private int height;
+		private int sizeHorizontal;
+		private int sizeVertical;
+
+		public static NoiseShape of(int minY, int height, int sizeHorizontal, int sizeVertical) {
+			NoiseShape out = new NoiseShape();
+			out.minY = minY;
+			out.height = height;
+			out.sizeHorizontal = sizeHorizontal;
+			out.sizeVertical = sizeVertical;
+			return out;
 		}
-		return out;
-	}
 
-	private static boolean isKnown(String key) {
-		return "sea_level".equals(key)
-				|| "legacy_random_source".equals(key)
-				|| "default_block".equals(key)
-				|| "default_fluid".equals(key)
-				|| "noise".equals(key)
-				|| "spawn_target".equals(key)
-				|| "spawn_density".equals(key)
-				|| "material_rule".equals(key)
-				|| "aquifers_enabled".equals(key)
-				|| "ore_veins_enabled".equals(key)
-				|| "disable_mob_generation".equals(key)
-				|| "noise_router".equals(key);
+		public int getMinY() { return minY; }
+		public int getHeight() { return height; }
+		public int getSizeHorizontal() { return sizeHorizontal; }
+		public int getSizeVertical() { return sizeVertical; }
 	}
 }

@@ -7,6 +7,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.component.ItemLore;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.data.advancement.*;
+import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.assets.blockstates.SimpleModel;
 import net.vampirestudios.packwright.assets.blockstates.BlockState;
 import net.vampirestudios.packwright.assets.blockstates.Variant;
@@ -53,8 +54,8 @@ public class PackwrightTestingCommon {
 								.addItem(Identifier.withDefaultNamespace("gold_ingot")),
 						Result.result(Identifier.withDefaultNamespace("golden_sword"))
 								.components(builder -> {
-									builder.addProperty("minecraft:damage", 3);
-									builder.addProperty("minecraft:rarity", "RARE");
+									builder.set("minecraft:damage", 3);
+									builder.set("minecraft:rarity", "RARE");
 								})
 				)
 		);
@@ -78,12 +79,12 @@ public class PackwrightTestingCommon {
 								.frame(Display.Frame.GOAL)
 						)
 						.criterion("burn_bread", Criterion.inventoryChanged(
-								AdvConditions.ItemPredicate.anyOf(Identifier.withDefaultNamespace("bread"))
-										.componentEquals(
-												AdvComponentPreds.id(DataComponents.ITEM_NAME),
+								ItemPredicate.of().items(Identifier.withDefaultNamespace("bread"))
+										.component(
+												AdvComponentPreds.id(DataComponents.ITEM_NAME).toString(),
 												AdvComponentPreds.encodeValue(DataComponents.ITEM_NAME, burntBreadName)
-										).componentEquals(
-												AdvComponentPreds.id(DataComponents.LORE),
+										).component(
+												AdvComponentPreds.id(DataComponents.LORE).toString(),
 												AdvComponentPreds.encodeValue(DataComponents.LORE, ItemLore.EMPTY
 														.withLineAdded(burntBreadLore.getFirst())
 												)

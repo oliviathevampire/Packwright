@@ -1,7 +1,8 @@
 package net.vampirestudios.packwright.api;
 
-import com.google.gson.JsonElement;
+import net.vampirestudios.packwright.assets.atlas.Atlas;
 import net.vampirestudios.packwright.assets.blockstates.BlockState;
+import net.vampirestudios.packwright.assets.font.Font;
 import net.vampirestudios.packwright.assets.equipment.EquipmentModel;
 import net.vampirestudios.packwright.assets.equipment.TrimMaterial;
 import net.vampirestudios.packwright.assets.equipment.TrimPattern;
@@ -25,8 +26,12 @@ import net.vampirestudios.packwright.data.entity.ZombieNautilusVariant;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.LootTable;
+import net.vampirestudios.packwright.data.loot.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.BannerPattern;
+import net.vampirestudios.packwright.data.registry.ChatType;
+import net.vampirestudios.packwright.data.registry.EnchantmentProvider;
+import net.vampirestudios.packwright.data.registry.SlotSource;
 import net.vampirestudios.packwright.data.registry.DamageType;
 import net.vampirestudios.packwright.data.registry.DecoratedPotPattern;
 import net.vampirestudios.packwright.data.registry.Dialog;
@@ -47,10 +52,13 @@ import net.vampirestudios.packwright.data.worldgen.dimension.Dimension;
 import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.packwright.data.worldgen.feature.Feature;
 import net.vampirestudios.packwright.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.packwright.data.worldgen.material.MaterialCondition;
+import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
+import net.vampirestudios.packwright.data.worldgen.noise.DensityFunction;
+import net.vampirestudios.packwright.data.worldgen.noise.NoiseParameters;
 import net.vampirestudios.packwright.data.worldgen.noise.NoiseSettings;
 import net.vampirestudios.packwright.data.worldgen.structure.Structure;
 import net.vampirestudios.packwright.data.worldgen.structure.StructureSet;
-import net.vampirestudios.packwright.impl.Codecs;
 
 /**
  * Catalog of the {@link ResourceType}s Packwright knows how to serialize. Each constant pairs a
@@ -67,6 +75,8 @@ public final class ResourceTypes {
 	public static final ResourceType<ItemModelDefinition> ITEM_MODEL_DEFINITION = ResourceType.asset("items", ItemModelDefinition.CODEC);
 	public static final ResourceType<EquipmentModel> EQUIPMENT_MODEL = ResourceType.asset("equipment", EquipmentModel.CODEC);
 	public static final ResourceType<BlockState> BLOCK_STATE = ResourceType.asset("blockstates", BlockState.CODEC);
+	public static final ResourceType<Atlas> ATLAS = ResourceType.asset("atlases", Atlas.CODEC);
+	public static final ResourceType<Font> FONT = ResourceType.asset("font", Font.CODEC);
 
 	// data
 	public static final ResourceType<Advancement> ADVANCEMENT = ResourceType.data("advancement", Advancement.CODEC);
@@ -88,15 +98,15 @@ public final class ResourceTypes {
 	// the registry is minecraft:timeline, so its data folder is singular
 	public static final ResourceType<Timeline> TIMELINE = ResourceType.data("timeline", Timeline.CODEC);
 	/** reusable number providers referenced by e.g. the {@code minecraft:compostable} component (since 26.3) */
-	public static final ResourceType<JsonElement> NUMBER_PROVIDER = ResourceType.data("number_provider", Codecs.JSON);
+	public static final ResourceType<NumberProvider> NUMBER_PROVIDER = ResourceType.data("number_provider", NumberProvider.CODEC);
 	/** reusable loot conditions, referenced via {@code minecraft:reference} conditions */
 	public static final ResourceType<Condition> PREDICATE = ResourceType.data("predicate", Condition.CODEC);
 	/** reusable loot functions, applied via {@code /item modify} or {@code minecraft:reference} functions */
 	public static final ResourceType<LootFunction> ITEM_MODIFIER = ResourceType.data("item_modifier", LootFunction.CODEC);
-	public static final ResourceType<JsonElement> CHAT_TYPE = ResourceType.data("chat_type", Codecs.JSON);
-	public static final ResourceType<JsonElement> ENCHANTMENT_PROVIDER = ResourceType.data("enchantment_provider", Codecs.JSON);
+	public static final ResourceType<ChatType> CHAT_TYPE = ResourceType.data("chat_type", ChatType.CODEC);
+	public static final ResourceType<EnchantmentProvider> ENCHANTMENT_PROVIDER = ResourceType.data("enchantment_provider", EnchantmentProvider.CODEC);
 	/** reusable slot sources for {@code /item} and {@code /execute if slots|items} (since 26.3) */
-	public static final ResourceType<JsonElement> SLOT_SOURCE = ResourceType.data("slot_source", Codecs.JSON);
+	public static final ResourceType<SlotSource> SLOT_SOURCE = ResourceType.data("slot_source", SlotSource.CODEC);
 
 	// entity variants
 	public static final ResourceType<WolfVariant> WOLF_VARIANT = ResourceType.data("wolf_variant", WolfVariant.CODEC);
@@ -121,10 +131,10 @@ public final class ResourceTypes {
 	public static final ResourceType<PlacedFeature> PLACED_FEATURE = ResourceType.data("worldgen/placed_feature", PlacedFeature.CODEC);
 	public static final ResourceType<Carver> CARVER = ResourceType.data("worldgen/carver", Carver.CODEC);
 	public static final ResourceType<NoiseSettings> NOISE_SETTINGS = ResourceType.data("worldgen/noise_settings", NoiseSettings.CODEC);
-	public static final ResourceType<JsonElement> NOISE = ResourceType.data("worldgen/noise", Codecs.JSON);
-	public static final ResourceType<JsonElement> DENSITY_FUNCTION = ResourceType.data("worldgen/density_function", Codecs.JSON);
-	public static final ResourceType<JsonElement> MATERIAL_RULE = ResourceType.data("worldgen/material_rule", Codecs.JSON);
-	public static final ResourceType<JsonElement> MATERIAL_CONDITION = ResourceType.data("worldgen/material_condition", Codecs.JSON);
+	public static final ResourceType<NoiseParameters> NOISE = ResourceType.data("worldgen/noise", NoiseParameters.CODEC);
+	public static final ResourceType<DensityFunction> DENSITY_FUNCTION = ResourceType.data("worldgen/density_function", DensityFunction.CODEC);
+	public static final ResourceType<MaterialRule> MATERIAL_RULE = ResourceType.data("worldgen/material_rule", MaterialRule.CODEC);
+	public static final ResourceType<MaterialCondition> MATERIAL_CONDITION = ResourceType.data("worldgen/material_condition", MaterialCondition.CODEC);
 	public static final ResourceType<Structure> STRUCTURE = ResourceType.data("worldgen/structure", Structure.CODEC);
 	public static final ResourceType<StructureSet> STRUCTURE_SET = ResourceType.data("worldgen/structure_set", StructureSet.CODEC);
 	public static final ResourceType<ProcessorList> PROCESSOR_LIST = ResourceType.data("worldgen/processor_list", ProcessorList.CODEC);

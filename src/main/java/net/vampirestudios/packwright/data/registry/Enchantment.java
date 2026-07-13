@@ -73,22 +73,11 @@ public class Enchantment {
 	public List<EquipmentSlot> getSlots() { return slots; }
 	public String getExclusiveSet() { return exclusiveSet; }
 
-	public static class Cost {
-		public static final Codec<Cost> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Codec.INT.fieldOf("base").forGetter(x -> x.base),
-				Codec.INT.fieldOf("per_level_above_first").forGetter(x -> x.perLevelAboveFirst)
-		).apply(i, Cost::new));
-
-		private final int base;
-		private final int perLevelAboveFirst;
-
-		public Cost(int base, int perLevelAboveFirst) {
-			this.base = base;
-			this.perLevelAboveFirst = perLevelAboveFirst;
-		}
-
-		public int getBase() { return base; }
-		public int getPerLevelAboveFirst() { return perLevelAboveFirst; }
+	public record Cost(int base, int perLevelAboveFirst) {
+			public static final Codec<Cost> CODEC = RecordCodecBuilder.create(i -> i.group(
+					Codec.INT.fieldOf("base").forGetter(x -> x.base),
+					Codec.INT.fieldOf("per_level_above_first").forGetter(x -> x.perLevelAboveFirst)
+			).apply(i, Cost::new));
 	}
 
 	public enum EquipmentSlot implements StringRepresentable {
