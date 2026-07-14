@@ -12,7 +12,12 @@ public final class OreFeatureBuilder extends FeatureBuilder {
 	private final List<OreTarget> targets = new ArrayList<>();
 
 	public OreFeatureBuilder() {
-		super("minecraft:ore");
+		this("minecraft:ore");
+	}
+
+	/** shares its config shape with {@code minecraft:ore}; used for e.g. {@code minecraft:scattered_ore} */
+	public OreFeatureBuilder(String type) {
+		super(type);
 		discardChanceOnAirExposure(0.0F);
 	}
 

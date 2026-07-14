@@ -11,7 +11,7 @@ public record AttachedToLogsTreeDecorator(float probability, BlockStateProvider 
 	public static final MapCodec<AttachedToLogsTreeDecorator> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 			Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:attached_to_logs"),
 			Codec.FLOAT.fieldOf("probability").forGetter(AttachedToLogsTreeDecorator::probability),
-			BlockStateProvider.CODEC.fieldOf("provider").forGetter(AttachedToLogsTreeDecorator::provider),
+			BlockStateProvider.CODEC.fieldOf("block_provider").forGetter(AttachedToLogsTreeDecorator::provider),
 			Codec.STRING.listOf().fieldOf("directions").forGetter(AttachedToLogsTreeDecorator::directions)
 	).apply(i, (type, probability, provider, directions) -> new AttachedToLogsTreeDecorator(probability, provider, directions)));
 }
