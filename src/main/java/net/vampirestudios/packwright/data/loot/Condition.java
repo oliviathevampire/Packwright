@@ -171,6 +171,83 @@ public class Condition extends PredicateBuilder<Condition> {
 		return condition;
 	}
 
+	/**
+	 * like {@link #randomChance(float)}, but the chance increases with the attacking entity's
+	 * looting (or given) enchantment level ({@code minecraft:random_chance_with_enchanted_bonus},
+	 * since 26.3)
+	 *
+	 * @param enchantedChance a constant chance used at any enchantment level above 0; for a curve
+	 * that varies with level, use {@link #randomChanceWithEnchantedBonus(float, Object, Identifier)}
+	 * with a raw {@code LevelBasedValue} object
+	 */
+	public static Condition randomChanceWithEnchantedBonus(float unenchantedChance, float enchantedChance, Identifier enchantment) {
+		return randomChanceWithEnchantedBonus(unenchantedChance, (Object) enchantedChance, enchantment);
+	}
+
+	/**
+	 * @param enchantedChance a plain float (constant), or a {@code LevelBasedValue} map/object;
+	 * this project has no typed builder for {@code LevelBasedValue} yet, so it is passed through as-is
+	 */
+	public static Condition randomChanceWithEnchantedBonus(float unenchantedChance, Object enchantedChance, Identifier enchantment) {
+		return of("minecraft:random_chance_with_enchanted_bonus")
+				.parameter("unenchanted_chance", unenchantedChance)
+				.put("enchanted_chance", enchantedChance)
+				.parameter("enchantment", enchantment);
+	}
+
+	/**
+	 * checks the world clock's current time ({@code minecraft:time_check}, since 26.3)
+	 *
+	 * @param clock a world clock id, e.g. {@code "minecraft:overworld"} or {@code "minecraft:the_end"}
+	 */
+	public static Condition timeCheck(String clock, Range value) {
+		return of("minecraft:time_check").parameter("clock", clock).parameter("value", value);
+	}
+
+	/**
+	 * @param period wraps the clock's time with {@code time % period} before checking it
+	 */
+	public static Condition timeCheck(String clock, Range value, long period) {
+		return timeCheck(clock, value).parameter("period", period);
+	}
+
+	/**
+	 * checks a number provider's value against a range ({@code minecraft:value_check}, since 26.3)
+	 */
+	public static Condition valueCheck(NumberProvider value, Range range) {
+		return of("minecraft:value_check").parameter("value", value).parameter("range", range);
+	}
+
+	/**
+	 * checks whether the loot context's enchantment (e.g. of an enchanted book being applied)
+	 * is active ({@code minecraft:enchantment_active_check}, since 26.3)
+	 */
+	public static Condition enchantmentActiveCheck(boolean active) {
+		return of("minecraft:enchantment_active_check").parameter("active", active);
+	}
+
+	/**
+	 * checks a boolean environment attribute, e.g. {@code gameplay/can_start_raid}
+	 * ({@code minecraft:environment_attribute_check}, since 26.3)
+	 */
+	public static Condition environmentAttributeCheck(Identifier attribute, boolean value) {
+		return of("minecraft:environment_attribute_check").parameter("attribute", attribute).parameter("value", value);
+	}
+
+	/**
+	 * checks a numeric environment attribute, e.g. {@code visual/star_brightness}
+	 */
+	public static Condition environmentAttributeCheck(Identifier attribute, double value) {
+		return of("minecraft:environment_attribute_check").parameter("attribute", attribute).parameter("value", value);
+	}
+
+	/**
+	 * checks a string/enum environment attribute, e.g. {@code visual/moon_phase}
+	 */
+	public static Condition environmentAttributeCheck(Identifier attribute, String value) {
+		return of("minecraft:environment_attribute_check").parameter("attribute", attribute).parameter("value", value);
+	}
+
 	// ---------- builder ----------
 
 	public Condition condition(String condition) {

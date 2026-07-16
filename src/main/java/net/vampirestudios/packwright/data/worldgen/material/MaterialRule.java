@@ -11,7 +11,7 @@ import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-public sealed interface MaterialRule permits BlockMaterialRule, SequenceMaterialRule, ConditionalMaterialRule {
+public sealed interface MaterialRule permits BlockMaterialRule, SequenceMaterialRule, ConditionalMaterialRule, BandlandsMaterialRule {
 	Codec<MaterialRule> CODEC = new Codec<>() {
 		@Override
 		public <T> DataResult<Pair<MaterialRule, T>> decode(DynamicOps<T> ops, T input) {
@@ -19,6 +19,7 @@ public sealed interface MaterialRule permits BlockMaterialRule, SequenceMaterial
 				case "block" -> BlockMaterialRule.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "sequence" -> SequenceMaterialRule.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "condition" -> ConditionalMaterialRule.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+				case "bandlands" -> BandlandsMaterialRule.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				default -> DataResult.error(() -> "Unsupported material rule type");
 			});
 		}
@@ -28,6 +29,7 @@ public sealed interface MaterialRule permits BlockMaterialRule, SequenceMaterial
 			if (input instanceof BlockMaterialRule rule) return BlockMaterialRule.CODEC.codec().encode(rule, ops, prefix);
 			if (input instanceof SequenceMaterialRule rule) return SequenceMaterialRule.CODEC.codec().encode(rule, ops, prefix);
 			if (input instanceof ConditionalMaterialRule rule) return ConditionalMaterialRule.CODEC.codec().encode(rule, ops, prefix);
+			if (input instanceof BandlandsMaterialRule rule) return BandlandsMaterialRule.CODEC.codec().encode(rule, ops, prefix);
 			return DataResult.error(() -> "Unsupported material rule: " + input.getClass().getSimpleName());
 		}
 	};
@@ -42,6 +44,11 @@ public sealed interface MaterialRule permits BlockMaterialRule, SequenceMaterial
 
 	static ConditionalMaterialRule condition(MaterialCondition condition, MaterialRule thenRun) {
 		return new ConditionalMaterialRule(condition, thenRun);
+	}
+
+	/** places the badlands terracotta color-band pattern */
+	static BandlandsMaterialRule bandlands() {
+		return new BandlandsMaterialRule();
 	}
 
 	private static String normalizeType(String type) {

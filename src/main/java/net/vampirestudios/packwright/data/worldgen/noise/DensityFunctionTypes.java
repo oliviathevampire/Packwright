@@ -90,6 +90,15 @@ public final class DensityFunctionTypes {
 					)
 			);
 
+	public static final DensityFunctionType<DensityFunctions.Mapped> INVERT =
+			register(
+					"invert",
+					codec -> DensityFunctions.Mapped.codec(
+							codec,
+							DensityFunctions.Mapped.Type.INVERT
+					)
+			);
+
 	public static final DensityFunctionType<DensityFunctions.Marker> INTERPOLATED =
 			register(
 					"interpolated",
@@ -123,6 +132,15 @@ public final class DensityFunctionTypes {
 					codec -> DensityFunctions.Marker.codec(
 							codec,
 							DensityFunctions.Marker.Type.CACHE_ONCE
+					)
+			);
+
+	public static final DensityFunctionType<DensityFunctions.Marker> CACHE_ALL_IN_CELL =
+			register(
+					"cache_all_in_cell",
+					codec -> DensityFunctions.Marker.codec(
+							codec,
+							DensityFunctions.Marker.Type.CACHE_ALL_IN_CELL
 					)
 			);
 
@@ -170,6 +188,42 @@ public final class DensityFunctionTypes {
 
 	public static final DensityFunctionType<DensityFunctions.RangeChoice> RANGE_CHOICE =
 			register("range_choice", DensityFunctions.RangeChoice::codec);
+
+	public static final DensityFunctionType<DensityFunctions.BlendAlpha> BLEND_ALPHA =
+			register("blend_alpha", DensityFunctions.BlendAlpha::codec);
+
+	public static final DensityFunctionType<DensityFunctions.BlendOffset> BLEND_OFFSET =
+			register("blend_offset", DensityFunctions.BlendOffset::codec);
+
+	public static final DensityFunctionType<DensityFunctions.Beardifier> BEARDIFIER =
+			register("beardifier", DensityFunctions.Beardifier::codec);
+
+	public static final DensityFunctionType<DensityFunctions.OldBlendedNoise> OLD_BLENDED_NOISE =
+			register("old_blended_noise", DensityFunctions.OldBlendedNoise::codec);
+
+	public static final DensityFunctionType<DensityFunctions.EndIslands> END_ISLANDS =
+			register("end_islands", DensityFunctions.EndIslands::codec);
+
+	public static final DensityFunctionType<DensityFunctions.ShiftedNoise> SHIFTED_NOISE =
+			register("shifted_noise", DensityFunctions.ShiftedNoise::codec);
+
+	public static final DensityFunctionType<DensityFunctions.IntervalSelect> INTERVAL_SELECT =
+			register("interval_select", DensityFunctions.IntervalSelect::codec);
+
+	public static final DensityFunctionType<DensityFunctions.ShiftA> SHIFT_A =
+			register("shift_a", DensityFunctions.ShiftA::codec);
+
+	public static final DensityFunctionType<DensityFunctions.ShiftB> SHIFT_B =
+			register("shift_b", DensityFunctions.ShiftB::codec);
+
+	public static final DensityFunctionType<DensityFunctions.Shift> SHIFT =
+			register("shift", DensityFunctions.Shift::codec);
+
+	public static final DensityFunctionType<DensityFunctions.Spline> SPLINE =
+			register("spline", DensityFunctions.Spline::codec);
+
+	public static final DensityFunctionType<DensityFunctions.FindTopSurface> FIND_TOP_SURFACE =
+			register("find_top_surface", DensityFunctions.FindTopSurface::codec);
 
 	private DensityFunctionTypes() {
 	}

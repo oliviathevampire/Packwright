@@ -26,11 +26,17 @@ public abstract class CookingRecipe extends Recipe {
 				ingredientCodec(),
 				resultCodec(),
 				experienceCodec(),
-				cookingTimeCodec()
-		).apply(instance, (ingredient, result, xp, time) -> {
+				cookingTimeCodec(),
+				groupCodec(),
+				categoryCodec(),
+				showNotificationCodec()
+		).apply(instance, (ingredient, result, xp, time, group, category, showNotification) -> {
 			T obj = ctor.apply(ingredient, result);
 			obj.experience(xp);
 			obj.cookingTime(time);
+			obj.group(group);
+			obj.category(category);
+			obj.showNotification(showNotification);
 			return obj;
 		}));
 	}
@@ -55,6 +61,21 @@ public abstract class CookingRecipe extends Recipe {
 				.forGetter(recipe -> recipe.getCookingtime() == null ? 200 : recipe.getCookingtime());
 	}
 
+	private static <T extends CookingRecipe> RecordCodecBuilder<T, String> groupCodec() {
+		return Codec.STRING.fieldOf("group").orElse("")
+				.forGetter(CookingRecipe::getGroup);
+	}
+
+	private static <T extends CookingRecipe> RecordCodecBuilder<T, CookingBookCategory> categoryCodec() {
+		return CookingBookCategory.CODEC.fieldOf("category").orElse(CookingBookCategory.MISC)
+				.forGetter(CookingRecipe::getCookingCategory);
+	}
+
+	private static <T extends CookingRecipe> RecordCodecBuilder<T, Boolean> showNotificationCodec() {
+		return Codec.BOOL.fieldOf("show_notification").orElse(true)
+				.forGetter(CookingRecipe::getShowNotification);
+	}
+
 	public CookingRecipe experience(final float experience) {
 		this.experience = experience;
 
@@ -70,6 +91,19 @@ public abstract class CookingRecipe extends Recipe {
 	@Override
 	public CookingRecipe group(final String group) {
 		return (CookingRecipe) super.group(group);
+	}
+
+	public CookingRecipe category(final CookingBookCategory category) {
+		return (CookingRecipe) category(category.getTypeId());
+	}
+
+	public CookingBookCategory getCookingCategory() {
+		return CookingBookCategory.fromIdOrDefault(getCategory(), CookingBookCategory.MISC);
+	}
+
+	@Override
+	public CookingRecipe showNotification(final boolean showNotification) {
+		return (CookingRecipe) super.showNotification(showNotification);
 	}
 
 	public Ingredient getIngredient() {

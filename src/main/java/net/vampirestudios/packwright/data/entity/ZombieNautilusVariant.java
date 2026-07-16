@@ -14,7 +14,7 @@ public final class ZombieNautilusVariant extends ModelVariant {
         ZombieNautilusVariant out = new ZombieNautilusVariant();
         out.model = model;
         out.assetId = assetId;
-        spawns.ifPresent(out::spawnConditions);
+        out.spawnConditions = spawns;
         return out;
     }));
 

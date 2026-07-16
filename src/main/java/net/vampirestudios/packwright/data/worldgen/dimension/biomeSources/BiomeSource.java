@@ -10,7 +10,7 @@ import net.vampirestudios.packwright.data.worldgen.dimension.Utils;
 
 import java.util.List;
 
-public sealed interface BiomeSource permits Fixed, MultiNoisePreset, MultiNoise {
+public sealed interface BiomeSource permits Fixed, MultiNoisePreset, MultiNoise, Checkerboard, TheEnd {
 
 	Codec<BiomeSource> CODEC = new Codec<>() {
 		@Override
@@ -39,6 +39,14 @@ public sealed interface BiomeSource permits Fixed, MultiNoisePreset, MultiNoise 
 						yield DataResult.error(() -> "A minecraft:multi_noise biome source must contain either preset or biomes");
 					}
 
+					case "checkerboard" -> Checkerboard.CODEC.codec()
+							.decode(ops, input)
+							.map(pair -> pair.mapFirst(source -> source));
+
+					case "the_end" -> TheEnd.CODEC.codec()
+							.decode(ops, input)
+							.map(pair -> pair.mapFirst(source -> source));
+
 					default -> DataResult.error(() -> rawType.isEmpty()
 							? "Biome source is missing its type"
 							: "Unsupported biome source type: " + rawType
@@ -59,6 +67,14 @@ public sealed interface BiomeSource permits Fixed, MultiNoisePreset, MultiNoise 
 
 			if (input instanceof MultiNoise source) {
 				return MultiNoise.CODEC.codec().encode(source, ops, prefix);
+			}
+
+			if (input instanceof Checkerboard source) {
+				return Checkerboard.CODEC.codec().encode(source, ops, prefix);
+			}
+
+			if (input instanceof TheEnd source) {
+				return TheEnd.CODEC.codec().encode(source, ops, prefix);
 			}
 
 			return DataResult.error(() -> "Unsupported biome source: " + input.getClass().getName());
@@ -94,5 +110,25 @@ public sealed interface BiomeSource permits Fixed, MultiNoisePreset, MultiNoise 
 		return new MultiNoise.Builder();
 	}
 
+	/**
+	 * Creates a {@code minecraft:checkerboard} biome source, using the vanilla default scale of 2.
+	 */
+	static Checkerboard checkerboard(List<Identifier> biomes) {
+		return new Checkerboard(biomes);
+	}
+
+	/**
+	 * Creates a {@code minecraft:checkerboard} biome source with an explicit scale.
+	 */
+	static Checkerboard checkerboard(List<Identifier> biomes, int scale) {
+		return new Checkerboard(biomes, scale);
+	}
+
+	/**
+	 * Creates a {@code minecraft:the_end} biome source. Has no configurable fields.
+	 */
+	static TheEnd theEnd() {
+		return TheEnd.INSTANCE;
+	}
 
 }

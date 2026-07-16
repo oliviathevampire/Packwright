@@ -9,7 +9,8 @@ import net.minecraft.resources.Identifier;
 public record NoiseThresholdMaterialCondition(
 		Identifier noise,
 		double minThreshold,
-		double maxThreshold
+		double maxThreshold,
+		boolean is3d
 ) implements MaterialCondition {
 
 	private static final Codec<String> TYPE_CODEC =
@@ -52,14 +53,22 @@ public record NoiseThresholdMaterialCondition(
 							.fieldOf("max_threshold")
 							.forGetter(
 									NoiseThresholdMaterialCondition::maxThreshold
+							),
+
+					Codec.BOOL
+							.fieldOf("is_3d")
+							.orElse(false)
+							.forGetter(
+									NoiseThresholdMaterialCondition::is3d
 							)
 			).apply(
 					instance,
-					(type, noise, minThreshold, maxThreshold) ->
+					(type, noise, minThreshold, maxThreshold, is3d) ->
 							new NoiseThresholdMaterialCondition(
 									noise,
 									minThreshold,
-									maxThreshold
+									maxThreshold,
+									is3d
 							)
 			));
 

@@ -1,8 +1,9 @@
 package net.vampirestudios.packwright.data.recipe;
 
 /**
- * Named type identifiers for cooking recipes.
- * Use {@link #getTypeId()} to obtain the string form for {@link Recipe#category(String)}.
+ * Named recipe-type identifiers for the cooking recipe types (as opposed to their
+ * recipe-book <em>category</em>, which is {@link CookingBookCategory}). Currently unused
+ * internally; kept as a convenience for referring to a cooking recipe type by name.
  */
 public enum SmeltingTypes {
     BLASTING("minecraft:blasting"),

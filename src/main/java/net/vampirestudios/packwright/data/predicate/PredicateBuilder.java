@@ -5,6 +5,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JavaOps;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.NumberProvider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -70,6 +71,10 @@ public abstract class PredicateBuilder<SELF extends PredicateBuilder<SELF>> {
 		return put(key, value.value());
 	}
 
+	public SELF parameter(String key, NumberProvider value) {
+		return put(key, value.value());
+	}
+
 	protected final SELF put(String key, Object value) {
 		this.values.put(key, value);
 		return self();
@@ -83,6 +88,15 @@ public abstract class PredicateBuilder<SELF extends PredicateBuilder<SELF>> {
 	@SuppressWarnings("unchecked")
 	protected final List<Object> subList(String key) {
 		return (List<Object>) this.values.computeIfAbsent(key, k -> new ArrayList<>());
+	}
+
+	/**
+	 * wraps a raw predicate value in the {@code {"value": ...}} shape used by dispatched
+	 * data-component predicate maps (see vanilla's {@code DataComponentPredicate.Single.wrapCodec}),
+	 * e.g. for item/block/entity {@code predicates} sub-predicate entries
+	 */
+	protected static Map<String, Object> wrapPredicateValue(Object value) {
+		return Map.of("value", value);
 	}
 
 	/**

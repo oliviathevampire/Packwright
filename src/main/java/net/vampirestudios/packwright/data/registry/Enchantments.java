@@ -14,9 +14,10 @@ public final class Enchantments {
 					either -> either.map(Enchantments::fromString, Enchantments::fromList),
 					value -> value.tag != null
 							? Either.left("#" + value.tag)
-							: value.ids.size() == 1
-							? Either.left(value.ids.getFirst().toString())
-							: Either.right(value.ids.stream().map(Identifier::toString).toList())
+							: (value.ids.size() == 1
+							   ? Either.left(value.ids.getFirst().toString())
+							   : Either.right(value.ids.stream().map(Identifier::toString).toList())
+							)
 			);
 
 	private final List<Identifier> ids;

@@ -3,6 +3,7 @@ package net.vampirestudios.packwright.data.registry;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.StringRepresentable;
+import net.vampirestudios.packwright.data.registry.enchantment.EnchantmentEffects;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,8 +21,9 @@ public class Enchantment {
 			Cost.CODEC.fieldOf("max_cost").forGetter(x -> x.maxCost),
 			Codec.INT.fieldOf("anvil_cost").forGetter(x -> x.anvilCost),
 			EquipmentSlot.CODEC.listOf().fieldOf("slots").forGetter(x -> x.slots),
-			Codec.STRING.optionalFieldOf("exclusive_set").forGetter(x -> Optional.ofNullable(x.exclusiveSet))
-	).apply(i, (desc, sup, pri, weight, maxLevel, minCost, maxCost, anvilCost, slots, excl) -> {
+			Enchantments.CODEC.optionalFieldOf("exclusive_set").forGetter(x -> Optional.ofNullable(x.exclusiveSet)),
+			EnchantmentEffects.CODEC.fieldOf("effects").orElse(EnchantmentEffects.effects()).forGetter(x -> x.effects)
+	).apply(i, (desc, sup, pri, weight, maxLevel, minCost, maxCost, anvilCost, slots, excl, effects) -> {
 		Enchantment out = new Enchantment();
 		out.description = desc;
 		out.supportedItems = sup;
@@ -33,6 +35,7 @@ public class Enchantment {
 		out.anvilCost = anvilCost;
 		out.slots = new ArrayList<>(slots);
 		out.exclusiveSet = excl.orElse(null);
+		out.effects = effects;
 		return out;
 	}));
 
@@ -45,7 +48,8 @@ public class Enchantment {
 	private Cost maxCost;
 	private int anvilCost = 1;
 	private List<EquipmentSlot> slots = new ArrayList<>();
-	private String exclusiveSet;
+	private Enchantments exclusiveSet;
+	private EnchantmentEffects effects = EnchantmentEffects.effects();
 
 	public static Enchantment enchantment() {
 		return new Enchantment();
@@ -60,7 +64,9 @@ public class Enchantment {
 	public Enchantment maxCost(int base, int perLevelAboveFirst) { this.maxCost = new Cost(base, perLevelAboveFirst); return this; }
 	public Enchantment anvilCost(int anvilCost) { this.anvilCost = anvilCost; return this; }
 	public Enchantment slots(EquipmentSlot... slots) { this.slots = new ArrayList<>(Arrays.asList(slots)); return this; }
-	public Enchantment exclusiveSet(String tag) { this.exclusiveSet = tag; return this; }
+	/** a tag, a single enchantment id, or an explicit list of enchantment ids that are incompatible with this one */
+	public Enchantment exclusiveSet(Enchantments exclusiveSet) { this.exclusiveSet = exclusiveSet; return this; }
+	public Enchantment effects(EnchantmentEffects effects) { this.effects = effects == null ? EnchantmentEffects.effects() : effects; return this; }
 
 	public String getDescription() { return description; }
 	public String getSupportedItems() { return supportedItems; }
@@ -71,7 +77,8 @@ public class Enchantment {
 	public Cost getMaxCost() { return maxCost; }
 	public int getAnvilCost() { return anvilCost; }
 	public List<EquipmentSlot> getSlots() { return slots; }
-	public String getExclusiveSet() { return exclusiveSet; }
+	public Enchantments getExclusiveSet() { return exclusiveSet; }
+	public EnchantmentEffects getEffects() { return effects; }
 
 	public record Cost(int base, int perLevelAboveFirst) {
 			public static final Codec<Cost> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -90,7 +97,8 @@ public class Enchantment {
 		BODY("body"),
 		ANY("any"),
 		HAND("hand"),
-		ARMOR("armor");
+		ARMOR("armor"),
+		SADDLE("saddle");
 
 		public static final Codec<EquipmentSlot> CODEC = StringRepresentable.fromEnum(EquipmentSlot::values);
 		private final String name;

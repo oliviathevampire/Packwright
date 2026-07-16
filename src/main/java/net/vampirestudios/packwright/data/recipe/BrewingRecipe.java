@@ -53,23 +53,27 @@ public final class BrewingRecipe extends Recipe {
 	 */
 	public static final class PotionIngredient {
 		public static final Codec<PotionIngredient> CODEC = RecordCodecBuilder.create(i -> i.group(
-				Identifier.CODEC.fieldOf("item").forGetter(x -> x.item),
+				Ingredient.CODEC.fieldOf("item").forGetter(x -> x.item),
 				PotionContentsPredicate.CODEC.optionalFieldOf("potion_contents").forGetter(x -> Optional.ofNullable(x.potionContents))
 		).apply(i, (item, potionContents) -> new PotionIngredient(item).potionContents(potionContents.orElse(null))));
 
-		private final Identifier item;
+		private final Ingredient item;
 		private PotionContentsPredicate potionContents;
 
-		private PotionIngredient(Identifier item) {
+		private PotionIngredient(Ingredient item) {
 			this.item = item;
 		}
 
-		public static PotionIngredient of(Identifier item) {
+		public static PotionIngredient of(Ingredient item) {
 			return new PotionIngredient(item);
 		}
 
+		public static PotionIngredient of(Identifier item) {
+			return new PotionIngredient(Ingredient.of(item));
+		}
+
 		public static PotionIngredient of(String item) {
-			return new PotionIngredient(Identifier.tryParse(item));
+			return new PotionIngredient(Ingredient.of(Identifier.tryParse(item)));
 		}
 
 		/**
@@ -87,7 +91,7 @@ public final class BrewingRecipe extends Recipe {
 			return potionContents(PotionContentsPredicate.potion(potion));
 		}
 
-		public Identifier getItem() {
+		public Ingredient getItem() {
 			return item;
 		}
 

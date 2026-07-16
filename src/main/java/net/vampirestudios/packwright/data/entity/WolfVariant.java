@@ -4,21 +4,22 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
-import java.util.Optional;
-
 public final class WolfVariant {
     public static final Codec<WolfVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
             Assets.CODEC.fieldOf("assets").forGetter(x -> x.assets),
-            SpawnPrioritySelectors.CODEC.optionalFieldOf("spawn_conditions").forGetter(x -> Optional.ofNullable(x.spawnConditions))
-    ).apply(i, (assets, spawns) -> {
+            Assets.CODEC.fieldOf("baby_assets").forGetter(x -> x.babyAssets),
+            SpawnPrioritySelectors.CODEC.fieldOf("spawn_conditions").forGetter(x -> x.spawnConditions)
+    ).apply(i, (assets, babyAssets, spawns) -> {
         WolfVariant out = new WolfVariant();
         out.assets = assets;
-        spawns.ifPresent(out::spawnConditions);
+        out.babyAssets = babyAssets;
+        out.spawnConditions = spawns;
         return out;
     }));
 
     private Assets assets;
-    private SpawnPrioritySelectors spawnConditions; // optional
+    private Assets babyAssets;
+    private SpawnPrioritySelectors spawnConditions;
 
     public WolfVariant() {}
 
@@ -31,9 +32,17 @@ public final class WolfVariant {
 
     public WolfVariant assets(Assets assets) { this.assets = assets; return this; }
 
+    public WolfVariant babyAssets(Identifier wild, Identifier tame, Identifier angry) {
+        this.babyAssets = new Assets().wild(wild).tame(tame).angry(angry);
+        return this;
+    }
+
+    public WolfVariant babyAssets(Assets babyAssets) { this.babyAssets = babyAssets; return this; }
+
     public WolfVariant spawnConditions(SpawnPrioritySelectors spawns) { this.spawnConditions = spawns; return this; }
 
     public Assets getAssets() { return assets; }
+    public Assets getBabyAssets() { return babyAssets; }
     public SpawnPrioritySelectors getSpawnConditions() { return spawnConditions; }
 
     public static class Assets {

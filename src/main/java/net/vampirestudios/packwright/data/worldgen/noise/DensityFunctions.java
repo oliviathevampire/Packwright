@@ -5,6 +5,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
+import java.util.List;
+
 /**
  * Factory methods and implementations for density functions.
  */
@@ -132,8 +134,86 @@ public final class DensityFunctions {
 		return new Marker(Marker.Type.CACHE_ONCE, argument);
 	}
 
+	public static DensityFunction cacheAllInCell(DensityFunction argument) {
+		return new Marker(Marker.Type.CACHE_ALL_IN_CELL, argument);
+	}
+
+	public static DensityFunction invert(DensityFunction argument) {
+		return new Mapped(Mapped.Type.INVERT, argument);
+	}
+
 	public static DensityFunction blendDensity(DensityFunction argument) {
 		return new BlendDensity(argument);
+	}
+
+	public static DensityFunction blendAlpha() {
+		return new BlendAlpha();
+	}
+
+	public static DensityFunction blendOffset() {
+		return new BlendOffset();
+	}
+
+	public static DensityFunction beardifier() {
+		return new Beardifier();
+	}
+
+	public static DensityFunction oldBlendedNoise(
+			double xzScale,
+			double yScale,
+			double xzFactor,
+			double yFactor,
+			double smearScaleMultiplier
+	) {
+		return new OldBlendedNoise(xzScale, yScale, xzFactor, yFactor, smearScaleMultiplier);
+	}
+
+	public static DensityFunction endIslands() {
+		return new EndIslands();
+	}
+
+	public static DensityFunction shiftedNoise(
+			DensityFunction shiftX,
+			DensityFunction shiftY,
+			DensityFunction shiftZ,
+			double xzScale,
+			double yScale,
+			Identifier noise
+	) {
+		return new ShiftedNoise(shiftX, shiftY, shiftZ, xzScale, yScale, noise);
+	}
+
+	public static DensityFunction intervalSelect(
+			DensityFunction input,
+			List<Double> thresholds,
+			List<DensityFunction> functions
+	) {
+		return new IntervalSelect(input, thresholds, functions);
+	}
+
+	public static DensityFunction shiftA(Identifier noise) {
+		return new ShiftA(noise);
+	}
+
+	public static DensityFunction shiftB(Identifier noise) {
+		return new ShiftB(noise);
+	}
+
+	public static DensityFunction shift(Identifier noise) {
+		return new Shift(noise);
+	}
+
+	public static DensityFunction spline(CubicSpline spline) {
+		return new Spline(spline);
+	}
+
+	public static DensityFunction findTopSurface(
+			DensityFunction density,
+			DensityFunction upperBound,
+			int lowerBound,
+			int cellHeight
+	) {
+		return new FindTopSurface(density, upperBound, lowerBound, cellHeight);
 	}
 
 	public static DensityFunction clamp(
@@ -257,6 +337,7 @@ public final class DensityFunctions {
 				case HALF_NEGATIVE -> DensityFunctionTypes.HALF_NEGATIVE;
 				case QUARTER_NEGATIVE -> DensityFunctionTypes.QUARTER_NEGATIVE;
 				case SQUEEZE -> DensityFunctionTypes.SQUEEZE;
+				case INVERT -> DensityFunctionTypes.INVERT;
 			};
 		}
 
@@ -266,7 +347,8 @@ public final class DensityFunctions {
 			CUBE,
 			HALF_NEGATIVE,
 			QUARTER_NEGATIVE,
-			SQUEEZE
+			SQUEEZE,
+			INVERT
 		}
 	}
 
@@ -292,6 +374,7 @@ public final class DensityFunctions {
 				case FLAT_CACHE -> DensityFunctionTypes.FLAT_CACHE;
 				case CACHE_2D -> DensityFunctionTypes.CACHE_2D;
 				case CACHE_ONCE -> DensityFunctionTypes.CACHE_ONCE;
+				case CACHE_ALL_IN_CELL -> DensityFunctionTypes.CACHE_ALL_IN_CELL;
 			};
 		}
 
@@ -299,7 +382,8 @@ public final class DensityFunctions {
 			INTERPOLATED,
 			FLAT_CACHE,
 			CACHE_2D,
-			CACHE_ONCE
+			CACHE_ONCE,
+			CACHE_ALL_IN_CELL
 		}
 	}
 
@@ -426,6 +510,254 @@ public final class DensityFunctions {
 		@Override
 		public DensityFunctionType<RangeChoice> type() {
 			return DensityFunctionTypes.RANGE_CHOICE;
+		}
+	}
+
+	/** {@code minecraft:blend_alpha}: the blending alpha at this position, no arguments */
+	public record BlendAlpha() implements DensityFunction.Direct {
+		private static final MapCodec<BlendAlpha> DATA_CODEC = MapCodec.unit(new BlendAlpha());
+
+		static MapCodec<BlendAlpha> codec(Codec<DensityFunction> ignored) {
+			return DATA_CODEC;
+		}
+
+		@Override
+		public DensityFunctionType<BlendAlpha> type() {
+			return DensityFunctionTypes.BLEND_ALPHA;
+		}
+	}
+
+	/** {@code minecraft:blend_offset}: the blending offset at this position, no arguments */
+	public record BlendOffset() implements DensityFunction.Direct {
+		private static final MapCodec<BlendOffset> DATA_CODEC = MapCodec.unit(new BlendOffset());
+
+		static MapCodec<BlendOffset> codec(Codec<DensityFunction> ignored) {
+			return DATA_CODEC;
+		}
+
+		@Override
+		public DensityFunctionType<BlendOffset> type() {
+			return DensityFunctionTypes.BLEND_OFFSET;
+		}
+	}
+
+	/** {@code minecraft:beardifier}: mob/structure carve-out density, no arguments */
+	public record Beardifier() implements DensityFunction.Direct {
+		private static final MapCodec<Beardifier> DATA_CODEC = MapCodec.unit(new Beardifier());
+
+		static MapCodec<Beardifier> codec(Codec<DensityFunction> ignored) {
+			return DATA_CODEC;
+		}
+
+		@Override
+		public DensityFunctionType<Beardifier> type() {
+			return DensityFunctionTypes.BEARDIFIER;
+		}
+	}
+
+	/** {@code minecraft:old_blended_noise}: the legacy (pre-1.18) terrain noise */
+	public record OldBlendedNoise(
+			double xzScale,
+			double yScale,
+			double xzFactor,
+			double yFactor,
+			double smearScaleMultiplier
+	) implements DensityFunction.Direct {
+		static MapCodec<OldBlendedNoise> codec(Codec<DensityFunction> ignored) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					Codec.DOUBLE
+							.fieldOf("xz_scale")
+							.forGetter(OldBlendedNoise::xzScale),
+					Codec.DOUBLE
+							.fieldOf("y_scale")
+							.forGetter(OldBlendedNoise::yScale),
+					Codec.DOUBLE
+							.fieldOf("xz_factor")
+							.forGetter(OldBlendedNoise::xzFactor),
+					Codec.DOUBLE
+							.fieldOf("y_factor")
+							.forGetter(OldBlendedNoise::yFactor),
+					Codec.DOUBLE
+							.fieldOf("smear_scale_multiplier")
+							.forGetter(OldBlendedNoise::smearScaleMultiplier)
+			).apply(instance, OldBlendedNoise::new));
+		}
+
+		@Override
+		public DensityFunctionType<OldBlendedNoise> type() {
+			return DensityFunctionTypes.OLD_BLENDED_NOISE;
+		}
+	}
+
+	/** {@code minecraft:end_islands}: the End's island density, no arguments */
+	public record EndIslands() implements DensityFunction.Direct {
+		private static final MapCodec<EndIslands> DATA_CODEC = MapCodec.unit(new EndIslands());
+
+		static MapCodec<EndIslands> codec(Codec<DensityFunction> ignored) {
+			return DATA_CODEC;
+		}
+
+		@Override
+		public DensityFunctionType<EndIslands> type() {
+			return DensityFunctionTypes.END_ISLANDS;
+		}
+	}
+
+	/** {@code minecraft:shifted_noise}: samples {@code noise} at a position offset by three density functions */
+	public record ShiftedNoise(
+			DensityFunction shiftX,
+			DensityFunction shiftY,
+			DensityFunction shiftZ,
+			double xzScale,
+			double yScale,
+			Identifier noise
+	) implements DensityFunction.Direct {
+		static MapCodec<ShiftedNoise> codec(Codec<DensityFunction> densityFunctionCodec) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					densityFunctionCodec
+							.fieldOf("shift_x")
+							.forGetter(ShiftedNoise::shiftX),
+					densityFunctionCodec
+							.fieldOf("shift_y")
+							.forGetter(ShiftedNoise::shiftY),
+					densityFunctionCodec
+							.fieldOf("shift_z")
+							.forGetter(ShiftedNoise::shiftZ),
+					Codec.DOUBLE
+							.fieldOf("xz_scale")
+							.forGetter(ShiftedNoise::xzScale),
+					Codec.DOUBLE
+							.fieldOf("y_scale")
+							.forGetter(ShiftedNoise::yScale),
+					Identifier.CODEC
+							.fieldOf("noise")
+							.forGetter(ShiftedNoise::noise)
+			).apply(instance, ShiftedNoise::new));
+		}
+
+		@Override
+		public DensityFunctionType<ShiftedNoise> type() {
+			return DensityFunctionTypes.SHIFTED_NOISE;
+		}
+	}
+
+	/** {@code minecraft:interval_select}: picks one of {@code functions} based on which {@code thresholds} bucket {@code input} falls into */
+	public record IntervalSelect(
+			DensityFunction input,
+			List<Double> thresholds,
+			List<DensityFunction> functions
+	) implements DensityFunction.Direct {
+		static MapCodec<IntervalSelect> codec(Codec<DensityFunction> densityFunctionCodec) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					densityFunctionCodec
+							.fieldOf("input")
+							.forGetter(IntervalSelect::input),
+					Codec.DOUBLE.listOf()
+							.fieldOf("thresholds")
+							.forGetter(IntervalSelect::thresholds),
+					densityFunctionCodec.listOf()
+							.fieldOf("functions")
+							.forGetter(IntervalSelect::functions)
+			).apply(instance, IntervalSelect::new));
+		}
+
+		@Override
+		public DensityFunctionType<IntervalSelect> type() {
+			return DensityFunctionTypes.INTERVAL_SELECT;
+		}
+	}
+
+	/** {@code minecraft:shift_a}: samples {@code noise} at (blockX, 0, blockZ), scaled by 0.25 */
+	public record ShiftA(Identifier noise) implements DensityFunction.Direct {
+		static MapCodec<ShiftA> codec(Codec<DensityFunction> ignored) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					Identifier.CODEC
+							.fieldOf("argument")
+							.forGetter(ShiftA::noise)
+			).apply(instance, ShiftA::new));
+		}
+
+		@Override
+		public DensityFunctionType<ShiftA> type() {
+			return DensityFunctionTypes.SHIFT_A;
+		}
+	}
+
+	/** {@code minecraft:shift_b}: samples {@code noise} at (blockZ, blockX, 0), scaled by 0.25 */
+	public record ShiftB(Identifier noise) implements DensityFunction.Direct {
+		static MapCodec<ShiftB> codec(Codec<DensityFunction> ignored) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					Identifier.CODEC
+							.fieldOf("argument")
+							.forGetter(ShiftB::noise)
+			).apply(instance, ShiftB::new));
+		}
+
+		@Override
+		public DensityFunctionType<ShiftB> type() {
+			return DensityFunctionTypes.SHIFT_B;
+		}
+	}
+
+	/** {@code minecraft:shift}: samples {@code noise} at (blockX, blockY, blockZ), scaled by 0.25 */
+	public record Shift(Identifier noise) implements DensityFunction.Direct {
+		static MapCodec<Shift> codec(Codec<DensityFunction> ignored) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					Identifier.CODEC
+							.fieldOf("argument")
+							.forGetter(Shift::noise)
+			).apply(instance, Shift::new));
+		}
+
+		@Override
+		public DensityFunctionType<Shift> type() {
+			return DensityFunctionTypes.SHIFT;
+		}
+	}
+
+	/** {@code minecraft:spline}: samples a {@link CubicSpline} */
+	public record Spline(CubicSpline spline) implements DensityFunction.Direct {
+		static MapCodec<Spline> codec(Codec<DensityFunction> densityFunctionCodec) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					CubicSpline.codec(densityFunctionCodec)
+							.fieldOf("spline")
+							.forGetter(Spline::spline)
+			).apply(instance, Spline::new));
+		}
+
+		@Override
+		public DensityFunctionType<Spline> type() {
+			return DensityFunctionTypes.SPLINE;
+		}
+	}
+
+	/** {@code minecraft:find_top_surface}: the highest {@code density}-positive cell at or below {@code upper_bound}, stepping down by {@code cell_height} until {@code lower_bound} */
+	public record FindTopSurface(
+			DensityFunction density,
+			DensityFunction upperBound,
+			int lowerBound,
+			int cellHeight
+	) implements DensityFunction.Direct {
+		static MapCodec<FindTopSurface> codec(Codec<DensityFunction> densityFunctionCodec) {
+			return RecordCodecBuilder.mapCodec(instance -> instance.group(
+					densityFunctionCodec
+							.fieldOf("density")
+							.forGetter(FindTopSurface::density),
+					densityFunctionCodec
+							.fieldOf("upper_bound")
+							.forGetter(FindTopSurface::upperBound),
+					Codec.INT
+							.fieldOf("lower_bound")
+							.forGetter(FindTopSurface::lowerBound),
+					Codec.INT
+							.fieldOf("cell_height")
+							.forGetter(FindTopSurface::cellHeight)
+			).apply(instance, FindTopSurface::new));
+		}
+
+		@Override
+		public DensityFunctionType<FindTopSurface> type() {
+			return DensityFunctionTypes.FIND_TOP_SURFACE;
 		}
 	}
 }

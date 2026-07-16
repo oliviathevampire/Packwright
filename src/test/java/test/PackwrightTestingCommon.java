@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static test.PackwrightPreTest.myModId;
+
 public class PackwrightTestingCommon {
 	public static final String MOD_ID = "packwright_testing";
 
@@ -74,8 +76,8 @@ public class PackwrightTestingCommon {
 				new Advancement()
 						.display(new Display()
 								.icon(Icon.of(Identifier.withDefaultNamespace("bread")))
-								.title(Component.literal("Cooked Bread?"))
-								.description(Component.literal("Burn a piece of bread. Congratulations?"))
+								.title("Cooked Bread?")
+								.description("Burn a piece of bread. Congratulations?")
 								.frame(Display.Frame.GOAL)
 						)
 						.criterion("burn_bread", Criterion.inventoryChanged(
@@ -115,9 +117,9 @@ public class PackwrightTestingCommon {
 		pack.addRecipe(
 				Identifier.fromNamespaceAndPath(MOD_ID, "bread_trims"),
 				Recipe.smithingTrim(
-						Ingredient.ingredient().tag(Identifier.withDefaultNamespace("trimmable_armor")),
 						Ingredient.ingredient().item(Identifier.withDefaultNamespace("bread")),
-						Ingredient.ingredient().tag(Identifier.withDefaultNamespace("trim_templates"))
+						Ingredient.ingredient().tag(Identifier.withDefaultNamespace("trim_templates")),
+						myModId("bread_trim")
 				)
 		);
 

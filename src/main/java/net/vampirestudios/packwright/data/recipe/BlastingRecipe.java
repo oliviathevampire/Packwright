@@ -28,4 +28,14 @@ public class BlastingRecipe extends CookingRecipe {
 	public BlastingRecipe group(final String group) {
 		return (BlastingRecipe) super.group(group);
 	}
+
+	@Override
+	public BlastingRecipe category(final CookingBookCategory category) {
+		return (BlastingRecipe) super.category(category);
+	}
+
+	@Override
+	public BlastingRecipe showNotification(final boolean showNotification) {
+		return (BlastingRecipe) super.showNotification(showNotification);
+	}
 }

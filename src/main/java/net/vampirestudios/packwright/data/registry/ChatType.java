@@ -2,6 +2,7 @@ package net.vampirestudios.packwright.data.registry;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.vampirestudios.packwright.util.DynamicMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,30 +119,44 @@ public class ChatType {
 	public static class Style {
 		public static final Codec<Style> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Codec.STRING.optionalFieldOf("color").forGetter(x -> Optional.ofNullable(x.color)),
+				Codec.INT.optionalFieldOf("shadow_color").forGetter(x -> Optional.ofNullable(x.shadowColor)),
 				Codec.BOOL.optionalFieldOf("bold").forGetter(x -> Optional.ofNullable(x.bold)),
 				Codec.BOOL.optionalFieldOf("italic").forGetter(x -> Optional.ofNullable(x.italic)),
 				Codec.BOOL.optionalFieldOf("underlined").forGetter(x -> Optional.ofNullable(x.underlined)),
 				Codec.BOOL.optionalFieldOf("strikethrough").forGetter(x -> Optional.ofNullable(x.strikethrough)),
 				Codec.BOOL.optionalFieldOf("obfuscated").forGetter(x -> Optional.ofNullable(x.obfuscated)),
+				DynamicMap.CODEC.optionalFieldOf("click_event").forGetter(x -> Optional.ofNullable(x.clickEvent)),
+				DynamicMap.CODEC.optionalFieldOf("hover_event").forGetter(x -> Optional.ofNullable(x.hoverEvent)),
+				Codec.STRING.optionalFieldOf("insertion").forGetter(x -> Optional.ofNullable(x.insertion)),
 				Codec.STRING.optionalFieldOf("font").forGetter(x -> Optional.ofNullable(x.font))
-		).apply(i, (color, bold, italic, underlined, strikethrough, obfuscated, font) -> {
+		).apply(i, (color, shadowColor, bold, italic, underlined, strikethrough, obfuscated, clickEvent, hoverEvent, insertion, font) -> {
 			Style out = new Style();
 			out.color = color.orElse(null);
+			out.shadowColor = shadowColor.orElse(null);
 			out.bold = bold.orElse(null);
 			out.italic = italic.orElse(null);
 			out.underlined = underlined.orElse(null);
 			out.strikethrough = strikethrough.orElse(null);
 			out.obfuscated = obfuscated.orElse(null);
+			out.clickEvent = clickEvent.orElse(null);
+			out.hoverEvent = hoverEvent.orElse(null);
+			out.insertion = insertion.orElse(null);
 			out.font = font.orElse(null);
 			return out;
 		}));
 
 		private String color;
+		private Integer shadowColor;
 		private Boolean bold;
 		private Boolean italic;
 		private Boolean underlined;
 		private Boolean strikethrough;
 		private Boolean obfuscated;
+		/** free-form passthrough (vanilla {@code click_event} is a dispatched action object, e.g. {@code {"action":"open_url","url":"..."}}) */
+		private DynamicMap clickEvent;
+		/** free-form passthrough (vanilla {@code hover_event} is a dispatched action object, e.g. {@code {"action":"show_text","value":"..."}}) */
+		private DynamicMap hoverEvent;
+		private String insertion;
 		private String font;
 
 		public static Style style() {
@@ -149,11 +164,16 @@ public class ChatType {
 		}
 
 		public Style color(String color) { this.color = color; return this; }
+		/** packed ARGB color used for the text shadow; {@code 0} disables the shadow */
+		public Style shadowColor(int shadowColor) { this.shadowColor = shadowColor; return this; }
 		public Style bold(boolean bold) { this.bold = bold; return this; }
 		public Style italic(boolean italic) { this.italic = italic; return this; }
 		public Style underlined(boolean underlined) { this.underlined = underlined; return this; }
 		public Style strikethrough(boolean strikethrough) { this.strikethrough = strikethrough; return this; }
 		public Style obfuscated(boolean obfuscated) { this.obfuscated = obfuscated; return this; }
+		public Style clickEvent(DynamicMap clickEvent) { this.clickEvent = clickEvent; return this; }
+		public Style hoverEvent(DynamicMap hoverEvent) { this.hoverEvent = hoverEvent; return this; }
+		public Style insertion(String insertion) { this.insertion = insertion; return this; }
 		public Style font(String font) { this.font = font; return this; }
 	}
 }

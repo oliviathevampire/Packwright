@@ -9,12 +9,14 @@ public class CowVariant extends ModelVariant {
     public static final Codec<CowVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
             ModelType.CODEC.optionalFieldOf("model", ModelType.NORMAL).forGetter(x -> x.model),
             assetIdCodec(),
+            babyAssetIdCodec(),
             spawnCodec()
-    ).apply(i, (model, assetId, spawns) -> {
+    ).apply(i, (model, assetId, babyAssetId, spawns) -> {
         CowVariant out = new CowVariant();
         out.model = model;
         out.assetId = assetId;
-        spawns.ifPresent(out::spawnConditions);
+        out.babyAssetId = babyAssetId;
+        out.spawnConditions = spawns;
         return out;
     }));
 
@@ -26,6 +28,7 @@ public class CowVariant extends ModelVariant {
 
     public CowVariant model(ModelType model) { this.model = model; return this; }
     public CowVariant assetId(Identifier assetId) { this.assetId = assetId; return this; }
+    public CowVariant babyAssetId(Identifier babyAssetId) { this.babyAssetId = babyAssetId; return this; }
     public CowVariant spawnConditions(SpawnPrioritySelectors spawns) { this.spawnConditions = spawns; return this; }
 
     public ModelType getModel() { return model; }

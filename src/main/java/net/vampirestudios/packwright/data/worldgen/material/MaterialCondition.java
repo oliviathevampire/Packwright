@@ -18,7 +18,12 @@ public sealed interface MaterialCondition permits
 		YAboveMaterialCondition,
 		StoneDepthMaterialCondition,
 		VerticalGradientMaterialCondition,
-		NoiseThresholdMaterialCondition {
+		NoiseThresholdMaterialCondition,
+		WaterMaterialCondition,
+		TemperatureMaterialCondition,
+		SteepMaterialCondition,
+		HoleMaterialCondition,
+		AbovePreliminarySurfaceMaterialCondition {
 
 	/**
 	 * Codec for inline, typed material-condition objects.
@@ -83,6 +88,41 @@ public sealed interface MaterialCondition permits
 									input
 							);
 
+					case "water" ->
+							MaterialCondition.decodeAsMaterialCondition(
+									WaterMaterialCondition.CODEC.codec(),
+									ops,
+									input
+							);
+
+					case "temperature" ->
+							MaterialCondition.decodeAsMaterialCondition(
+									TemperatureMaterialCondition.CODEC.codec(),
+									ops,
+									input
+							);
+
+					case "steep" ->
+							MaterialCondition.decodeAsMaterialCondition(
+									SteepMaterialCondition.CODEC.codec(),
+									ops,
+									input
+							);
+
+					case "hole" ->
+							MaterialCondition.decodeAsMaterialCondition(
+									HoleMaterialCondition.CODEC.codec(),
+									ops,
+									input
+							);
+
+					case "above_preliminary_surface" ->
+							MaterialCondition.decodeAsMaterialCondition(
+									AbovePreliminarySurfaceMaterialCondition.CODEC.codec(),
+									ops,
+									input
+							);
+
 					default -> DataResult.error(
 							() -> rawType.isEmpty()
 									? "Material condition is missing its type"
@@ -133,6 +173,31 @@ public sealed interface MaterialCondition permits
 
 			if (input instanceof NoiseThresholdMaterialCondition condition) {
 				return NoiseThresholdMaterialCondition.CODEC.codec()
+						.encode(condition, ops, prefix);
+			}
+
+			if (input instanceof WaterMaterialCondition condition) {
+				return WaterMaterialCondition.CODEC.codec()
+						.encode(condition, ops, prefix);
+			}
+
+			if (input instanceof TemperatureMaterialCondition condition) {
+				return TemperatureMaterialCondition.CODEC.codec()
+						.encode(condition, ops, prefix);
+			}
+
+			if (input instanceof SteepMaterialCondition condition) {
+				return SteepMaterialCondition.CODEC.codec()
+						.encode(condition, ops, prefix);
+			}
+
+			if (input instanceof HoleMaterialCondition condition) {
+				return HoleMaterialCondition.CODEC.codec()
+						.encode(condition, ops, prefix);
+			}
+
+			if (input instanceof AbovePreliminarySurfaceMaterialCondition condition) {
+				return AbovePreliminarySurfaceMaterialCondition.CODEC.codec()
 						.encode(condition, ops, prefix);
 			}
 
@@ -246,11 +311,69 @@ public sealed interface MaterialCondition permits
 			double minThreshold,
 			double maxThreshold
 	) {
+		return noiseThreshold(noise, minThreshold, maxThreshold, false);
+	}
+
+	/**
+	 * Tests a registered noise value against an inclusive threshold range.
+	 *
+	 * @param is3d whether the noise is sampled in 3D (x, y, z) instead of 2D (x, z)
+	 */
+	static NoiseThresholdMaterialCondition noiseThreshold(
+			Identifier noise,
+			double minThreshold,
+			double maxThreshold,
+			boolean is3d
+	) {
 		return new NoiseThresholdMaterialCondition(
 				noise,
 				minThreshold,
-				maxThreshold
+				maxThreshold,
+				is3d
 		);
+	}
+
+	/**
+	 * True if the position is at or below the surface's water level.
+	 */
+	static WaterMaterialCondition water(
+			int offset,
+			int surfaceDepthMultiplier,
+			boolean addStoneDepth
+	) {
+		return new WaterMaterialCondition(
+				offset,
+				surfaceDepthMultiplier,
+				addStoneDepth
+		);
+	}
+
+	/**
+	 * True if the current biome is cold enough for snow at this position.
+	 */
+	static TemperatureMaterialCondition temperature() {
+		return new TemperatureMaterialCondition();
+	}
+
+	/**
+	 * True if the terrain height changes sharply between neighboring columns.
+	 */
+	static SteepMaterialCondition steep() {
+		return new SteepMaterialCondition();
+	}
+
+	/**
+	 * True if the surface depth at this column is not positive.
+	 */
+	static HoleMaterialCondition hole() {
+		return new HoleMaterialCondition();
+	}
+
+	/**
+	 * True if the position is at or above the preliminary noise surface.
+	 */
+	static AbovePreliminarySurfaceMaterialCondition abovePreliminarySurface() {
+		return new AbovePreliminarySurfaceMaterialCondition();
 	}
 
 	private static String normalizeType(String type) {

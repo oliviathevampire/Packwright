@@ -28,4 +28,14 @@ public class SmeltingRecipe extends CookingRecipe {
 	public SmeltingRecipe group(final String group) {
 		return (SmeltingRecipe) super.group(group);
 	}
+
+	@Override
+	public SmeltingRecipe category(final CookingBookCategory category) {
+		return (SmeltingRecipe) super.category(category);
+	}
+
+	@Override
+	public SmeltingRecipe showNotification(final boolean showNotification) {
+		return (SmeltingRecipe) super.showNotification(showNotification);
+	}
 }

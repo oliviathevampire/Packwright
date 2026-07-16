@@ -5,7 +5,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.entity.IdOrTag;
+
+import java.util.List;
 
 /** a {@code worldgen/structure_set} placement rule */
 public sealed interface StructurePlacement permits RandomSpreadPlacement, ConcentricRingsPlacement, DimensionOriginPlacement {
@@ -31,21 +35,47 @@ public sealed interface StructurePlacement permits RandomSpreadPlacement, Concen
 
 	/** {@code minecraft:random_spread}: a spaced grid of chunks, offset by a random amount per cell */
 	static RandomSpreadPlacement randomSpread(int salt, int spacing, int separation) {
-		return new RandomSpreadPlacement(salt, spacing, separation);
+		return new RandomSpreadPlacement(
+				LocateOffset.ZERO, "default", 1.0F, salt, java.util.Optional.empty(),
+				spacing, separation, "linear"
+		);
 	}
 
 	/** {@code minecraft:concentric_rings}: rings of evenly-spaced structures around the origin */
-	static ConcentricRingsPlacement concentricRings(int distance, int spread, int count) {
-		return new ConcentricRingsPlacement(distance, spread, count, java.util.Optional.empty());
-	}
-
-	static ConcentricRingsPlacement concentricRings(int distance, int spread, int count, IdOrTag preferredBiomes) {
-		return new ConcentricRingsPlacement(distance, spread, count, java.util.Optional.ofNullable(preferredBiomes));
+	static ConcentricRingsPlacement concentricRings(int distance, int spread, int count, int salt, IdOrTag preferredBiomes) {
+		return new ConcentricRingsPlacement(
+				LocateOffset.ZERO, "default", 1.0F, salt, java.util.Optional.empty(),
+				distance, spread, count, preferredBiomes
+		);
 	}
 
 	/** {@code minecraft:dimension_origin}: a single structure at the dimension origin */
 	static DimensionOriginPlacement dimensionOrigin() {
 		return new DimensionOriginPlacement();
+	}
+
+	/**
+	 * A {@code Vec3i}-like block offset applied to the located position, shared by the
+	 * spreading placement types ({@code locate_offset}, defaults to {@code [0, 0, 0]}).
+	 */
+	record LocateOffset(int x, int y, int z) {
+		public static final LocateOffset ZERO = new LocateOffset(0, 0, 0);
+
+		public static final Codec<LocateOffset> CODEC = Codec.INT.listOf().xmap(
+				list -> list.size() == 3 ? new LocateOffset(list.get(0), list.get(1), list.get(2)) : ZERO,
+				offset -> List.of(offset.x, offset.y, offset.z)
+		);
+	}
+
+	/**
+	 * Suppresses generation near an existing {@code worldgen/structure_set}, shared by the
+	 * spreading placement types ({@code exclusion_zone}, absent by default).
+	 */
+	record ExclusionZone(Identifier otherSet, int chunkCount) {
+		public static final Codec<ExclusionZone> CODEC = RecordCodecBuilder.create(i -> i.group(
+				Identifier.CODEC.fieldOf("other_set").forGetter(ExclusionZone::otherSet),
+				Codec.INT.fieldOf("chunk_count").forGetter(ExclusionZone::chunkCount)
+		).apply(i, ExclusionZone::new));
 	}
 
 	private static String normalizeType(String type) {

@@ -9,12 +9,14 @@ public class ChickenVariant extends ModelVariant {
     public static final Codec<ChickenVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
             ModelType.CODEC.optionalFieldOf("model", ModelType.NORMAL).forGetter(x -> x.model),
             assetIdCodec(),
+            babyAssetIdCodec(),
             spawnCodec()
-    ).apply(i, (model, assetId, spawns) -> {
+    ).apply(i, (model, assetId, babyAssetId, spawns) -> {
         ChickenVariant out = new ChickenVariant();
         out.model = model;
         out.assetId = assetId;
-        spawns.ifPresent(out::spawnConditions);
+        out.babyAssetId = babyAssetId;
+        out.spawnConditions = spawns;
         return out;
     }));
 
@@ -26,6 +28,7 @@ public class ChickenVariant extends ModelVariant {
 
     public ChickenVariant model(ModelType model) { this.model = model; return this; }
     public ChickenVariant assetId(Identifier assetId) { this.assetId = assetId; return this; }
+    public ChickenVariant babyAssetId(Identifier babyAssetId) { this.babyAssetId = babyAssetId; return this; }
     public ChickenVariant spawnConditions(SpawnPrioritySelectors spawns) { this.spawnConditions = spawns; return this; }
 
     public ModelType getModel() { return model; }

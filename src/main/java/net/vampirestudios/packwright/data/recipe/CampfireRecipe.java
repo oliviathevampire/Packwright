@@ -28,4 +28,14 @@ public class CampfireRecipe extends CookingRecipe {
 	public CampfireRecipe group(final String group) {
 		return (CampfireRecipe) super.group(group);
 	}
+
+	@Override
+	public CampfireRecipe category(final CookingBookCategory category) {
+		return (CampfireRecipe) super.category(category);
+	}
+
+	@Override
+	public CampfireRecipe showNotification(final boolean showNotification) {
+		return (CampfireRecipe) super.showNotification(showNotification);
+	}
 }

@@ -27,7 +27,7 @@ public class Biome {
 							.forGetter(Biome::hasPrecipitation),
 					Codec.FLOAT.fieldOf("temperature")
 							.forGetter(Biome::temperature),
-					Codec.STRING.fieldOf("temperature_modifier")
+					Codec.STRING.fieldOf("temperature_modifier").orElse("none")
 							.forGetter(Biome::temperatureModifier),
 					Codec.FLOAT.fieldOf("downfall")
 							.forGetter(Biome::downfall),

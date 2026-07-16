@@ -26,6 +26,7 @@ import net.vampirestudios.packwright.data.loot.LootTable;
 import net.vampirestudios.packwright.data.loot.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.*;
+import net.vampirestudios.packwright.data.registry.dialog.Dialog;
 import net.vampirestudios.packwright.data.tags.Tag;
 import net.vampirestudios.packwright.data.worldgen.*;
 import net.vampirestudios.packwright.data.worldgen.biome.Biome;
@@ -199,11 +200,11 @@ public interface RuntimeResourcePack extends PackResources {
 		return this.add(ResourceType.data(variantFolder.getPath(), SimpleMobVariant.CODEC), id, variant);
 	}
 
-	default byte[] addCatVariant(Identifier id, SimpleMobVariant variant) {
+	default byte[] addCatVariant(Identifier id, CatVariant variant) {
 		return this.add(ResourceTypes.CAT_VARIANT, id, variant);
 	}
 
-	default byte[] addFrogVariant(Identifier id, SimpleMobVariant variant) {
+	default byte[] addFrogVariant(Identifier id, FrogVariant variant) {
 		return this.add(ResourceTypes.FROG_VARIANT, id, variant);
 	}
 

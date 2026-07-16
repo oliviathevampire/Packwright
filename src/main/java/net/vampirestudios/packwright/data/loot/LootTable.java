@@ -3,11 +3,11 @@ package net.vampirestudios.packwright.data.loot;
 import com.mojang.serialization.Codec;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
+import net.vampirestudios.packwright.data.predicate.Range;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A loot table. Create one with a typed factory ({@link #block()}, {@link #entity()},
@@ -114,9 +114,7 @@ public class LootTable extends PredicateBuilder<LootTable> {
 	 */
 	public static Condition hasSilkTouch() {
 		return Condition.matchTool(ItemPredicate.of()
-				.predicate("minecraft:enchantments", List.of(Map.of(
-						"enchantments", "minecraft:silk_touch",
-						"levels", Map.of("min", 1)))));
+				.enchantments(ItemPredicate.enchantmentEntry(List.of("minecraft:silk_touch"), Range.atLeast(1))));
 	}
 
 	public static Entry entry() {
