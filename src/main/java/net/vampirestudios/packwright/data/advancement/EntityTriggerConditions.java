@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -23,8 +25,8 @@ public final class EntityTriggerConditions extends CriterionConditions {
 
 	private static MapCodec<EntityTriggerConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-				EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity))
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity))
 		).apply(i, (player, entity) -> {
 			EntityTriggerConditions out = new EntityTriggerConditions(trigger);
 			out.player = player.orElse(null);
@@ -33,7 +35,7 @@ public final class EntityTriggerConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private EntityPredicate entity;
 
 	private EntityTriggerConditions(Identifier trigger) {
@@ -56,11 +58,10 @@ public final class EntityTriggerConditions extends CriterionConditions {
 		return out;
 	}
 
-	public EntityTriggerConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public EntityTriggerConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public EntityTriggerConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public EntityPredicate getEntity() { return entity; }
 }

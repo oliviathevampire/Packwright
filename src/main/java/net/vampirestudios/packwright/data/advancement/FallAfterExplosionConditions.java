@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.DistancePredicate;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.LocationPredicate;
 
@@ -14,10 +16,10 @@ public final class FallAfterExplosionConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("fall_after_explosion");
 
 	public static final MapCodec<FallAfterExplosionConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			LocationPredicate.CODEC.optionalFieldOf("start_position").forGetter(x -> Optional.ofNullable(x.startPosition)),
 			DistancePredicate.CODEC.optionalFieldOf("distance").forGetter(x -> Optional.ofNullable(x.distance)),
-			EntityPredicate.CODEC.optionalFieldOf("cause").forGetter(x -> Optional.ofNullable(x.cause))
+			AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("cause").forGetter(x -> Optional.ofNullable(x.cause))
 	).apply(i, (player, startPosition, distance, cause) -> {
 		FallAfterExplosionConditions out = new FallAfterExplosionConditions();
 		out.player = player.orElse(null);
@@ -31,7 +33,7 @@ public final class FallAfterExplosionConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private LocationPredicate startPosition;
 	private DistancePredicate distance;
 	private EntityPredicate cause;
@@ -47,12 +49,11 @@ public final class FallAfterExplosionConditions extends CriterionConditions {
 		return out;
 	}
 
-	public FallAfterExplosionConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public FallAfterExplosionConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public FallAfterExplosionConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public LocationPredicate getStartPosition() { return startPosition; }
 	public DistancePredicate getDistance() { return distance; }
 	public EntityPredicate getCause() { return cause; }

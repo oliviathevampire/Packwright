@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.DamagePredicate;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -13,7 +15,7 @@ public final class EntityHurtPlayerConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("entity_hurt_player");
 
 	public static final MapCodec<EntityHurtPlayerConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			DamagePredicate.CODEC.optionalFieldOf("damage").forGetter(x -> Optional.ofNullable(x.damage))
 	).apply(i, (player, damage) -> {
 		EntityHurtPlayerConditions out = new EntityHurtPlayerConditions();
@@ -26,7 +28,7 @@ public final class EntityHurtPlayerConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private DamagePredicate damage;
 
 	public EntityHurtPlayerConditions() {
@@ -39,11 +41,10 @@ public final class EntityHurtPlayerConditions extends CriterionConditions {
 		return out;
 	}
 
-	public EntityHurtPlayerConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public EntityHurtPlayerConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public EntityHurtPlayerConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public DamagePredicate getDamage() { return damage; }
 }

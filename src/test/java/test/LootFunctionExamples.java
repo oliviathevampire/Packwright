@@ -4,15 +4,15 @@ import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.data.loot.Entry;
 import net.vampirestudios.packwright.data.loot.EntityTarget;
-import net.vampirestudios.packwright.data.loot.ListOperation;
+import net.vampirestudios.packwright.data.loot.functions.ListOperation;
 import net.vampirestudios.packwright.data.loot.LootFunction;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
+import net.vampirestudios.packwright.data.loot.functions.TooltipToggle;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.util.JsonBytes;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static net.vampirestudios.packwright.util.ResourceHelpers.customId;
 
@@ -114,7 +114,7 @@ public class LootFunctionExamples {
 
 	/** hides the enchantment glint tooltip line without hiding the glint itself */
 	public static LootFunction buildHiddenTooltipModifier() {
-		return LootFunction.toggleTooltips(Map.of("minecraft:enchantments", false));
+		return LootFunction.toggleTooltips(TooltipToggle.hide("minecraft:enchantments"));
 	}
 
 	/** rolls a random ominous bottle amplifier between 1 and 3 */
@@ -137,11 +137,6 @@ public class LootFunctionExamples {
 	/** turns a mob head into a specific player's head */
 	public static LootFunction buildPlayerHeadModifier() {
 		return LootFunction.fillPlayerHead(EntityTarget.THIS);
-	}
-
-	/** points at a shared item_modifier file instead of duplicating logic */
-	public static LootFunction buildReferenceModifier() {
-		return LootFunction.reference(myModId("auto_smelt"));
 	}
 
 	/** runs a smelt, then a rename, in one modifier */
@@ -198,7 +193,6 @@ public class LootFunctionExamples {
 		pack.addItemModifier(myModId("custom_model_data"), buildCustomModelDataModifier());
 		pack.addItemModifier(myModId("copy_killer_name"), buildCopyKillerNameModifier());
 		pack.addItemModifier(myModId("player_head"), buildPlayerHeadModifier());
-		pack.addItemModifier(myModId("reference"), buildReferenceModifier());
 		pack.addItemModifier(myModId("sequence"), buildSequenceModifier());
 		pack.addItemModifier(myModId("fixed_shulker_contents"), buildFixedShulkerContentsModifier());
 		pack.addItemModifier(myModId("rerolled_bundle"), buildRerolledBundleModifier());

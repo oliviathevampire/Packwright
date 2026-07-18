@@ -27,7 +27,7 @@ import net.vampirestudios.packwright.data.entity.ZombieNautilusVariant;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.LootTable;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.BannerPattern;
 import net.vampirestudios.packwright.data.registry.ChatType;

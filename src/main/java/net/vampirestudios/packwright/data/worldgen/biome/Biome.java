@@ -3,9 +3,12 @@ package net.vampirestudios.packwright.data.worldgen.biome;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.packwright.data.worldgen.AttributeValue;
+import net.vampirestudios.packwright.data.worldgen.IntProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import java.util.*;
+
+import static net.vampirestudios.packwright.util.ResourceHelpers.vanillaId;
 
 /**
  * Biome definition that matches modern JSON:
@@ -16,6 +19,12 @@ import java.util.*;
  * No Gson anywhere; everything is driven by Mojang Codecs.
  */
 public class Biome {
+
+	/**
+	 * Since 26.3, mob spawning is no longer a set of flat top-level biome fields;
+	 * it's an environment attribute value (an embedded {@link SpawnSettings}).
+	 */
+	private static final Identifier NATURAL_MOB_SPAWNS_ID = vanillaId("gameplay/natural_mob_spawns");
 
 	// =====================================================================
 	// Root biome codec
@@ -35,27 +44,7 @@ public class Biome {
 							.forGetter(Biome::effects),
 					Codec.unboundedMap(Identifier.CODEC, AttributeValue.CODEC)
 							.fieldOf("attributes").orElse(Collections.emptyMap())
-							.forGetter(b -> b.attributes == null ? Collections.emptyMap() : b.attributes),
-					Codec.FLOAT.optionalFieldOf("creature_spawn_probability")
-							.forGetter(b -> {
-								if (b.spawnSettings == null) return Optional.empty();
-								Float prob = b.spawnSettings.getCreatureSpawnProbability();
-								return prob == null ? Optional.empty() : Optional.of(prob);
-							}),
-					Codec.unboundedMap(Identifier.CODEC, SpawnSettings.SpawnCost.CODEC)
-							.optionalFieldOf("spawn_costs")
-							.forGetter(b -> Optional.of(
-									b.spawnSettings == null
-											? Collections.emptyMap()
-											: b.spawnSettings.getSpawnCosts()
-							)),
-					Codec.unboundedMap(Codec.STRING, SpawnSettings.SpawnerData.CODEC.listOf())
-							.optionalFieldOf("spawners")
-							.forGetter(b -> Optional.of(
-									b.spawnSettings == null
-											? Collections.emptyMap()
-											: b.spawnSettings.getSpawners()
-							)),
+							.forGetter(Biome::attributesForEncode),
 					// carvers and features are required by the game, even when empty
 					Identifier.CODEC.listOf()
 							.fieldOf("carvers").orElse(Collections.emptyList())
@@ -70,40 +59,21 @@ public class Biome {
 								if (b.generation == null) return Collections.emptyList();
 								return b.generation.getFeaturesByStep();
 							})
-			).apply(instance, (precip, temp, tempMod, downfall, effects, attrs,
-							   spawnProbOpt, spawnCostsOpt, spawnersOpt, carvers, featuresSteps) -> {
+			).apply(instance, (precip, temp, tempMod, downfall, effects, attrs, carvers, featuresSteps) -> {
 				Biome biome = new Biome();
 				biome.hasPrecipitation(precip);
 				biome.temperature(temp);
 				biome.temperatureModifier(tempMod);
 				biome.downfall(downfall);
 				biome.effects(effects);
-				biome.attributes(attrs);
 
-				// ---- spawn ----
-				boolean hasAnySpawn =
-						spawnProbOpt.isPresent()
-								|| spawnCostsOpt.isPresent()
-								|| spawnersOpt.isPresent();
-
-				if (hasAnySpawn) {
-					SpawnSettings s = new SpawnSettings();
-					spawnProbOpt.ifPresent(s::setCreatureSpawnProbability);
-
-					Map<Identifier, SpawnSettings.SpawnCost> spawnCosts =
-							spawnCostsOpt.orElseGet(Collections::emptyMap);
-					if (!spawnCosts.isEmpty()) {
-						s.spawnCosts.putAll(spawnCosts);
-					}
-
-					Map<String, List<SpawnSettings.SpawnerData>> spawners =
-							spawnersOpt.orElseGet(Collections::emptyMap);
-					if (!spawners.isEmpty()) {
-						s.spawners.putAll(spawners);
-					}
-
-					biome.spawnSettings(s);
+				// ---- spawn: pulled out of the generic attributes map into the typed field ----
+				Map<Identifier, AttributeValue> rest = new LinkedHashMap<>(attrs);
+				AttributeValue mobSpawns = rest.remove(NATURAL_MOB_SPAWNS_ID);
+				if (mobSpawns != null) {
+					biome.spawnSettings(mobSpawns.decode(SpawnSettings.CODEC));
 				}
+				biome.attributes(rest);
 
 				// ---- generation ----
 				if (!carvers.isEmpty() || !featuresSteps.isEmpty()) {
@@ -121,6 +91,16 @@ public class Biome {
 				return biome;
 			})
 	);
+
+	/** the raw attributes map plus the mob spawn settings, if any, keyed under {@code minecraft:gameplay/natural_mob_spawns} */
+	private Map<Identifier, AttributeValue> attributesForEncode() {
+		Map<Identifier, AttributeValue> base = this.attributes == null ? Collections.emptyMap() : this.attributes;
+		if (this.spawnSettings == null || this.spawnSettings.isEmpty()) return base;
+
+		Map<Identifier, AttributeValue> merged = new LinkedHashMap<>(base);
+		merged.put(NATURAL_MOB_SPAWNS_ID, AttributeValue.ofEncoded(SpawnSettings.CODEC, this.spawnSettings));
+		return merged;
+	}
 
 	// =====================================================================
 	// Fields
@@ -299,11 +279,6 @@ public class Biome {
 		return this.spawnSettings;
 	}
 
-	public Biome spawnProbability(float probability) {
-		ensureSpawnSettings().setCreatureSpawnProbability(probability);
-		return this;
-	}
-
 	/** Convenience for "spawn_costs" entry. */
 	public Biome spawnCost(Identifier entityId, double energyBudget, double charge) {
 		ensureSpawnSettings().addSpawnCost(entityId, energyBudget, charge);
@@ -311,7 +286,7 @@ public class Biome {
 	}
 
 	/**
-	 * Convenience for "spawners" entry.
+	 * Convenience for "spawns_by_category" entry.
 	 * category examples: "monster", "creature", "ambient", "water_creature", "water_ambient", "misc".
 	 */
 	public Biome spawner(String category, Identifier entityId, int weight, int minCount, int maxCount) {
@@ -380,50 +355,45 @@ public class Biome {
 		}
 	}
 
+	/**
+	 * The {@code minecraft:gameplay/natural_mob_spawns} attribute value (since 26.3;
+	 * previously a set of flat top-level biome fields).
+	 */
 	public static class SpawnSettings {
 		public static final Codec<SpawnSettings> CODEC = RecordCodecBuilder.create(instance ->
 				instance.group(
-						Codec.FLOAT.optionalFieldOf("creature_spawn_probability")
-								.forGetter(s -> Optional.ofNullable(s.creatureSpawnProbability)),
+						Codec.unboundedMap(Codec.STRING, SpawnerData.CODEC.listOf())
+								.optionalFieldOf("spawns_by_category", Collections.emptyMap())
+								.forGetter(s -> s.spawnsByCategory == null ? Collections.emptyMap() : s.spawnsByCategory),
 						Codec.unboundedMap(Identifier.CODEC, SpawnCost.CODEC)
 								.optionalFieldOf("spawn_costs", Collections.emptyMap())
-								.forGetter(s -> s.spawnCosts == null ? Collections.emptyMap() : s.spawnCosts),
-						Codec.unboundedMap(Codec.STRING, SpawnerData.CODEC.listOf())
-								.optionalFieldOf("spawners", Collections.emptyMap())
-								.forGetter(s -> s.spawners == null ? Collections.emptyMap() : s.spawners)
-				).apply(instance, (probOpt, spawnCosts, spawners) -> {
+								.forGetter(s -> s.spawnCosts == null ? Collections.emptyMap() : s.spawnCosts)
+				).apply(instance, (spawnsByCategory, spawnCosts) -> {
 					SpawnSettings s = new SpawnSettings();
-					probOpt.ifPresent(s::setCreatureSpawnProbability);
+					if (!spawnsByCategory.isEmpty()) {
+						s.spawnsByCategory.putAll(spawnsByCategory);
+					}
 					if (!spawnCosts.isEmpty()) {
 						s.spawnCosts.putAll(spawnCosts);
-					}
-					if (!spawners.isEmpty()) {
-						s.spawners.putAll(spawners);
 					}
 					return s;
 				})
 		);
-		private Float creatureSpawnProbability;
+		private Map<String, List<SpawnerData>> spawnsByCategory = new LinkedHashMap<>();
 		private Map<Identifier, SpawnCost> spawnCosts = new LinkedHashMap<>();
-		private Map<String, List<SpawnerData>> spawners = new LinkedHashMap<>();
 
 		// ---------------- core setters / getters ----------------
-
-		public Float getCreatureSpawnProbability() {
-			return creatureSpawnProbability;
-		}
-
-		public SpawnSettings setCreatureSpawnProbability(float probability) {
-			this.creatureSpawnProbability = probability;
-			return this;
-		}
 
 		public Map<Identifier, SpawnCost> getSpawnCosts() {
 			return Collections.unmodifiableMap(spawnCosts);
 		}
 
-		public Map<String, List<SpawnerData>> getSpawners() {
-			return Collections.unmodifiableMap(spawners);
+		public Map<String, List<SpawnerData>> getSpawnsByCategory() {
+			return Collections.unmodifiableMap(spawnsByCategory);
+		}
+
+		public boolean isEmpty() {
+			return spawnsByCategory.isEmpty() && spawnCosts.isEmpty();
 		}
 
 		// ---------------- builder-style helpers ----------------
@@ -437,19 +407,29 @@ public class Biome {
 		}
 
 		/**
-		 * Add a spawner entry:
+		 * Add a spawns_by_category entry:
 		 * category examples: "monster", "creature", "ambient", "water_creature", "water_ambient", "misc".
 		 */
-		public SpawnSettings addSpawner(String category, Identifier entityId, int weight, int minCount, int maxCount) {
+		public SpawnSettings addSpawner(String category, Identifier entityId, int weight, IntProvider count) {
 			if (category == null || entityId == null) return this;
-			this.spawners
+			this.spawnsByCategory
 					.computeIfAbsent(category, k -> new ArrayList<>())
-					.add(new SpawnerData(entityId, weight, minCount, maxCount));
+					.add(new SpawnerData(entityId, weight, count));
 			return this;
 		}
 
+		/** a fixed spawn group size */
+		public SpawnSettings addSpawner(String category, Identifier entityId, int weight, int count) {
+			return addSpawner(category, entityId, weight, IntProvider.constant(count));
+		}
+
+		/** a random spawn group size, uniformly distributed between {@code minCount} and {@code maxCount} */
+		public SpawnSettings addSpawner(String category, Identifier entityId, int weight, int minCount, int maxCount) {
+			return addSpawner(category, entityId, weight, IntProvider.uniform(minCount, maxCount));
+		}
+
 		// ------------------------------------------------------
-		// Nested value objects for spawn_costs and spawners
+		// Nested value objects for spawn_costs and spawns_by_category
 		// ------------------------------------------------------
 
 		/**
@@ -471,24 +451,22 @@ public class Biome {
 		}
 
 		/**
-		 * Matches entries inside "spawners" category lists:
+		 * Matches entries inside "spawns_by_category" category lists:
 		 * <p>
-		 * "spawners": {
+		 * "spawns_by_category": {
 		 *   "monster": [
-		 *     { "type": "minecraft:zombie", "weight": 95, "minCount": 4, "maxCount": 4 }
+		 *     { "type": "minecraft:zombie", "weight": 95, "count": {"type": "minecraft:uniform", "min_inclusive": 4, "max_inclusive": 4} }
 		 *   ]
 		 * }
 		 */
-		public record SpawnerData(Identifier type, int weight, int minCount, int maxCount) {
+		public record SpawnerData(Identifier type, int weight, IntProvider count) {
 			public static final Codec<SpawnerData> CODEC = RecordCodecBuilder.create(instance ->
 					instance.group(
 							Identifier.CODEC.fieldOf("type").forGetter(d -> d.type),
 							Codec.INT.fieldOf("weight").forGetter(d -> d.weight),
-							Codec.INT.fieldOf("minCount").forGetter(d -> d.minCount),
-							Codec.INT.fieldOf("maxCount").forGetter(d -> d.maxCount)
+							IntProvider.CODEC.fieldOf("count").forGetter(d -> d.count)
 					).apply(instance, SpawnerData::new)
 			);
-
 		}
 	}
 

@@ -29,13 +29,14 @@ public class NoiseSettings {
 			Parameters.CODEC.listOf().fieldOf("spawn_target").orElse(List.of()).forGetter(x -> List.copyOf(x.spawnTarget)),
 			// a material rule is either a worldgen/material_rule registry id or an inline rule
 			Codec.either(Identifier.CODEC, MaterialRule.CODEC).optionalFieldOf("material_rule").forGetter(NoiseSettings::materialRuleEither),
-			// the three flags are required by the game; fieldOf+orElse always encodes them
-			Codec.BOOL.fieldOf("aquifers_enabled").orElse(false).forGetter(x -> x.aquifersEnabled),
-			Codec.BOOL.fieldOf("ore_veins_enabled").orElse(false).forGetter(x -> x.oreVeinsEnabled),
+			AquiferSettings.CODEC.optionalFieldOf("aquifers").forGetter(x -> Optional.ofNullable(x.aquifers)),
+			// ore_veins is required by the game; fieldOf+orElse always encodes it
+			OreVein.CODEC.listOf().fieldOf("ore_veins").orElse(List.of()).forGetter(x -> List.copyOf(x.oreVeins)),
+			// disable_mob_generation is required by the game; fieldOf+orElse always encodes it
 			Codec.BOOL.fieldOf("disable_mob_generation").orElse(false).forGetter(x -> x.disableMobGeneration),
 			NoiseRouter.CODEC.optionalFieldOf("noise_router").forGetter(x -> Optional.ofNullable(x.noiseRouter))
 	).apply(i, (seaLevel, legacyRandomSource, defaultBlock, defaultFluid, noise, spawnTarget, materialRule,
-				aquifersEnabled, oreVeinsEnabled, disableMobGeneration, noiseRouter) -> {
+				aquifers, oreVeins, disableMobGeneration, noiseRouter) -> {
 		NoiseSettings out = new NoiseSettings();
 		out.seaLevel = seaLevel.orElse(null);
 		out.legacyRandomSource = legacyRandomSource.orElse(null);
@@ -44,8 +45,8 @@ public class NoiseSettings {
 		out.noise = noise.orElse(null);
 		out.spawnTarget = new ArrayList<>(spawnTarget);
 		materialRule.ifPresent(either -> either.ifLeft(id -> out.materialRuleId = id).ifRight(rule -> out.materialRule = rule));
-		out.aquifersEnabled = aquifersEnabled;
-		out.oreVeinsEnabled = oreVeinsEnabled;
+		out.aquifers = aquifers.orElse(null);
+		out.oreVeins = new ArrayList<>(oreVeins);
 		out.disableMobGeneration = disableMobGeneration;
 		out.noiseRouter = noiseRouter.orElse(null);
 		return out;
@@ -59,9 +60,9 @@ public class NoiseSettings {
 	private List<Parameters> spawnTarget = new ArrayList<>();
 	private Identifier materialRuleId;
 	private MaterialRule materialRule;
+	private AquiferSettings aquifers;
+	private List<OreVein> oreVeins = new ArrayList<>();
 	// required by the game; defaulted so a bare settings object still parses
-	private boolean aquifersEnabled = false;
-	private boolean oreVeinsEnabled = false;
 	private boolean disableMobGeneration = false;
 	private NoiseRouter noiseRouter;
 
@@ -99,8 +100,9 @@ public class NoiseSettings {
 		return this;
 	}
 
-	public NoiseSettings aquifersEnabled(boolean v) { this.aquifersEnabled = v; return this; }
-	public NoiseSettings oreVeinsEnabled(boolean v) { this.oreVeinsEnabled = v; return this; }
+	public NoiseSettings aquifers(AquiferSettings v) { this.aquifers = v; return this; }
+	public NoiseSettings oreVeins(List<OreVein> v) { this.oreVeins = v == null ? new ArrayList<>() : new ArrayList<>(v); return this; }
+	public NoiseSettings addOreVein(OreVein v) { this.oreVeins.add(v); return this; }
 	public NoiseSettings disableMobGeneration(boolean v) { this.disableMobGeneration = v; return this; }
 	public NoiseSettings noiseRouter(NoiseRouter v) { this.noiseRouter = v; return this; }
 

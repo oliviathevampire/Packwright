@@ -111,6 +111,11 @@ public final class Features {
 		return new HugeMushroomFeatureBuilder("minecraft:huge_brown_mushroom").capProvider(capBlock).stemProvider(stemBlock);
 	}
 
+	/**
+	 * @deprecated the {@code nether_forest_vegetation} feature type was removed from the game
+	 * in 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
 	public static NetherForestVegetationFeatureBuilder netherForestVegetation(Identifier block) {
 		return new NetherForestVegetationFeatureBuilder().stateProvider(block);
 	}
@@ -232,6 +237,11 @@ public final class Features {
 		return new FossilFeatureBuilder();
 	}
 
+	/**
+	 * @deprecated the {@code twisting_vines} feature type was removed from the game in
+	 * 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
 	public static TwistingVinesFeatureBuilder twistingVines() {
 		return new TwistingVinesFeatureBuilder();
 	}
@@ -269,6 +279,11 @@ public final class Features {
 	public static NoConfigFeatureBuilder voidStartPlatform() { return noConfig("minecraft:void_start_platform"); }
 	public static NoConfigFeatureBuilder endIsland() { return noConfig("minecraft:end_island"); }
 	public static NoConfigFeatureBuilder bonusChest() { return noConfig("minecraft:bonus_chest"); }
+	/**
+	 * @deprecated the {@code weeping_vines} feature type was removed from the game in
+	 * 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
 	public static NoConfigFeatureBuilder weepingVines() { return noConfig("minecraft:weeping_vines"); }
 	public static NoConfigFeatureBuilder chorusPlant() { return noConfig("minecraft:chorus_plant"); }
 	public static NoConfigFeatureBuilder endPlatform() { return noConfig("minecraft:end_platform"); }

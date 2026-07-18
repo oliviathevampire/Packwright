@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.ArrayList;
@@ -35,10 +36,16 @@ public final class BlockUseConditions extends CriterionConditions {
 		CriterionConditions.register(ANY_BLOCK_USE.toString(), mapCodec(ANY_BLOCK_USE).codec());
 	}
 
+	private final List<Condition> location = new ArrayList<>();
+	private Condition player;
+	private BlockUseConditions(Identifier trigger) {
+		super(trigger.toString());
+	}
+
 	private static MapCodec<BlockUseConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-				Condition.CODEC.listOf().optionalFieldOf("location")
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.LOCATION_CODEC.optionalFieldOf("location")
 						.forGetter(x -> x.location.isEmpty() ? Optional.empty() : Optional.of(x.location))
 		).apply(i, (player, location) -> {
 			BlockUseConditions out = new BlockUseConditions(trigger);
@@ -46,13 +53,6 @@ public final class BlockUseConditions extends CriterionConditions {
 			location.ifPresent(out.location::addAll);
 			return out;
 		}));
-	}
-
-	private EntityPredicate player;
-	private final List<Condition> location = new ArrayList<>();
-
-	private BlockUseConditions(Identifier trigger) {
-		super(trigger.toString());
 	}
 
 	public static BlockUseConditions placedBlock(Condition... location) {
@@ -81,11 +81,20 @@ public final class BlockUseConditions extends CriterionConditions {
 		return new BlockUseConditions(ANY_BLOCK_USE);
 	}
 
-	public BlockUseConditions player(EntityPredicate player) {
+	public BlockUseConditions player(Condition player) {
 		this.player = player;
 		return this;
 	}
 
-	public EntityPredicate getPlayer() { return player; }
-	public List<Condition> getLocation() { return List.copyOf(location); }
+	public BlockUseConditions player(EntityPredicate predicate) {
+		return player(Condition.entityProperties(EntityTarget.THIS, predicate));
+	}
+
+	public Condition getPlayer() {
+		return player;
+	}
+
+	public List<Condition> getLocation() {
+		return List.copyOf(location);
+	}
 }

@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.DamagePredicate;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -26,8 +28,8 @@ public final class PlayerKilledEntityConditions extends CriterionConditions {
 
 	private static MapCodec<PlayerKilledEntityConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-				EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity)),
 				DamagePredicate.CODEC.optionalFieldOf("killing_blow").forGetter(x -> Optional.ofNullable(x.killingBlow))
 		).apply(i, (player, entity, killingBlow) -> {
 			PlayerKilledEntityConditions out = new PlayerKilledEntityConditions(trigger);
@@ -38,7 +40,7 @@ public final class PlayerKilledEntityConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private EntityPredicate entity;
 	private DamagePredicate killingBlow;
 
@@ -64,12 +66,11 @@ public final class PlayerKilledEntityConditions extends CriterionConditions {
 		return new PlayerKilledEntityConditions(KILL_MOB_NEAR_SCULK_CATALYST);
 	}
 
-	public PlayerKilledEntityConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public PlayerKilledEntityConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public PlayerKilledEntityConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public EntityPredicate getEntity() { return entity; }
 	public DamagePredicate getKillingBlow() { return killingBlow; }
 }

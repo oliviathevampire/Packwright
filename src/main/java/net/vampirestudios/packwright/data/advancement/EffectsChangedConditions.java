@@ -7,6 +7,8 @@ import com.mojang.serialization.JavaOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.LinkedHashMap;
@@ -33,9 +35,9 @@ public final class EffectsChangedConditions extends CriterionConditions {
 	}, map -> new Dynamic<>(JavaOps.INSTANCE, map));
 
 	public static final MapCodec<EffectsChangedConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			EFFECTS_CODEC.optionalFieldOf("effects").forGetter(x -> x.effects.isEmpty() ? Optional.empty() : Optional.of(Map.copyOf(x.effects))),
-			EntityPredicate.CODEC.optionalFieldOf("source").forGetter(x -> Optional.ofNullable(x.source))
+			AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("source").forGetter(x -> Optional.ofNullable(x.source))
 	).apply(i, (player, effects, source) -> {
 		EffectsChangedConditions out = new EffectsChangedConditions();
 		out.player = player.orElse(null);
@@ -48,7 +50,7 @@ public final class EffectsChangedConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private final Map<String, Object> effects = new LinkedHashMap<>();
 	private EntityPredicate source;
 
@@ -70,12 +72,11 @@ public final class EffectsChangedConditions extends CriterionConditions {
 		return this;
 	}
 
-	public EffectsChangedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public EffectsChangedConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public EffectsChangedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Map<String, Object> getEffects() { return Map.copyOf(effects); }
 	public EntityPredicate getSource() { return source; }
 }

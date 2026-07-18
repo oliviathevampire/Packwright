@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.IntBound;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
@@ -31,7 +33,7 @@ public final class InventoryChangedConditions extends CriterionConditions {
 	}
 
 	public static final MapCodec<InventoryChangedConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			Slots.CODEC.optionalFieldOf("slots").forGetter(x -> {
 				Slots slots = new Slots(Optional.ofNullable(x.slotsOccupied), Optional.ofNullable(x.slotsFull), Optional.ofNullable(x.slotsEmpty));
 				return slots.isAny() ? Optional.empty() : Optional.of(slots);
@@ -53,7 +55,7 @@ public final class InventoryChangedConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private IntBound slotsOccupied;
 	private IntBound slotsFull;
 	private IntBound slotsEmpty;
@@ -69,10 +71,9 @@ public final class InventoryChangedConditions extends CriterionConditions {
 		return out;
 	}
 
-	public InventoryChangedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public InventoryChangedConditions player(Condition player) { this.player = player; return this; }
+
+	public InventoryChangedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
 
 	/**
 	 * requires the number of occupied/full/empty inventory slots to be within these
@@ -85,7 +86,7 @@ public final class InventoryChangedConditions extends CriterionConditions {
 		return this;
 	}
 
-	public EntityPredicate getPlayer() { return player; }
+	public Condition getPlayer() { return player; }
 	public IntBound getSlotsOccupied() { return slotsOccupied; }
 	public IntBound getSlotsFull() { return slotsFull; }
 	public IntBound getSlotsEmpty() { return slotsEmpty; }

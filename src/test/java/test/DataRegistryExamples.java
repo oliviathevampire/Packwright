@@ -4,7 +4,7 @@ import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.api.RuntimeResourcePack;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.data.registry.ChatType;
 import net.vampirestudios.packwright.data.registry.EnchantmentProvider;
@@ -13,7 +13,6 @@ import net.vampirestudios.packwright.util.JsonBytes;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static net.vampirestudios.packwright.util.ResourceHelpers.customId;
 
@@ -30,18 +29,16 @@ public class DataRegistryExamples {
 
 	/* ----------------------------------------------------------
 	 * 1) Predicates: reusable loot conditions, referenced from
-	 *    loot tables/advancements with Condition.reference(...)
+	 *    loot tables/advancements by bare predicate-file id, e.g.
+	 *    Entry#condition(Identifier) / LootFunction#condition(Identifier)
 	 *    (the same mechanism vanilla uses for tool/can_silk_touch
 	 *    since 26.3).
 	 * ---------------------------------------------------------- */
 
-	/** the tool is any pickaxe with Fortune of any level */
-	public static Condition buildFortunePickaxePredicate() {
+	/** the tool is a diamond pickaxe */
+	public static Condition buildDiamondPickaxePredicate() {
 		return Condition.matchTool(ItemPredicate.of()
-				.items("#minecraft:pickaxes")
-				.predicate("minecraft:enchantments", List.of(
-						Map.of("enchantments", "minecraft:fortune")
-				)));
+				.items(Identifier.withDefaultNamespace("diamond_pickaxe")));
 	}
 
 	/** it is currently thundering — nice for storm-only drops */
@@ -119,7 +116,8 @@ public class DataRegistryExamples {
 		return NumberProvider.conditionalValue(
 				buildThunderingPredicate(),
 				NumberProvider.uniform(2, 3),
-				NumberProvider.constant(1));
+				NumberProvider.constant(1)
+		);
 	}
 
 	/* ----------------------------------------------------------
@@ -127,7 +125,7 @@ public class DataRegistryExamples {
 	 * ---------------------------------------------------------- */
 
 	public static void registerAll(RuntimeResourcePack pack) {
-		pack.addPredicate(myModId("fortune_pickaxe"), buildFortunePickaxePredicate());
+		pack.addPredicate(myModId("diamond_pickaxe"), buildDiamondPickaxePredicate());
 		pack.addPredicate(myModId("thundering"), buildThunderingPredicate());
 		pack.addItemModifier(myModId("auto_smelt"), buildAutoSmeltModifier());
 		pack.addItemModifier(myModId("trophy"), buildTrophyModifier());
@@ -139,8 +137,8 @@ public class DataRegistryExamples {
 	}
 
 	public static void main() {
-		System.out.println("Predicate JSON (mymod:fortune_pickaxe):");
-		System.out.println(JsonBytes.encodeToPrettyString(Condition.CODEC, buildFortunePickaxePredicate()));
+		System.out.println("Predicate JSON (mymod:diamond_pickaxe):");
+		System.out.println(JsonBytes.encodeToPrettyString(Condition.CODEC, buildDiamondPickaxePredicate()));
 		System.out.println("Predicate JSON (mymod:thundering):");
 		System.out.println(JsonBytes.encodeToPrettyString(Condition.CODEC, buildThunderingPredicate()));
 		System.out.println("Item Modifier JSON (mymod:auto_smelt):");

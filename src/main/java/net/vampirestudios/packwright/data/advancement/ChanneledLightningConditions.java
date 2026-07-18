@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ public final class ChanneledLightningConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("channeled_lightning");
 
 	public static final MapCodec<ChanneledLightningConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			EntityPredicate.CODEC.listOf().optionalFieldOf("victims", List.of()).forGetter(x -> x.victims)
 	).apply(i, (player, victims) -> {
 		ChanneledLightningConditions out = new ChanneledLightningConditions();
@@ -27,7 +29,7 @@ public final class ChanneledLightningConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private final List<EntityPredicate> victims = new ArrayList<>();
 
 	public ChanneledLightningConditions() {
@@ -40,11 +42,10 @@ public final class ChanneledLightningConditions extends CriterionConditions {
 		return out;
 	}
 
-	public ChanneledLightningConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public ChanneledLightningConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public ChanneledLightningConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public List<EntityPredicate> getVictims() { return List.copyOf(victims); }
 }

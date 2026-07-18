@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.LocationPredicate;
 
@@ -40,7 +42,7 @@ public final class PlayerConditions extends CriterionConditions {
 
 	private static MapCodec<PlayerConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player))
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player))
 		).apply(i, player -> {
 			PlayerConditions out = new PlayerConditions(trigger);
 			out.player = player.orElse(null);
@@ -48,7 +50,7 @@ public final class PlayerConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 
 	private PlayerConditions(Identifier trigger) {
 		super(trigger.toString());
@@ -56,19 +58,19 @@ public final class PlayerConditions extends CriterionConditions {
 
 	public static PlayerConditions player(Identifier trigger, EntityPredicate player) {
 		PlayerConditions out = new PlayerConditions(trigger);
-		out.player = player;
+		out.player = Condition.entityProperties(EntityTarget.THIS, player);
 		return out;
 	}
 
 	public static PlayerConditions location(LocationPredicate location) {
 		PlayerConditions out = new PlayerConditions(LOCATION);
-		out.player = EntityPredicate.of().location(location);
+		out.player = Condition.entityProperties(EntityTarget.THIS, EntityPredicate.of().location(location));
 		return out;
 	}
 
 	public static PlayerConditions location(EntityPredicate player) {
 		PlayerConditions out = new PlayerConditions(LOCATION);
-		out.player = player;
+		out.player = Condition.entityProperties(EntityTarget.THIS, player);
 		return out;
 	}
 
@@ -79,10 +81,9 @@ public final class PlayerConditions extends CriterionConditions {
 	public static PlayerConditions avoidVibration() { return new PlayerConditions(AVOID_VIBRATION); }
 	public static PlayerConditions startedRiding() { return new PlayerConditions(STARTED_RIDING); }
 
-	public PlayerConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public PlayerConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public PlayerConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 }

@@ -72,6 +72,28 @@ public final class DensityFunctions {
 		);
 	}
 
+	public static DensityFunction sub(
+			DensityFunction argument1,
+			DensityFunction argument2
+	) {
+		return new TwoArgumentSimpleFunction(
+				TwoArgumentSimpleFunction.Type.SUB,
+				argument1,
+				argument2
+		);
+	}
+
+	public static DensityFunction div(
+			DensityFunction argument1,
+			DensityFunction argument2
+	) {
+		return new TwoArgumentSimpleFunction(
+				TwoArgumentSimpleFunction.Type.DIV,
+				argument1,
+				argument2
+		);
+	}
+
 	public static DensityFunction min(
 			DensityFunction argument1,
 			DensityFunction argument2
@@ -138,8 +160,12 @@ public final class DensityFunctions {
 		return new Marker(Marker.Type.CACHE_ALL_IN_CELL, argument);
 	}
 
-	public static DensityFunction invert(DensityFunction argument) {
-		return new Mapped(Mapped.Type.INVERT, argument);
+	public static DensityFunction reciprocal(DensityFunction argument) {
+		return new Mapped(Mapped.Type.RECIPROCAL, argument);
+	}
+
+	public static DensityFunction negate(DensityFunction argument) {
+		return new Mapped(Mapped.Type.NEGATE, argument);
 	}
 
 	public static DensityFunction blendDensity(DensityFunction argument) {
@@ -323,7 +349,7 @@ public final class DensityFunctions {
 		) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					densityFunctionCodec
-							.fieldOf("argument")
+							.fieldOf("input")
 							.forGetter(Mapped::argument)
 			).apply(instance, argument -> new Mapped(operation, argument)));
 		}
@@ -336,8 +362,9 @@ public final class DensityFunctions {
 				case CUBE -> DensityFunctionTypes.CUBE;
 				case HALF_NEGATIVE -> DensityFunctionTypes.HALF_NEGATIVE;
 				case QUARTER_NEGATIVE -> DensityFunctionTypes.QUARTER_NEGATIVE;
+				case RECIPROCAL -> DensityFunctionTypes.RECIPROCAL;
+				case NEGATE -> DensityFunctionTypes.NEGATE;
 				case SQUEEZE -> DensityFunctionTypes.SQUEEZE;
-				case INVERT -> DensityFunctionTypes.INVERT;
 			};
 		}
 
@@ -347,8 +374,9 @@ public final class DensityFunctions {
 			CUBE,
 			HALF_NEGATIVE,
 			QUARTER_NEGATIVE,
-			SQUEEZE,
-			INVERT
+			RECIPROCAL,
+			NEGATE,
+			SQUEEZE
 		}
 	}
 
@@ -362,7 +390,7 @@ public final class DensityFunctions {
 		) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					densityFunctionCodec
-							.fieldOf("argument")
+							.fieldOf("input")
 							.forGetter(Marker::argument)
 			).apply(instance, argument -> new Marker(marker, argument)));
 		}
@@ -398,10 +426,10 @@ public final class DensityFunctions {
 		) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					densityFunctionCodec
-							.fieldOf("argument1")
+							.fieldOf("left")
 							.forGetter(TwoArgumentSimpleFunction::argument1),
 					densityFunctionCodec
-							.fieldOf("argument2")
+							.fieldOf("right")
 							.forGetter(TwoArgumentSimpleFunction::argument2)
 			).apply(
 					instance,
@@ -418,7 +446,9 @@ public final class DensityFunctions {
 		public DensityFunctionType<TwoArgumentSimpleFunction> type() {
 			return switch (this.operation) {
 				case ADD -> DensityFunctionTypes.ADD;
+				case SUB -> DensityFunctionTypes.SUB;
 				case MUL -> DensityFunctionTypes.MUL;
+				case DIV -> DensityFunctionTypes.DIV;
 				case MIN -> DensityFunctionTypes.MIN;
 				case MAX -> DensityFunctionTypes.MAX;
 			};
@@ -426,7 +456,9 @@ public final class DensityFunctions {
 
 		public enum Type {
 			ADD,
+			SUB,
 			MUL,
+			DIV,
 			MIN,
 			MAX
 		}

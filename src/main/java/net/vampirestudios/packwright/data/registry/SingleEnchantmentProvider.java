@@ -9,7 +9,7 @@ import net.vampirestudios.packwright.data.worldgen.IntProvider;
 /** {@code minecraft:single}: always the given enchantment, at a fixed or random level */
 public record SingleEnchantmentProvider(Identifier enchantment, IntProvider level) implements EnchantmentProvider {
 	public static final MapCodec<SingleEnchantmentProvider> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:single"),
+			Codec.STRING.fieldOf("type").forGetter(x -> "minecraft:single_enchantment"),
 			Identifier.CODEC.fieldOf("enchantment").forGetter(SingleEnchantmentProvider::enchantment),
 			IntProvider.CODEC.fieldOf("level").forGetter(SingleEnchantmentProvider::level)
 	).apply(i, (type, enchantment, level) -> new SingleEnchantmentProvider(enchantment, level)));

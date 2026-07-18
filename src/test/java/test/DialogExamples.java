@@ -51,13 +51,18 @@ public class DialogExamples {
 						.action(Action.showDialog(myModId("dialogs/welcome"))));
 	}
 
-	/** {@code dialog_list}: a menu of other dialogs, referenced both by id and inline */
+	/** extra notice used by the dialog list example */
+	public static Dialog buildAboutEmberWastesNotice() {
+		return Dialog.notice("About the Ember Wastes", "Close")
+				.plainMessage("A scorched frontier biome added by this pack.");
+	}
+
+	/** {@code dialog_list}: a menu of other dialogs, referenced by id */
 	public static Dialog buildTravelerMenuDialog() {
 		return Dialog.dialogList("Traveler Services",
 				Dialog.Reference.id(myModId("dialogs/welcome")),
 				Dialog.Reference.id(myModId("dialogs/outpost_links")),
-				Dialog.Reference.inline(Dialog.notice("About the Ember Wastes", "Close")
-						.plainMessage("A scorched frontier biome added by this pack."))
+				Dialog.Reference.id(myModId("dialogs/about_ember_wastes"))
 		).columns(1);
 	}
 
@@ -90,6 +95,7 @@ public class DialogExamples {
 		pack.addDialog(myModId("dialogs/abandon_camp"), buildAbandonCampConfirmation());
 		pack.addDialog(myModId("dialogs/trinket"), buildTrinketNotice());
 		pack.addDialog(myModId("dialogs/outpost_links"), buildOutpostLinksDialog());
+		pack.addDialog(myModId("dialogs/about_ember_wastes"), buildAboutEmberWastesNotice());
 		pack.addDialog(myModId("dialogs/traveler_menu"), buildTravelerMenuDialog());
 		pack.addDialog(myModId("dialogs/quick_actions"), buildQuickActionsDialog());
 	}

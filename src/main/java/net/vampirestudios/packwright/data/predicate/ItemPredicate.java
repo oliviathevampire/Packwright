@@ -23,6 +23,9 @@ public class ItemPredicate extends PredicateBuilder<ItemPredicate> {
 	 * matches any of the given item ids or {@code #tag}s
 	 */
 	public ItemPredicate items(String... itemsOrTag) {
+		if (itemsOrTag.length == 1 && itemsOrTag[0].startsWith("#")) {
+			return parameter("items", itemsOrTag[0]);
+		}
 		return parameter("items", List.of(itemsOrTag));
 	}
 

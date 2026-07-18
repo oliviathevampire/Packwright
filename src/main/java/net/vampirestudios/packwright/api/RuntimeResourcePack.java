@@ -23,7 +23,7 @@ import net.vampirestudios.packwright.data.entity.*;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.LootTable;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.registry.dialog.Dialog;

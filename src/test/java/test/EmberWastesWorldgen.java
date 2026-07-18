@@ -271,8 +271,6 @@ public final class EmberWastesWorldgen {
 				.defaultFluidId(vanillaId("lava"))
 				.noiseSimple(0, 256, 1, 2)
 				.disableMobGeneration(false)
-				.aquifersEnabled(false)
-				.oreVeinsEnabled(false)
 				.noiseRouter(NoiseRouter.simple(finalDensity))
 				.materialRule(MATERIAL_RULE);
 	}
@@ -390,7 +388,6 @@ public final class EmberWastesWorldgen {
 				.downfall(0.0F)
 				.effects(new Biome.Effects().waterColor(waterColor))
 				.attributes(biomeAttributes(sky, fog, fogDistance))
-				.spawnSettings(new Biome.SpawnSettings().setCreatureSpawnProbability(0.0F))
 				.generation(generation);
 	}
 

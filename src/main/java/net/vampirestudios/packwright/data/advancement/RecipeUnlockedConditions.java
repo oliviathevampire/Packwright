@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -12,8 +14,8 @@ public final class RecipeUnlockedConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("recipe_unlocked");
 
 	public static final MapCodec<RecipeUnlockedConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-			Identifier.CODEC.fieldOf("recipe").forGetter(x -> x.recipe)
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			Identifier.CODEC.fieldOf("recipes").forGetter(x -> x.recipe)
 	).apply(i, (player, recipe) -> {
 		RecipeUnlockedConditions out = new RecipeUnlockedConditions();
 		out.player = player.orElse(null);
@@ -25,7 +27,7 @@ public final class RecipeUnlockedConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier recipe;
 
 	public RecipeUnlockedConditions() {
@@ -38,12 +40,11 @@ public final class RecipeUnlockedConditions extends CriterionConditions {
 		return out;
 	}
 
-	public RecipeUnlockedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public RecipeUnlockedConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public RecipeUnlockedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getRecipe() {
 		return recipe;
 	}

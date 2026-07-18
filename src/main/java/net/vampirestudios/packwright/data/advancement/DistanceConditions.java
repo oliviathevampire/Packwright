@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.DistancePredicate;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.LocationPredicate;
 
@@ -27,7 +29,7 @@ public final class DistanceConditions extends CriterionConditions {
 
 	private static MapCodec<DistanceConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 				LocationPredicate.CODEC.optionalFieldOf("start_position").forGetter(x -> Optional.ofNullable(x.startPosition)),
 				DistancePredicate.CODEC.optionalFieldOf("distance").forGetter(x -> Optional.ofNullable(x.distance))
 		).apply(i, (player, startPosition, distance) -> {
@@ -39,7 +41,7 @@ public final class DistanceConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private LocationPredicate startPosition;
 	private DistancePredicate distance;
 
@@ -55,7 +57,7 @@ public final class DistanceConditions extends CriterionConditions {
 
 	public static DistanceConditions fallFromHeight(EntityPredicate player, DistancePredicate distance, LocationPredicate startPosition) {
 		DistanceConditions out = new DistanceConditions(FALL_FROM_HEIGHT);
-		out.player = player;
+		out.player = Condition.entityProperties(EntityTarget.THIS, player);
 		out.distance = distance;
 		out.startPosition = startPosition;
 		return out;
@@ -63,17 +65,16 @@ public final class DistanceConditions extends CriterionConditions {
 
 	public static DistanceConditions rideEntityInLava(EntityPredicate player, DistancePredicate distance) {
 		DistanceConditions out = new DistanceConditions(RIDE_ENTITY_IN_LAVA);
-		out.player = player;
+		out.player = Condition.entityProperties(EntityTarget.THIS, player);
 		out.distance = distance;
 		return out;
 	}
 
-	public DistanceConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public DistanceConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public DistanceConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public LocationPredicate getStartPosition() { return startPosition; }
 	public DistancePredicate getDistance() { return distance; }
 }

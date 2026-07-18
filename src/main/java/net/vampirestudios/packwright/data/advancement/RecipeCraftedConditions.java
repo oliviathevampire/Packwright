@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
@@ -26,7 +28,7 @@ public final class RecipeCraftedConditions extends CriterionConditions {
 
 	private static MapCodec<RecipeCraftedConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 				Identifier.CODEC.fieldOf("recipe_id").forGetter(x -> x.recipeId),
 				ItemPredicate.CODEC.listOf().optionalFieldOf("ingredients", List.of()).forGetter(x -> x.ingredients)
 		).apply(i, (player, recipeId, ingredients) -> {
@@ -38,7 +40,7 @@ public final class RecipeCraftedConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier recipeId;
 	private final List<ItemPredicate> ingredients = new ArrayList<>();
 
@@ -59,12 +61,11 @@ public final class RecipeCraftedConditions extends CriterionConditions {
 		return out;
 	}
 
-	public RecipeCraftedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public RecipeCraftedConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public RecipeCraftedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getRecipeId() { return recipeId; }
 	public List<ItemPredicate> getIngredients() { return List.copyOf(ingredients); }
 }

@@ -26,6 +26,7 @@ import net.vampirestudios.packwright.assets.lang.Lang;
 import net.vampirestudios.packwright.assets.models.Model;
 import net.vampirestudios.packwright.data.entity.*;
 import net.vampirestudios.packwright.data.loot.*;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.vampirestudios.packwright.data.recipe.*;
 import net.vampirestudios.packwright.data.registry.*;
 import net.vampirestudios.packwright.data.registry.dialog.Dialog;
@@ -436,7 +437,7 @@ public class PackwrightPreTest {
 				LootTable.block().pool(Pool.of().rolls(1)
 						.entry(Entry.alternatives(
 								Entry.item(vanillaId("gilded_stone"))
-										.condition(Condition.reference(vanillaId("tool/can_silk_touch"))),
+										.condition(vanillaId("tool/can_silk_touch")),
 								Entry.item(vanillaId("gold_nugget"))
 										.function(LootFunction.setCount(NumberProvider.conditionalValue(
 												Condition.randomChance(0.1F),

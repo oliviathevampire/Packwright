@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.LinkedHashMap;
@@ -28,7 +30,7 @@ public final class PlacedBlockConditions extends CriterionConditions {
 
 	private static MapCodec<PlacedBlockConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 				Identifier.CODEC.optionalFieldOf("block").forGetter(x -> Optional.ofNullable(x.block)),
 				Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("state")
 						.forGetter(x -> x.state.isEmpty() ? Optional.empty() : Optional.of(x.state))
@@ -41,7 +43,7 @@ public final class PlacedBlockConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier block;
 	private final Map<String, String> state = new LinkedHashMap<>();
 
@@ -63,12 +65,11 @@ public final class PlacedBlockConditions extends CriterionConditions {
 		return out;
 	}
 
-	public PlacedBlockConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public PlacedBlockConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public PlacedBlockConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getBlock() { return block; }
 	public Map<String, String> getState() { return Map.copyOf(state); }
 }

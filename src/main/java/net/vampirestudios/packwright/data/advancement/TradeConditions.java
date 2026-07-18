@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
@@ -13,8 +15,8 @@ public final class TradeConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("villager_trade");
 
 	public static final MapCodec<TradeConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-			EntityPredicate.CODEC.optionalFieldOf("villager").forGetter(x -> Optional.ofNullable(x.villager)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("villager").forGetter(x -> Optional.ofNullable(x.villager)),
 			ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item))
 	).apply(i, (player, villager, item) -> {
 		TradeConditions out = new TradeConditions();
@@ -28,7 +30,7 @@ public final class TradeConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private EntityPredicate villager;
 	private ItemPredicate item;
 
@@ -40,12 +42,11 @@ public final class TradeConditions extends CriterionConditions {
 		return new TradeConditions();
 	}
 
-	public TradeConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public TradeConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public TradeConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public EntityPredicate getVillager() { return villager; }
 	public ItemPredicate getItem() { return item; }
 }

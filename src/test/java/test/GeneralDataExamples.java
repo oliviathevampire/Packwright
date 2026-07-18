@@ -122,7 +122,7 @@ public class GeneralDataExamples {
 
 	public static Instrument buildQuietHornInstrument() {
 		return Instrument.instrument()
-				.soundEvent(myModId("item.goat_horn.quiet_call"))
+				.soundEvent(vanillaId("item.goat_horn.sound.0"))
 				.useDuration(0.0f)
 				.durabilityDamage(1)
 				.range(48.0f)
@@ -131,7 +131,7 @@ public class GeneralDataExamples {
 
 	public static JukeboxSong buildCampfireJukeboxSong() {
 		return JukeboxSong.jukeboxSong()
-				.soundEvent(myModId("music_disc.campfire_loop"))
+				.soundEvent(vanillaId("music_disc.cat"))
 				.description("jukebox_song.mymod.campfire_loop")
 				.lengthInSeconds(96.0f)
 				.comparatorOutput(6);

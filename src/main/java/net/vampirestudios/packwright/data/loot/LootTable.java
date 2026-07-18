@@ -1,6 +1,8 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
+import net.vampirestudios.packwright.data.loot.functions.CustomLootFunction;
+import net.vampirestudios.packwright.data.loot.util.LootValue;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
 import net.vampirestudios.packwright.data.predicate.Range;
@@ -129,7 +131,7 @@ public class LootTable extends PredicateBuilder<LootTable> {
 	}
 
 	public static LootFunction function(String function) {
-		return new LootFunction(function);
+		return new CustomLootFunction(function);
 	}
 
 	public static Pool pool() {
@@ -148,7 +150,7 @@ public class LootTable extends PredicateBuilder<LootTable> {
 
 	public LootTable pool(Pool pool) {
 		this.pools.add(pool);
-		subList("pools").add(pool.asMap());
+		subList("pools").add(LootValue.encode(Pool.CODEC, pool));
 		return this;
 	}
 
@@ -160,11 +162,12 @@ public class LootTable extends PredicateBuilder<LootTable> {
 	}
 
 	/**
-	 * adds a table-wide function, applied to every item this table drops
+	 * a table-wide function, applied to every item this table drops (26.3-snapshot-4 changed this
+	 * from a {@code "functions"} list to a single optional {@code "modifier"} — combine several
+	 * with {@link LootFunction#sequence(LootFunction...)} if needed)
 	 */
 	public LootTable function(LootFunction function) {
-		subList("functions").add(function.asMap());
-		return this;
+		return put("modifier", LootValue.encode(LootFunction.CODEC, function));
 	}
 
 	public LootTable randomSequence(Identifier id) {

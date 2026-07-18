@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -12,7 +14,7 @@ public final class LootTableConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("player_generates_container_loot");
 
 	public static final MapCodec<LootTableConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			Identifier.CODEC.fieldOf("loot_table").forGetter(x -> x.lootTable)
 	).apply(i, (player, lootTable) -> {
 		LootTableConditions out = new LootTableConditions();
@@ -25,7 +27,7 @@ public final class LootTableConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier lootTable;
 
 	public LootTableConditions() {
@@ -38,11 +40,10 @@ public final class LootTableConditions extends CriterionConditions {
 		return out;
 	}
 
-	public LootTableConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public LootTableConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public LootTableConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getLootTable() { return lootTable; }
 }

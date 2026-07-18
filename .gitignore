@@ -21,3 +21,6 @@ tokens.properties
 /packwright.debug
 /rrp.debug
 /worktrees
+
+# scratch vanilla-source audit extraction
+/.audit_tmp

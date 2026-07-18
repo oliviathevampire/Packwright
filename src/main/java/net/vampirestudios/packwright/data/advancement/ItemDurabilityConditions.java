@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.IntBound;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
@@ -14,7 +16,7 @@ public final class ItemDurabilityConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("item_durability_changed");
 
 	public static final MapCodec<ItemDurabilityConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item)),
 			IntBound.CODEC.optionalFieldOf("durability").forGetter(x -> Optional.ofNullable(x.durability)),
 			IntBound.CODEC.optionalFieldOf("delta").forGetter(x -> Optional.ofNullable(x.delta))
@@ -31,7 +33,7 @@ public final class ItemDurabilityConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private ItemPredicate item;
 	private IntBound durability;
 	private IntBound delta;
@@ -47,12 +49,11 @@ public final class ItemDurabilityConditions extends CriterionConditions {
 		return out;
 	}
 
-	public ItemDurabilityConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public ItemDurabilityConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public ItemDurabilityConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public ItemPredicate getItem() { return item; }
 	public IntBound getDurability() { return durability; }
 	public IntBound getDelta() { return delta; }

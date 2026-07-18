@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.IntBound;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
@@ -14,7 +16,7 @@ public final class BeeNestDestroyedConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("bee_nest_destroyed");
 
 	public static final MapCodec<BeeNestDestroyedConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			Identifier.CODEC.optionalFieldOf("block").forGetter(x -> Optional.ofNullable(x.block)),
 			ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item)),
 			IntBound.CODEC.optionalFieldOf("num_bees_inside").forGetter(x -> Optional.ofNullable(x.beesInside))
@@ -31,7 +33,7 @@ public final class BeeNestDestroyedConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier block;
 	private ItemPredicate item;
 	private IntBound beesInside;
@@ -48,12 +50,11 @@ public final class BeeNestDestroyedConditions extends CriterionConditions {
 		return out;
 	}
 
-	public BeeNestDestroyedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public BeeNestDestroyedConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public BeeNestDestroyedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getBlock() { return block; }
 	public ItemPredicate getItem() { return item; }
 	public IntBound getBeesInside() { return beesInside; }

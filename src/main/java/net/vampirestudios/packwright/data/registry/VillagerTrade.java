@@ -7,8 +7,6 @@ import net.minecraft.core.component.DataComponentPatch;
 import net.vampirestudios.packwright.data.loot.Condition;
 import net.vampirestudios.packwright.data.loot.LootFunction;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class VillagerTrade {
@@ -20,11 +18,11 @@ public class VillagerTrade {
 			TradeSet.NumberProvider.CODEC.optionalFieldOf("reputation_discount", TradeSet.NumberProvider.constant(0)).forGetter(x -> x.reputationDiscount),
 			TradeSet.NumberProvider.CODEC.fieldOf("xp").orElse(TradeSet.NumberProvider.constant(1)).forGetter(x -> x.xp),
 			Condition.CODEC.optionalFieldOf("merchant_predicate").forGetter(x -> x.merchantPredicate),
-			LootFunction.CODEC.listOf().optionalFieldOf("given_item_modifiers", List.of()).forGetter(x -> x.givenItemModifiers),
+			LootFunction.CODEC.optionalFieldOf("given_item_modifier").forGetter(x -> x.givenItemModifier),
 			Enchantments.CODEC.optionalFieldOf("double_trade_price_enchantments").forGetter(x -> x.doubleTradePriceEnchantments)
-	).apply(i, (wants, additionalWants, gives, maxUses, reputationDiscount, xp, merchantPredicate, modifiers, doubleTradePriceEnchantments) -> new VillagerTrade()
+	).apply(i, (wants, additionalWants, gives, maxUses, reputationDiscount, xp, merchantPredicate, modifier, doubleTradePriceEnchantments) -> new VillagerTrade()
 			.wants(wants).additionalWants(additionalWants).gives(gives).maxUses(maxUses).reputationDiscount(reputationDiscount).xp(xp)
-			.merchantPredicate(merchantPredicate).givenItemModifiers(modifiers).doubleTradePriceEnchantments(doubleTradePriceEnchantments)));
+			.merchantPredicate(merchantPredicate).givenItemModifier(modifier).doubleTradePriceEnchantments(doubleTradePriceEnchantments)));
 
 	private TradeCost wants = new TradeCost("minecraft:emerald", TradeSet.NumberProvider.constant(1));
 	private Optional<TradeCost> additionalWants = Optional.empty();
@@ -33,7 +31,7 @@ public class VillagerTrade {
 	private TradeSet.NumberProvider reputationDiscount = TradeSet.NumberProvider.constant(0);
 	private TradeSet.NumberProvider xp = TradeSet.NumberProvider.constant(1);
 	private Optional<Condition> merchantPredicate = Optional.empty();
-	private List<LootFunction> givenItemModifiers = new ArrayList<>();
+	private Optional<LootFunction> givenItemModifier = Optional.empty();
 	private Optional<Enchantments> doubleTradePriceEnchantments = Optional.empty();
 
 	public static VillagerTrade trade() { return new VillagerTrade(); }
@@ -50,8 +48,8 @@ public class VillagerTrade {
 	public VillagerTrade xp(int xp) { return xp(TradeSet.NumberProvider.constant(xp)); }
 	public VillagerTrade merchantPredicate(Optional<Condition> merchantPredicate) { this.merchantPredicate = merchantPredicate; return this; }
 	public VillagerTrade merchantPredicate(Condition merchantPredicate) { this.merchantPredicate = Optional.of(merchantPredicate); return this; }
-	public VillagerTrade givenItemModifiers(List<LootFunction> modifiers) { this.givenItemModifiers = new ArrayList<>(modifiers); return this; }
-	public VillagerTrade givenItemModifier(LootFunction modifier) { this.givenItemModifiers.add(modifier); return this; }
+	public VillagerTrade givenItemModifier(Optional<LootFunction> modifier) { this.givenItemModifier = modifier; return this; }
+	public VillagerTrade givenItemModifier(LootFunction modifier) { this.givenItemModifier = Optional.of(modifier); return this; }
 	/** enchantments (or a {@code #tag}) that, when present on {@link #gives}, double the trade's cost */
 	public VillagerTrade doubleTradePriceEnchantments(Optional<Enchantments> enchantments) { this.doubleTradePriceEnchantments = enchantments; return this; }
 	public VillagerTrade doubleTradePriceEnchantments(Enchantments enchantments) { this.doubleTradePriceEnchantments = Optional.of(enchantments); return this; }

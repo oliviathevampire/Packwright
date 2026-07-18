@@ -5,7 +5,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JavaOps;
 import net.minecraft.resources.Identifier;
-import net.vampirestudios.packwright.data.loot.NumberProvider;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

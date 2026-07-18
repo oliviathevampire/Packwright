@@ -17,7 +17,7 @@ public record TargetedConditionalEffect<T>(EnchantmentTarget enchanted, Enchantm
 				EnchantmentTarget.CODEC.fieldOf("enchanted").forGetter(TargetedConditionalEffect::enchanted),
 				EnchantmentTarget.CODEC.fieldOf("affected").forGetter(TargetedConditionalEffect::affected),
 				effectCodec.fieldOf("effect").forGetter(TargetedConditionalEffect::effect),
-				Condition.CODEC.optionalFieldOf("requirements").forGetter(TargetedConditionalEffect::requirements)
+				Condition.TYPE_CODEC.optionalFieldOf("requirements").forGetter(TargetedConditionalEffect::requirements)
 		).apply(i, TargetedConditionalEffect::new));
 	}
 
@@ -29,7 +29,7 @@ public record TargetedConditionalEffect<T>(EnchantmentTarget enchanted, Enchantm
 		return RecordCodecBuilder.create(i -> i.group(
 				EnchantmentTarget.CODEC.fieldOf("enchanted").forGetter(TargetedConditionalEffect::enchanted),
 				effectCodec.fieldOf("effect").forGetter(TargetedConditionalEffect::effect),
-				Condition.CODEC.optionalFieldOf("requirements").forGetter(TargetedConditionalEffect::requirements)
+				Condition.TYPE_CODEC.optionalFieldOf("requirements").forGetter(TargetedConditionalEffect::requirements)
 		).apply(i, (enchanted, effect, requirements) -> new TargetedConditionalEffect<>(enchanted, EnchantmentTarget.VICTIM, effect, requirements)));
 	}
 

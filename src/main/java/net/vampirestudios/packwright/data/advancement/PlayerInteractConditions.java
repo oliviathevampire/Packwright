@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
@@ -24,9 +26,9 @@ public final class PlayerInteractConditions extends CriterionConditions {
 
 	private static MapCodec<PlayerInteractConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 				ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item)),
-				EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity))
+				AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity))
 		).apply(i, (player, item, entity) -> {
 			PlayerInteractConditions out = new PlayerInteractConditions(trigger);
 			out.player = player.orElse(null);
@@ -36,7 +38,7 @@ public final class PlayerInteractConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private ItemPredicate item;
 	private EntityPredicate entity;
 
@@ -58,12 +60,11 @@ public final class PlayerInteractConditions extends CriterionConditions {
 		return out;
 	}
 
-	public PlayerInteractConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public PlayerInteractConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public PlayerInteractConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public ItemPredicate getItem() { return item; }
 	public EntityPredicate getEntity() { return entity; }
 }

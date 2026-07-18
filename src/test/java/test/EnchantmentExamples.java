@@ -43,7 +43,7 @@ public class EnchantmentExamples {
 	public static Enchantment buildEmberEdgeEnchantment() {
 		return Enchantment.enchantment()
 				.description("enchantment.mymod.ember_edge")
-				.supportedItems("#minecraft:enchantable/sword")
+				.supportedItems("minecraft:diamond_sword")
 				.weight(2)
 				.maxLevel(3)
 				.minCost(15, 9)
@@ -104,7 +104,7 @@ public class EnchantmentExamples {
 	public static Enchantment buildCurseOfClingingEnchantment() {
 		return Enchantment.enchantment()
 				.description("enchantment.mymod.curse_of_clinging")
-				.supportedItems("#minecraft:enchantable/equippable")
+				.supportedItems("minecraft:leather_chestplate")
 				.weight(1)
 				.maxLevel(1)
 				.minCost(25, 0)

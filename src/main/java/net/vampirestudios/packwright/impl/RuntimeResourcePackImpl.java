@@ -241,7 +241,7 @@ public class RuntimeResourcePackImpl extends AbstractPackMetadataResources imple
 					RecipeBuilder.createCraftingCommonInfo(accessor.isShowNotification()),
 					RecipeBuilder.createCraftingBookInfo(accessor.getCategory(), accessor.getGroup()), pattern, accessor.getResult()
 			);
-			return this.add(ResourceType.data("recipe", ShapedRecipe.CODEC), id, recipe1);
+			return this.add(ResourceType.data("recipe", ShapedRecipe.DIRECT_CODEC), id, recipe1);
 		}
 		return new byte[0];
 	}

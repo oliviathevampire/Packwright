@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.DoubleBound;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -13,7 +15,7 @@ public final class UsedEnderEyeConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("used_ender_eye");
 
 	public static final MapCodec<UsedEnderEyeConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			DoubleBound.CODEC.optionalFieldOf("distance").forGetter(x -> Optional.ofNullable(x.distance))
 	).apply(i, (player, distance) -> {
 		UsedEnderEyeConditions out = new UsedEnderEyeConditions();
@@ -26,7 +28,7 @@ public final class UsedEnderEyeConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private DoubleBound distance;
 
 	public UsedEnderEyeConditions() {
@@ -39,11 +41,10 @@ public final class UsedEnderEyeConditions extends CriterionConditions {
 		return out;
 	}
 
-	public UsedEnderEyeConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public UsedEnderEyeConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public UsedEnderEyeConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public DoubleBound getDistance() { return distance; }
 }

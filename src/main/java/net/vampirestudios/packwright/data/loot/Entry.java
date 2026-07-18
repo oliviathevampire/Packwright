@@ -1,6 +1,7 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
+import net.vampirestudios.packwright.data.loot.util.LootValue;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
 import net.minecraft.resources.Identifier;
 
@@ -112,7 +113,7 @@ public class Entry extends PredicateBuilder<Entry> {
 		if (this == child) {
 			throw new IllegalArgumentException("Can't add entry as its own child!");
 		}
-		subList("children").add(child.asMap());
+		subList("children").add(LootValue.encode(Entry.CODEC, child));
 		return this;
 	}
 
@@ -127,22 +128,35 @@ public class Entry extends PredicateBuilder<Entry> {
 		return parameter("expand", expand);
 	}
 
+	/**
+	 * only applies this function when this entry is used (26.3-snapshot-4 changed this from a
+	 * {@code "functions"} list to a single optional {@code "modifier"} — combine several with
+	 * {@link LootFunction#sequence(LootFunction...)} if needed)
+	 */
 	public Entry function(LootFunction function) {
-		subList("functions").add(function.asMap());
-		return this;
+		return put("modifier", LootValue.encode(LootFunction.CODEC, function));
 	}
 
 	public Entry function(String function) {
 		return function(LootTable.function(function));
 	}
 
+	/**
+	 * only uses this entry when the condition passes (26.3-snapshot-4 changed this from a
+	 * {@code "conditions"} list to a single optional {@code "condition"} — combine several with
+	 * {@link Condition#allOf(Condition...)} if needed)
+	 */
 	public Entry condition(Condition condition) {
-		subList("conditions").add(condition.asMap());
-		return this;
+		return put("condition", LootValue.encode(Condition.TYPE_CODEC, condition));
 	}
 
 	public Entry condition(String condition) {
 		return condition(LootTable.predicate(condition));
+	}
+
+	/** references a predicate file at {@code data/<namespace>/predicate/<path>.json} by id, instead of embedding a condition inline */
+	public Entry condition(Identifier reference) {
+		return put("condition", reference.toString());
 	}
 
 	public Entry weight(Integer weight) {

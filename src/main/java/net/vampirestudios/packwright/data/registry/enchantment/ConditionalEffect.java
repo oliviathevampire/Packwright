@@ -11,7 +11,7 @@ public record ConditionalEffect<T>(T effect, Optional<Condition> requirements) {
 	public static <T> Codec<ConditionalEffect<T>> codec(Codec<T> effectCodec) {
 		return RecordCodecBuilder.create(i -> i.group(
 				effectCodec.fieldOf("effect").forGetter(ConditionalEffect::effect),
-				Condition.CODEC.optionalFieldOf("requirements").forGetter(ConditionalEffect::requirements)
+				Condition.TYPE_CODEC.optionalFieldOf("requirements").forGetter(ConditionalEffect::requirements)
 		).apply(i, ConditionalEffect::new));
 	}
 

@@ -209,8 +209,6 @@ public final class SkyIslandsWorldgen {
 				.defaultBlockId(VanillaIds.STONE)
 				.defaultFluidId(VanillaIds.WATER)
 				.noiseSimple(0, 256, 1, 2)
-				.aquifersEnabled(false)
-				.oreVeinsEnabled(false)
 				.disableMobGeneration(false)
 				.noiseRouter(NoiseRouter.simple(finalDensity))
 				.materialRule(SURFACE_RULE);
@@ -295,9 +293,6 @@ public final class SkyIslandsWorldgen {
 				.downfall(0.55F)
 				.effects(new Biome.Effects().waterColor(0x3F76E4))
 				.attributes(buildBiomeAttributes())
-				.spawnSettings(
-						new Biome.SpawnSettings().setCreatureSpawnProbability(0.07F)
-				)
 				.generation(
 						new Biome.Generation()
 								.addFeature(7, TREES)

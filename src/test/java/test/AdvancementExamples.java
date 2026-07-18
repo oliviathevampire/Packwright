@@ -107,7 +107,7 @@ public class AdvancementExamples {
 
 	public static Advancement buildVillageStoryAdvancement() {
 		EntityPredicate villager = EntityPredicate.of().type(Identifier.withDefaultNamespace("villager"));
-		EntityPredicate animal = EntityPredicate.of().type("#minecraft:animals");
+		EntityPredicate animal = EntityPredicate.of().type(Identifier.withDefaultNamespace("cow"));
 
 		return new Advancement()
 				.parent(myModId("field_notes/root"))

@@ -5,13 +5,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
-import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
 /**
  * A reusable slot source in the {@code slot_source} registry (since 26.3), used by
- * {@code /item} and {@code /execute if slots|items} and referenced inline with
- * {@code minecraft:reference}.
+ * {@code /item} and {@code /execute if slots|items}.
  *
  * <pre>{@code
  * SlotSource.slotRange("hotbar.*")
@@ -19,7 +17,6 @@ import net.vampirestudios.packwright.data.predicate.ItemPredicate;
  */
 public sealed interface SlotSource permits
 		SlotRangeSource,
-		ReferenceSlotSource,
 		GroupSlotSource,
 		FilteredSlotSource,
 		LimitSlotSource,
@@ -30,7 +27,6 @@ public sealed interface SlotSource permits
 		public <T> DataResult<Pair<SlotSource, T>> decode(DynamicOps<T> ops, T input) {
 			DataResult<Pair<SlotSource, T>> byType = ops.getMap(input).flatMap(map -> switch (normalizeType(string(map, ops, "type", ""))) {
 				case "slot_range" -> SlotRangeSource.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-				case "reference" -> ReferenceSlotSource.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "group" -> GroupSlotSource.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "filtered" -> FilteredSlotSource.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "limit_slots" -> LimitSlotSource.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
@@ -48,7 +44,6 @@ public sealed interface SlotSource permits
 		@Override
 		public <T> DataResult<T> encode(SlotSource input, DynamicOps<T> ops, T prefix) {
 			if (input instanceof SlotRangeSource s) return SlotRangeSource.CODEC.codec().encode(s, ops, prefix);
-			if (input instanceof ReferenceSlotSource s) return ReferenceSlotSource.CODEC.codec().encode(s, ops, prefix);
 			if (input instanceof GroupSlotSource s) return GroupSlotSource.CODEC.codec().encode(s, ops, prefix);
 			if (input instanceof FilteredSlotSource s) return FilteredSlotSource.CODEC.codec().encode(s, ops, prefix);
 			if (input instanceof LimitSlotSource s) return LimitSlotSource.CODEC.codec().encode(s, ops, prefix);
@@ -64,10 +59,6 @@ public sealed interface SlotSource permits
 
 	static SlotRangeSource slotRange(String source, String slots) {
 		return new SlotRangeSource(source, slots);
-	}
-
-	static ReferenceSlotSource reference(Identifier id) {
-		return new ReferenceSlotSource(id);
 	}
 
 	static GroupSlotSource group(SlotSource... terms) {

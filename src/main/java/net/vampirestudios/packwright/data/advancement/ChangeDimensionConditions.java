@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -15,7 +17,7 @@ public final class ChangeDimensionConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("changed_dimension");
 
 	public static final MapCodec<ChangeDimensionConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			Identifier.CODEC.optionalFieldOf("from").forGetter(x -> Optional.ofNullable(x.from)),
 			Identifier.CODEC.optionalFieldOf("to").forGetter(x -> Optional.ofNullable(x.to))
 	).apply(i, (player, from, to) -> {
@@ -30,7 +32,7 @@ public final class ChangeDimensionConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier from;
 	private Identifier to;
 
@@ -61,12 +63,11 @@ public final class ChangeDimensionConditions extends CriterionConditions {
 		return out;
 	}
 
-	public ChangeDimensionConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public ChangeDimensionConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public ChangeDimensionConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getFrom() { return from; }
 	public Identifier getTo() { return to; }
 }

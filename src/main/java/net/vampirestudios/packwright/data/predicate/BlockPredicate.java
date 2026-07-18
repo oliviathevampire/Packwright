@@ -35,13 +35,11 @@ public class BlockPredicate extends PredicateBuilder<BlockPredicate> {
 	}
 
 	public BlockPredicate state(String property, boolean value) {
-		subMap("state").put(property, value);
-		return this;
+		return state(property, Boolean.toString(value));
 	}
 
 	public BlockPredicate state(String property, int value) {
-		subMap("state").put(property, value);
-		return this;
+		return state(property, Integer.toString(value));
 	}
 
 	public BlockPredicate nbt(String nbt) {

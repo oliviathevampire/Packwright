@@ -3,6 +3,9 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
+import net.vampirestudios.packwright.data.recipe.PotionContentsPredicate;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -13,10 +16,14 @@ import java.util.Optional;
  */
 public final class BrewedPotionConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("brewed_potion");
+	private static final com.mojang.serialization.Codec<Identifier> POTION_PREDICATE_CODEC = PotionContentsPredicate.CODEC.xmap(
+			predicate -> predicate.potions().orElseThrow().getFirst().getId(),
+			PotionContentsPredicate::potion
+	);
 
 	public static final MapCodec<BrewedPotionConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
-			Identifier.CODEC.optionalFieldOf("potion").forGetter(x -> Optional.ofNullable(x.potion))
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			POTION_PREDICATE_CODEC.optionalFieldOf("potion").forGetter(x -> Optional.ofNullable(x.potion))
 	).apply(i, (player, potion) -> {
 		BrewedPotionConditions out = new BrewedPotionConditions();
 		out.player = player.orElse(null);
@@ -28,7 +35,7 @@ public final class BrewedPotionConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Identifier potion;
 
 	public BrewedPotionConditions() {
@@ -45,11 +52,10 @@ public final class BrewedPotionConditions extends CriterionConditions {
 		return out;
 	}
 
-	public BrewedPotionConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public BrewedPotionConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public BrewedPotionConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Identifier getPotion() { return potion; }
 }

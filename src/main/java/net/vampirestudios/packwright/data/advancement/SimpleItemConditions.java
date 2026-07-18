@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
@@ -32,7 +34,7 @@ public final class SimpleItemConditions extends CriterionConditions {
 
 	private static MapCodec<SimpleItemConditions> mapCodec(Identifier trigger) {
 		return RecordCodecBuilder.mapCodec(i -> i.group(
-				EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+				AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 				ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item))
 		).apply(i, (player, item) -> {
 			SimpleItemConditions out = new SimpleItemConditions(trigger);
@@ -42,7 +44,7 @@ public final class SimpleItemConditions extends CriterionConditions {
 		}));
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private ItemPredicate item;
 
 	private SimpleItemConditions(Identifier trigger) {
@@ -79,11 +81,10 @@ public final class SimpleItemConditions extends CriterionConditions {
 		return out;
 	}
 
-	public SimpleItemConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public SimpleItemConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public SimpleItemConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public ItemPredicate getItem() { return item; }
 }

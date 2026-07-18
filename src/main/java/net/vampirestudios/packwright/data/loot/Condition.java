@@ -1,16 +1,22 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JavaOps;
 import net.vampirestudios.packwright.assets.models.Model;
+import net.vampirestudios.packwright.data.predicate.BlockPredicate;
 import net.vampirestudios.packwright.data.predicate.DamageSourcePredicate;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 import net.vampirestudios.packwright.data.predicate.LocationPredicate;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
 import net.vampirestudios.packwright.data.predicate.Range;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +29,37 @@ import java.util.Map;
  */
 public class Condition extends PredicateBuilder<Condition> {
 	public static final Codec<Condition> CODEC = codecOf(Condition::new, "condition", "Loot condition");
+	public static final Codec<Condition> TYPE_CODEC = Codec.PASSTHROUGH.comapFlatMap(dynamic -> {
+		Object value = dynamic.convert(JavaOps.INSTANCE).getValue();
+		if (!(value instanceof Map<?, ?> map)) {
+			return DataResult.error(() -> "Condition must be an object");
+		}
+		if (!(map.get("type") instanceof String)) {
+			return DataResult.error(() -> "Condition missing 'type' string");
+		}
+		Condition builder = new Condition();
+		map.forEach((k, v) -> builder.values.put("type".equals(String.valueOf(k)) ? "condition" : String.valueOf(k), v));
+		return DataResult.success(builder);
+	}, condition -> new Dynamic<>(JavaOps.INSTANCE, condition.typeKeyedValues()));
+
+	private Map<String, Object> typeKeyedValues() {
+		Map<String, Object> out = new LinkedHashMap<>();
+		this.values.forEach((key, value) -> out.put("condition".equals(key) ? "type" : key, typeKeyedValue(value)));
+		return out;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Object typeKeyedValue(Object value) {
+		if (value instanceof Map<?, ?> map) {
+			Map<String, Object> out = new LinkedHashMap<>();
+			map.forEach((key, nested) -> out.put("condition".equals(String.valueOf(key)) ? "type" : String.valueOf(key), typeKeyedValue(nested)));
+			return out;
+		}
+		if (value instanceof List<?> list) {
+			return list.stream().map(Condition::typeKeyedValue).toList();
+		}
+		return value;
+	}
 
 	/**
 	 * @see LootTable#predicate(String)
@@ -83,12 +120,9 @@ public class Condition extends PredicateBuilder<Condition> {
 		return of("minecraft:all_of").terms(terms);
 	}
 
-	/**
-	 * references a predicate file at {@code data/<namespace>/predicate/<path>.json}
-	 */
-	public static Condition reference(Identifier predicate) {
-		return of("minecraft:reference").parameter("name", predicate);
-	}
+	// note: the standalone "minecraft:reference" condition type was removed in 26.3-snapshot-4 —
+	// every place a condition is expected (e.g. LootFunction#condition(Identifier)) now accepts a
+	// bare predicate-file id directly instead
 
 	/**
 	 * @param enchantment the enchantment whose level indexes into {@code chances}
@@ -119,10 +153,19 @@ public class Condition extends PredicateBuilder<Condition> {
 	}
 
 	/**
-	 * checks block state properties; add them with {@link #property}
+	 * matches a {@link BlockPredicate} against the loot context's block
+	 * ({@code minecraft:match_block}, since 26.3-snapshot-4 — replaces the old flat
+	 * {@code minecraft:block_state_property} shape)
 	 */
-	public static Condition blockStateProperty(Identifier block) {
-		return of("minecraft:block_state_property").parameter("block", block);
+	public static Condition matchBlock(BlockPredicate predicate) {
+		return of("minecraft:match_block").parameter("predicate", predicate);
+	}
+
+	/**
+	 * matches any block state of the given block id
+	 */
+	public static Condition matchBlock(Identifier block) {
+		return matchBlock(BlockPredicate.of().blocks(block));
 	}
 
 	/**
@@ -284,24 +327,6 @@ public class Condition extends PredicateBuilder<Condition> {
 	 */
 	public Condition terms(Condition... conditions) {
 		return parameter("terms", conditions);
-	}
-
-	/**
-	 * adds a block state property check, for {@link #blockStateProperty(Identifier)}
-	 */
-	public Condition property(String key, String value) {
-		subMap("properties").put(key, value);
-		return this;
-	}
-
-	public Condition property(String key, boolean value) {
-		subMap("properties").put(key, value);
-		return this;
-	}
-
-	public Condition property(String key, int value) {
-		subMap("properties").put(key, value);
-		return this;
 	}
 
 	/**

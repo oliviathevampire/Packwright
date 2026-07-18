@@ -90,12 +90,21 @@ public final class DensityFunctionTypes {
 					)
 			);
 
-	public static final DensityFunctionType<DensityFunctions.Mapped> INVERT =
+	public static final DensityFunctionType<DensityFunctions.Mapped> RECIPROCAL =
 			register(
-					"invert",
+					"reciprocal",
 					codec -> DensityFunctions.Mapped.codec(
 							codec,
-							DensityFunctions.Mapped.Type.INVERT
+							DensityFunctions.Mapped.Type.RECIPROCAL
+					)
+			);
+
+	public static final DensityFunctionType<DensityFunctions.Mapped> NEGATE =
+			register(
+					"negate",
+					codec -> DensityFunctions.Mapped.codec(
+							codec,
+							DensityFunctions.Mapped.Type.NEGATE
 					)
 			);
 
@@ -153,12 +162,30 @@ public final class DensityFunctionTypes {
 					)
 			);
 
+	public static final DensityFunctionType<DensityFunctions.TwoArgumentSimpleFunction> SUB =
+			register(
+					"sub",
+					codec -> DensityFunctions.TwoArgumentSimpleFunction.codec(
+							codec,
+							DensityFunctions.TwoArgumentSimpleFunction.Type.SUB
+					)
+			);
+
 	public static final DensityFunctionType<DensityFunctions.TwoArgumentSimpleFunction> MUL =
 			register(
 					"mul",
 					codec -> DensityFunctions.TwoArgumentSimpleFunction.codec(
 							codec,
 							DensityFunctions.TwoArgumentSimpleFunction.Type.MUL
+					)
+			);
+
+	public static final DensityFunctionType<DensityFunctions.TwoArgumentSimpleFunction> DIV =
+			register(
+					"div",
+					codec -> DensityFunctions.TwoArgumentSimpleFunction.codec(
+							codec,
+							DensityFunctions.TwoArgumentSimpleFunction.Type.DIV
 					)
 			);
 

@@ -3,6 +3,8 @@ package net.vampirestudios.packwright.data.advancement;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 import net.vampirestudios.packwright.data.predicate.ItemPredicate;
 
@@ -13,9 +15,9 @@ public final class FishingRodHookedConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("fishing_rod_hooked");
 
 	public static final MapCodec<FishingRodHookedConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			ItemPredicate.CODEC.optionalFieldOf("rod").forGetter(x -> Optional.ofNullable(x.rod)),
-			EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity)),
+			AdvancementPredicates.ENTITY_CODEC.optionalFieldOf("entity").forGetter(x -> Optional.ofNullable(x.entity)),
 			ItemPredicate.CODEC.optionalFieldOf("item").forGetter(x -> Optional.ofNullable(x.item))
 	).apply(i, (player, rod, entity, item) -> {
 		FishingRodHookedConditions out = new FishingRodHookedConditions();
@@ -30,7 +32,7 @@ public final class FishingRodHookedConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private ItemPredicate rod;
 	private EntityPredicate entity;
 	private ItemPredicate item;
@@ -47,12 +49,11 @@ public final class FishingRodHookedConditions extends CriterionConditions {
 		return out;
 	}
 
-	public FishingRodHookedConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public FishingRodHookedConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public FishingRodHookedConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public ItemPredicate getRod() { return rod; }
 	public EntityPredicate getEntity() { return entity; }
 	public ItemPredicate getItem() { return item; }

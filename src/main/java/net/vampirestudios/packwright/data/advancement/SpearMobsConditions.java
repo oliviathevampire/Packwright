@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.data.loot.Condition;
+import net.vampirestudios.packwright.data.loot.EntityTarget;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
 
 import java.util.Optional;
@@ -13,7 +15,7 @@ public final class SpearMobsConditions extends CriterionConditions {
 	public static final Identifier TYPE = Identifier.withDefaultNamespace("spear_mobs");
 
 	public static final MapCodec<SpearMobsConditions> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-			EntityPredicate.CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
+			AdvancementPredicates.CONDITION_CODEC.optionalFieldOf("player").forGetter(x -> Optional.ofNullable(x.player)),
 			Codec.INT.optionalFieldOf("count").forGetter(x -> Optional.ofNullable(x.count))
 	).apply(i, (player, count) -> {
 		SpearMobsConditions out = new SpearMobsConditions();
@@ -26,7 +28,7 @@ public final class SpearMobsConditions extends CriterionConditions {
 		CriterionConditions.register(TYPE.toString(), MAP_CODEC.codec());
 	}
 
-	private EntityPredicate player;
+	private Condition player;
 	private Integer count;
 
 	public SpearMobsConditions() {
@@ -39,11 +41,10 @@ public final class SpearMobsConditions extends CriterionConditions {
 		return out;
 	}
 
-	public SpearMobsConditions player(EntityPredicate player) {
-		this.player = player;
-		return this;
-	}
+	public SpearMobsConditions player(Condition player) { this.player = player; return this; }
 
-	public EntityPredicate getPlayer() { return player; }
+	public SpearMobsConditions player(EntityPredicate predicate) { return player(Condition.entityProperties(EntityTarget.THIS, predicate)); }
+
+	public Condition getPlayer() { return player; }
 	public Integer getCount() { return count; }
 }
