@@ -35,16 +35,32 @@ public class BlockPredicate extends PredicateBuilder<BlockPredicate> {
 	}
 
 	public BlockPredicate state(String property, boolean value) {
-		subMap("state").put(property, value);
-		return this;
+		return state(property, Boolean.toString(value));
 	}
 
 	public BlockPredicate state(String property, int value) {
-		subMap("state").put(property, value);
-		return this;
+		return state(property, Integer.toString(value));
 	}
 
 	public BlockPredicate nbt(String nbt) {
 		return parameter("nbt", nbt);
+	}
+
+	/**
+	 * requires an exact data component value on the block entity, e.g.
+	 * {@code component("minecraft:custom_name", "...")}
+	 */
+	public BlockPredicate component(String component, Object value) {
+		subMap("components").put(component, value);
+		return this;
+	}
+
+	/**
+	 * adds a data-component sub-predicate on the block entity, e.g.
+	 * {@code predicate("minecraft:container", Map.of("items", Map.of("contains", List.of())))}
+	 */
+	public BlockPredicate predicate(String id, Object value) {
+		subMap("predicates").put(id, wrapPredicateValue(value));
+		return this;
 	}
 }

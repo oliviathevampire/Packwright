@@ -10,7 +10,7 @@ import net.minecraft.world.item.Item;
 
 public final class Icon {
 	public static final Codec<Icon> CODEC = RecordCodecBuilder.create(i -> i.group(
-			Identifier.CODEC.fieldOf("item").forGetter(ic -> ic.item),
+			Identifier.CODEC.fieldOf("id").forGetter(ic -> ic.item),
 			Codec.INT.optionalFieldOf("count").forGetter(ic -> Optional.ofNullable(ic.count)),
 			DataComponentPatch.CODEC.optionalFieldOf("components").forGetter(ic -> Optional.ofNullable(ic.components))
 	).apply(i, (item, count, comps) -> {

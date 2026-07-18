@@ -1,13 +1,12 @@
 package net.vampirestudios.packwright.data.recipe;
 
-import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
-import net.vampirestudios.packwright.impl.Codecs;
+import net.vampirestudios.packwright.util.DynamicMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.function.Consumer;
 public class Ingredient {
 	public static final Codec<Ingredient> CODEC = Codec.either(
 			Codec.either(Codec.STRING, Codec.STRING.listOf()),
-			Codecs.JSON_OBJECT
+			DynamicMap.CODEC
 	).comapFlatMap(
 			e -> e.map(
 					l -> l.map(Ingredient::fromString, Ingredient::fromList),
@@ -42,7 +41,7 @@ public class Ingredient {
 	private Identifier item;
 	private Identifier tag;
 	private final List<Ingredient> alternatives = new ArrayList<>();
-	private JsonObject fabricCustom;
+	private DynamicMap fabricCustom;
 
 	Ingredient() {
 	}
@@ -97,32 +96,32 @@ public class Ingredient {
 		return this;
 	}
 
-	public static Ingredient fabricComponents(Item base, Consumer<JsonObject> components) {
+	public static Ingredient fabricComponents(Item base, Consumer<DynamicMap> components) {
 		return fabricComponents(BuiltInRegistries.ITEM.getKey(base), components, false);
 	}
 
-	public static Ingredient fabricComponents(Identifier base, Consumer<JsonObject> components) {
+	public static Ingredient fabricComponents(Identifier base, Consumer<DynamicMap> components) {
 		return fabricComponents(base, components, false);
 	}
 
-	public static Ingredient fabricComponents(Item base, Consumer<JsonObject> components, boolean strict) {
+	public static Ingredient fabricComponents(Item base, Consumer<DynamicMap> components, boolean strict) {
 		return fabricComponents(BuiltInRegistries.ITEM.getKey(base), components, strict);
 	}
 
-	public static Ingredient fabricComponents(Identifier base, Consumer<JsonObject> components, boolean strict) {
-		return ingredient().fabricCustom(FABRIC_COMPONENTS, json -> {
-			json.addProperty("base", base.toString());
-			json.addProperty("strict", strict);
-			json.add("components", jsonObject(components));
+	public static Ingredient fabricComponents(Identifier base, Consumer<DynamicMap> components, boolean strict) {
+		return ingredient().fabricCustom(FABRIC_COMPONENTS, dynamicMap -> {
+			dynamicMap.set("base", base.toString());
+			dynamicMap.set("strict", strict);
+			dynamicMap.set("components", dynamicMap(components));
 		});
 	}
 
-	public Ingredient fabricCustom(Identifier type, Consumer<JsonObject> data) {
+	public Ingredient fabricCustom(Identifier type, Consumer<DynamicMap> data) {
 		this.clear();
-		this.fabricCustom = jsonObject(json -> {
-			json.addProperty("fabric:type", type.toString());
+		this.fabricCustom = dynamicMap(dynamicMap -> {
+			dynamicMap.set("fabric:type", type.toString());
 			if (data != null) {
-				data.accept(json);
+				data.accept(dynamicMap);
 			}
 		});
 		return this;
@@ -148,8 +147,8 @@ public class Ingredient {
 		return List.copyOf(this.alternatives);
 	}
 
-	public JsonObject getFabricCustom() {
-		return this.fabricCustom == null ? null : this.fabricCustom.deepCopy();
+	public DynamicMap getFabricCustom() {
+		return this.fabricCustom;
 	}
 
 	private void clear() {
@@ -201,21 +200,21 @@ public class Ingredient {
 		return DataResult.success(ingredient);
 	}
 
-	private static DataResult<Ingredient> fromFabricCustom(JsonObject object) {
+	private static DataResult<Ingredient> fromFabricCustom(DynamicMap object) {
 		if (!object.has("fabric:type")) {
 			return DataResult.error(() -> "Ingredient object must have 'fabric:type'");
 		}
 
 		var ingredient = ingredient();
-		ingredient.fabricCustom = object.deepCopy();
+		ingredient.fabricCustom = object;
 		return DataResult.success(ingredient);
 	}
 
-	private static JsonObject jsonObject(Consumer<JsonObject> consumer) {
-		var json = new JsonObject();
+	private static DynamicMap dynamicMap(Consumer<DynamicMap> consumer) {
+		var map = DynamicMap.object();
 		if (consumer != null) {
-			consumer.accept(json);
+			consumer.accept(map);
 		}
-		return json;
+		return map;
 	}
 }

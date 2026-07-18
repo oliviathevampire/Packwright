@@ -1,0 +1,114 @@
+package test;
+
+import net.minecraft.resources.Identifier;
+import net.vampirestudios.packwright.api.RuntimeResourcePack;
+import net.vampirestudios.packwright.data.registry.dialog.Body;
+import net.vampirestudios.packwright.data.registry.dialog.Dialog;
+import net.vampirestudios.packwright.data.registry.dialog.Input;
+import net.vampirestudios.packwright.data.registry.dialog.Action;
+import net.vampirestudios.packwright.util.JsonBytes;
+
+import java.nio.file.Path;
+
+import static net.vampirestudios.packwright.util.ResourceHelpers.customId;
+
+/**
+ * Examples for the {@code dialog} registry (26.3): all five dialog types, both body types,
+ * all four input controls, and a representative spread of click actions.
+ */
+public class DialogExamples {
+
+	private static Identifier myModId(String path) {
+		return customId("mymod", path);
+	}
+
+	/** {@code notice}: a message with a single dismiss button, plus a text input for flavor */
+	public static Dialog buildWelcomeNotice() {
+		return Dialog.notice("Welcome to the Ember Wastes", "Got it")
+				.plainMessage("Watch your step near the vents, and check in with the outpost before dark.")
+				.input(Input.text("traveler_name", "What should we call you?").maxLength(24));
+	}
+
+	/** {@code confirmation}: a yes/no gate, e.g. before a risky action */
+	public static Dialog buildAbandonCampConfirmation() {
+		return Dialog.confirmation("Abandon this camp?", "Abandon", "Stay")
+				.plainMessage("You'll lose any progress on the current expedition.")
+				.pause(true);
+	}
+
+	/** {@code item} body type: renders an item next to its own description text */
+	public static Dialog buildTrinketNotice() {
+		return Dialog.notice("Curious Trinket", "Close")
+				.body(Body.item(Body.ItemStack.of("minecraft:echo_shard"))
+						.description("Hums faintly when held near ancient cities."));
+	}
+
+	/** {@code server_links}: shows the server's registered links, with an exit action back to the notice above */
+	public static Dialog buildOutpostLinksDialog() {
+		return Dialog.serverLinks("Outpost Services")
+				.columns(3)
+				.exitAction(Dialog.Button.button("Back")
+						.action(Action.showDialog(myModId("dialogs/welcome"))));
+	}
+
+	/** extra notice used by the dialog list example */
+	public static Dialog buildAboutEmberWastesNotice() {
+		return Dialog.notice("About the Ember Wastes", "Close")
+				.plainMessage("A scorched frontier biome added by this pack.");
+	}
+
+	/** {@code dialog_list}: a menu of other dialogs, referenced by id */
+	public static Dialog buildTravelerMenuDialog() {
+		return Dialog.dialogList("Traveler Services",
+				Dialog.Reference.id(myModId("dialogs/welcome")),
+				Dialog.Reference.id(myModId("dialogs/outpost_links")),
+				Dialog.Reference.id(myModId("dialogs/about_ember_wastes"))
+		).columns(1);
+	}
+
+	/** {@code multi_action}: a button grid exercising several distinct action types */
+	public static Dialog buildQuickActionsDialog() {
+		return Dialog.multiAction("Quick Actions",
+						Dialog.Button.button("Wiki")
+								.action(Action.openUrl("https://example.com/mymod/wiki")),
+						Dialog.Button.button("Suggest /time set day")
+								.action(Action.suggestCommand("/time set day")),
+						Dialog.Button.button("Copy Seed")
+								.tooltip("Copies the current world seed")
+								.action(Action.copyToClipboard("1234567890")),
+						Dialog.Button.button("Signal Beacon")
+								.action(Action.custom(myModId("signal_beacon")))
+				)
+				.columns(2)
+				.input(Input.bool("include_coords", "Include my coordinates?"))
+				.input(Input.numberRange("radius", "Search radius", 8, 64).step(8).initial(32))
+				.input(Input.singleOption("priority", "Priority",
+						Input.SingleOptionInput.Entry.of("low"),
+						Input.SingleOptionInput.Entry.of("normal").initial(true),
+						Input.SingleOptionInput.Entry.of("high").display("High Priority")
+				))
+				.exitAction(Dialog.Button.button("Cancel"));
+	}
+
+	public static void registerAll(RuntimeResourcePack pack) {
+		pack.addDialog(myModId("dialogs/welcome"), buildWelcomeNotice());
+		pack.addDialog(myModId("dialogs/abandon_camp"), buildAbandonCampConfirmation());
+		pack.addDialog(myModId("dialogs/trinket"), buildTrinketNotice());
+		pack.addDialog(myModId("dialogs/outpost_links"), buildOutpostLinksDialog());
+		pack.addDialog(myModId("dialogs/about_ember_wastes"), buildAboutEmberWastesNotice());
+		pack.addDialog(myModId("dialogs/traveler_menu"), buildTravelerMenuDialog());
+		pack.addDialog(myModId("dialogs/quick_actions"), buildQuickActionsDialog());
+	}
+
+	public static void main() {
+		System.out.println("Dialog JSON (mymod:dialogs/welcome):");
+		System.out.println(JsonBytes.encodeToPrettyString(Dialog.CODEC, buildWelcomeNotice()));
+		System.out.println("Dialog JSON (mymod:dialogs/quick_actions):");
+		System.out.println(JsonBytes.encodeToPrettyString(Dialog.CODEC, buildQuickActionsDialog()));
+
+		RuntimeResourcePack pack = RuntimeResourcePack.create("mymod:dialog_examples");
+		pack.addDataPackMcmeta("Dialog registry examples generated by Packwright");
+		registerAll(pack);
+		pack.dumpDirect(Path.of("dumps/dialog_examples"));
+	}
+}

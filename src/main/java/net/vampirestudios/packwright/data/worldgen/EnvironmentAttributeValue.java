@@ -1,23 +1,19 @@
 package net.vampirestudios.packwright.data.worldgen;
 
-import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.*;
+import net.vampirestudios.packwright.util.DynamicMap;
 
 import java.util.Optional;
 
 /**
  * Single Environment Attribute value.
- *
+ * <p>
  * Encoded as JSON via Codec:
  *  - boolean
  *  - number (double)
  *  - string
- *  - free-form JSON (for object-valued attributes like {@code minecraft:gameplay/bed_rule})
+ *  - free-form object (for object-valued attributes like {@code minecraft:gameplay/bed_rule})
  */
 public abstract class EnvironmentAttributeValue {
 
@@ -30,8 +26,8 @@ public abstract class EnvironmentAttributeValue {
                 return DataResult.success(ops.createDouble(n.value));
             } else if (value instanceof StringValue s) {
                 return DataResult.success(ops.createString(s.value));
-            } else if (value instanceof JsonValue j) {
-                return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, j.value).convert(ops).getValue());
+            } else if (value instanceof DynamicValue d) {
+                return DataResult.success(d.value.convert(ops).getValue());
             }
             return DataResult.error(() -> "Unknown EnvironmentAttributeValue subclass: " + value.getClass());
         }
@@ -56,9 +52,8 @@ public abstract class EnvironmentAttributeValue {
                 return DataResult.success(Pair.of(ofString(strOpt.get()), input));
             }
 
-            // fallback: keep any other shape (objects, lists) as raw JSON
-            JsonElement json = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-            return DataResult.success(Pair.of(ofJson(json), input));
+            // fallback: keep any other shape (objects, lists) as an opaque dynamic value
+            return DataResult.success(Pair.of(new DynamicValue(new Dynamic<>(ops, input)), input));
         }
     };
 
@@ -76,8 +71,14 @@ public abstract class EnvironmentAttributeValue {
     }
 
     /** for object-valued attributes, e.g. bed rules */
-    public static EnvironmentAttributeValue ofJson(JsonElement value) {
-        return new JsonValue(value);
+    public static EnvironmentAttributeValue ofObject(DynamicMap value) {
+        return new DynamicValue(value.toDynamic());
+    }
+
+    /** for object-valued attributes with a real codec, e.g. bed rules */
+    public static <T> EnvironmentAttributeValue ofEncoded(Codec<T> codec, T value) {
+        Object raw = codec.encodeStart(JavaOps.INSTANCE, value).getOrThrow();
+        return new DynamicValue(new Dynamic<>(JavaOps.INSTANCE, raw));
     }
 
     // Concrete variants
@@ -106,11 +107,11 @@ public abstract class EnvironmentAttributeValue {
         }
     }
 
-    public static final class JsonValue extends EnvironmentAttributeValue {
-        public final JsonElement value;
+    public static final class DynamicValue extends EnvironmentAttributeValue {
+        public final Dynamic<?> value;
 
-        public JsonValue(JsonElement value) {
-            this.value = value.deepCopy();
+        public DynamicValue(Dynamic<?> value) {
+            this.value = value;
         }
     }
 }

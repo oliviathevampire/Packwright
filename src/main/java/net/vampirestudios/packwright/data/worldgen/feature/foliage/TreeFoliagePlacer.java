@@ -14,13 +14,11 @@ public sealed interface TreeFoliagePlacer permits
 		PineFoliagePlacer,
 		AcaciaFoliagePlacer,
 		BushFoliagePlacer,
-		JungleBushFoliagePlacer,
 		MegaJungleFoliagePlacer,
 		MegaPineFoliagePlacer,
 		DarkOakFoliagePlacer,
 		RandomSpreadFoliagePlacer,
 		CherryFoliagePlacer,
-		MangroveFoliagePlacer,
 		PoplarFoliagePlacer {
 	Codec<TreeFoliagePlacer> CODEC = new Codec<>() {
 		@Override
@@ -32,13 +30,11 @@ public sealed interface TreeFoliagePlacer permits
 				case "pine_foliage_placer" -> PineFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "acacia_foliage_placer" -> AcaciaFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "bush_foliage_placer" -> BushFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-				case "jungle_bush_foliage_placer" -> JungleBushFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-				case "mega_jungle_foliage_placer" -> MegaJungleFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
+				case "jungle_foliage_placer" -> MegaJungleFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "mega_pine_foliage_placer" -> MegaPineFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "dark_oak_foliage_placer" -> DarkOakFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "random_spread_foliage_placer" -> RandomSpreadFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "cherry_foliage_placer" -> CherryFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
-				case "mangrove_foliage_placer" -> MangroveFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				case "poplar_foliage_placer" -> PoplarFoliagePlacer.CODEC.codec().decode(ops, input).map(pair -> pair.mapFirst(x -> x));
 				default -> DataResult.error(() -> "Unsupported tree foliage placer type");
 			});
@@ -52,13 +48,11 @@ public sealed interface TreeFoliagePlacer permits
 			if (input instanceof PineFoliagePlacer placer) return PineFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof AcaciaFoliagePlacer placer) return AcaciaFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof BushFoliagePlacer placer) return BushFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
-			if (input instanceof JungleBushFoliagePlacer placer) return JungleBushFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof MegaJungleFoliagePlacer placer) return MegaJungleFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof MegaPineFoliagePlacer placer) return MegaPineFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof DarkOakFoliagePlacer placer) return DarkOakFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof RandomSpreadFoliagePlacer placer) return RandomSpreadFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof CherryFoliagePlacer placer) return CherryFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
-			if (input instanceof MangroveFoliagePlacer placer) return MangroveFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			if (input instanceof PoplarFoliagePlacer placer) return PoplarFoliagePlacer.CODEC.codec().encode(placer, ops, prefix);
 			return DataResult.error(() -> "Unsupported tree foliage placer: " + input.getClass().getSimpleName());
 		}
@@ -88,10 +82,6 @@ public sealed interface TreeFoliagePlacer permits
 		return new BushFoliagePlacer(radius, offset, height);
 	}
 
-	static JungleBushFoliagePlacer jungleBush(IntProvider radius, IntProvider offset, int height) {
-		return new JungleBushFoliagePlacer(radius, offset, height);
-	}
-
 	static MegaJungleFoliagePlacer megaJungle(IntProvider radius, IntProvider offset, int height) {
 		return new MegaJungleFoliagePlacer(radius, offset, height);
 	}
@@ -114,10 +104,6 @@ public sealed interface TreeFoliagePlacer permits
 
 	static CherryFoliagePlacer cherry(IntProvider radius, IntProvider offset, IntProvider height, float wideBottomLayerHoleChance, float cornerHoleChance, float hangingLeavesChance, float hangingLeavesExtensionChance) {
 		return new CherryFoliagePlacer(radius, offset, height, wideBottomLayerHoleChance, cornerHoleChance, hangingLeavesChance, hangingLeavesExtensionChance);
-	}
-
-	static MangroveFoliagePlacer mangrove(IntProvider radius, IntProvider offset, int height) {
-		return new MangroveFoliagePlacer(radius, offset, height);
 	}
 
 	static PoplarFoliagePlacer poplar(IntProvider height, float sideHoleChance) {

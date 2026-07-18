@@ -8,7 +8,7 @@ import net.vampirestudios.packwright.data.worldgen.WorldgenBlockState;
 
 public final class ReplaceBlobsFeatureBuilder extends FeatureBuilder {
 	public ReplaceBlobsFeatureBuilder() {
-		super("minecraft:replace_blobs");
+		super("minecraft:netherrack_replace_blobs");
 	}
 
 	public ReplaceBlobsFeatureBuilder target(Identifier block) {

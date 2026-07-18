@@ -4,11 +4,14 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 
+import java.util.Arrays;
+import java.util.List;
+
 public final class BiomeSpawnCondition extends SpawnCondition {
     public static final Identifier TYPE = Identifier.fromNamespaceAndPath("minecraft", "biome");
 
     public static final MapCodec<BiomeSpawnCondition> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            IdOrTag.CODEC.fieldOf("biomes").forGetter(x -> x.biomes)
+            IdOrTag.LIST_CODEC.fieldOf("biomes").forGetter(x -> x.biomes)
     ).apply(i, (bio) -> {
         BiomeSpawnCondition out = new BiomeSpawnCondition();
         out.biomes = bio;
@@ -19,7 +22,7 @@ public final class BiomeSpawnCondition extends SpawnCondition {
         SpawnCondition.register(TYPE.toString(), CODEC);
     }
 
-    private IdOrTag biomes;
+    private List<IdOrTag> biomes;
 
     private BiomeSpawnCondition() {
         super(TYPE.toString());
@@ -28,9 +31,10 @@ public final class BiomeSpawnCondition extends SpawnCondition {
 
     public static BiomeSpawnCondition biomeCondition() { return new BiomeSpawnCondition(); }
 
-    public BiomeSpawnCondition biomes(IdOrTag biomes) { this.biomes = biomes; return this; }
-    public BiomeSpawnCondition biome(Identifier biome) { this.biomes = IdOrTag.id(biome); return this; }
-    public BiomeSpawnCondition biomeTag(Identifier tag) { this.biomes = IdOrTag.tag(tag); return this; }
+    public BiomeSpawnCondition biomes(List<IdOrTag> biomes) { this.biomes = biomes; return this; }
+    public BiomeSpawnCondition biome(Identifier biome) { this.biomes = List.of(IdOrTag.id(biome)); return this; }
+    public BiomeSpawnCondition biomes(Identifier... biomes) { this.biomes = Arrays.stream(biomes).map(IdOrTag::id).toList(); return this; }
+    public BiomeSpawnCondition biomeTag(Identifier tag) { this.biomes = List.of(IdOrTag.tag(tag)); return this; }
 
-    public IdOrTag getBiomes() { return biomes; }
+    public List<IdOrTag> getBiomes() { return biomes; }
 }

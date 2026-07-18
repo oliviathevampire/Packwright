@@ -9,7 +9,7 @@ import java.util.List;
 
 public record MangroveRootPlacement(
 		List<Identifier> canGrowThrough,
-		BlockStateProvider muddyRootsIn,
+		List<Identifier> muddyRootsIn,
 		BlockStateProvider muddyRootsProvider,
 		int maxRootWidth,
 		int maxRootLength,
@@ -17,7 +17,7 @@ public record MangroveRootPlacement(
 ) {
 	public static final Codec<MangroveRootPlacement> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Identifier.CODEC.listOf().fieldOf("can_grow_through").forGetter(MangroveRootPlacement::canGrowThrough),
-			BlockStateProvider.CODEC.fieldOf("muddy_roots_in").forGetter(MangroveRootPlacement::muddyRootsIn),
+			Identifier.CODEC.listOf().fieldOf("muddy_roots_in").forGetter(MangroveRootPlacement::muddyRootsIn),
 			BlockStateProvider.CODEC.fieldOf("muddy_roots_provider").forGetter(MangroveRootPlacement::muddyRootsProvider),
 			Codec.INT.fieldOf("max_root_width").forGetter(MangroveRootPlacement::maxRootWidth),
 			Codec.INT.fieldOf("max_root_length").forGetter(MangroveRootPlacement::maxRootLength),

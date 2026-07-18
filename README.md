@@ -18,7 +18,7 @@ modern Minecraft. This branch targets Minecraft 26.2.
 ```groovy
 // works for both Groovy and Kotlin DSL
 dependencies {
-    modImplementation("net.vampirestudios:packwright:1.0.0+build.1-26.2")
+    modImplementation("net.vampirestudios:packwright:1.0.1+build.1-26.2")
 }
 ```
 

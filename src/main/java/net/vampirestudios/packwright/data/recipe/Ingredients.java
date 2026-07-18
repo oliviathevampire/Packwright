@@ -1,10 +1,10 @@
 package net.vampirestudios.packwright.data.recipe;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.vampirestudios.packwright.util.DynamicMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +74,7 @@ public class Ingredients {
 		return this.add(Ingredient.ingredient().item(itemId));
 	}
 
-	public Ingredients addFabricCustom(Identifier type, Consumer<JsonObject> data) {
+	public Ingredients addFabricCustom(Identifier type, Consumer<DynamicMap> data) {
 		return this.add(Ingredient.fabricComponents(type, data));
 	}
 

@@ -2,6 +2,8 @@ package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
+import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
+import net.vampirestudios.packwright.data.loot.util.LootValue;
 
 /**
  * A loot pool: some entries, how often to roll them, and optional conditions/functions.
@@ -20,7 +22,7 @@ public class Pool extends PredicateBuilder<Pool> {
 	}
 
 	public Pool entry(Entry entry) {
-		subList("entries").add(entry.asMap());
+		subList("entries").add(LootValue.encode(Entry.CODEC, entry));
 		return this;
 	}
 
@@ -31,13 +33,15 @@ public class Pool extends PredicateBuilder<Pool> {
 		return this;
 	}
 
+	/** only rolls this pool when the condition passes */
 	public Pool condition(Condition condition) {
-		subList("conditions").add(condition.asMap());
+		subList("conditions").add(LootValue.encode(Condition.CODEC, condition));
 		return this;
 	}
 
+	/** applied to every item this pool produces */
 	public Pool function(LootFunction function) {
-		subList("functions").add(function.asMap());
+		subList("functions").add(LootValue.encode(LootFunction.CODEC, function));
 		return this;
 	}
 

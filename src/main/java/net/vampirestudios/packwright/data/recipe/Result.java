@@ -1,29 +1,22 @@
 package net.vampirestudios.packwright.data.recipe;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.vampirestudios.packwright.util.DynamicMap;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class Result {
-	protected static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.PASSTHROUGH.xmap(
-			dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue().getAsJsonObject(),
-			object -> new Dynamic<>(JsonOps.INSTANCE, object)
-	);
-
 	public static final Codec<Result> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Identifier.CODEC.fieldOf("id").forGetter(r -> r.itemId),
 			Codec.INT.optionalFieldOf("count").forGetter(r ->
 					r.hasCount() ? Optional.of(r.getCount()) : Optional.empty()
 			),
-			JSON_OBJECT_CODEC.optionalFieldOf("components").forGetter(r ->
+			DynamicMap.CODEC.optionalFieldOf("components").forGetter(r ->
 					r.hasComponents() ? Optional.of(r.components) : Optional.empty()
 			)
 	).apply(i, (id, count, components) -> {
@@ -36,15 +29,15 @@ public class Result {
 	}));
 
 	protected final Identifier itemId;
-	protected JsonObject components;
+	protected DynamicMap components;
 
 	Result(final Identifier id) {
 		this.itemId = id;
 	}
 
-	public Result(Identifier itemId, JsonObject components) {
+	public Result(Identifier itemId, DynamicMap components) {
 		this.itemId = itemId;
-		this.components = components == null ? null : components.deepCopy();
+		this.components = components;
 	}
 
 	public static Result item(final Item item) {
@@ -55,11 +48,11 @@ public class Result {
 		return new Result(id);
 	}
 
-	public static Result item(Item item, JsonObject components) {
+	public static Result item(Item item, DynamicMap components) {
 		return result(BuiltInRegistries.ITEM.getKey(item)).components(components);
 	}
 
-	public static StackedResult itemStack(Item item, int count, JsonObject components) {
+	public static StackedResult itemStack(Item item, int count, DynamicMap components) {
 		return (StackedResult) stackedResult(BuiltInRegistries.ITEM.getKey(item), count).components(components);
 	}
 
@@ -77,13 +70,13 @@ public class Result {
 		return result;
 	}
 
-	public Result components(JsonObject components) {
-		this.components = components == null ? null : components.deepCopy();
+	public Result components(DynamicMap components) {
+		this.components = components;
 		return this;
 	}
 
-	public Result components(Consumer<JsonObject> build) {
-		JsonObject object = new JsonObject();
+	public Result components(Consumer<DynamicMap> build) {
+		DynamicMap object = DynamicMap.object();
 
 		if (build != null) {
 			build.accept(object);
@@ -97,8 +90,8 @@ public class Result {
 		return itemId;
 	}
 
-	public JsonObject getComponents() {
-		return components == null ? null : components.deepCopy();
+	public DynamicMap getComponents() {
+		return components;
 	}
 
 	public int getCount() {

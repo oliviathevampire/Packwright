@@ -29,8 +29,7 @@ public class DataRegistryExamples {
 	/* ----------------------------------------------------------
 	 * 1) Predicates: reusable loot conditions, referenced from
 	 *    loot tables/advancements with Condition.reference(...)
-	 *    (the same mechanism vanilla uses for tool/can_silk_touch
-	 *    since 26.3).
+	 *    (the same mechanism vanilla uses for shared loot predicates).
 	 * ---------------------------------------------------------- */
 
 	/** the tool is any pickaxe with Fortune of any level */

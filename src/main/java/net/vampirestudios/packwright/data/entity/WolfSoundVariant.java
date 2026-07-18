@@ -15,7 +15,8 @@ import java.util.Objects;
  *   "growl_sound":   "minecraft:...",
  *   "hurt_sound":    "minecraft:...",
  *   "pant_sound":    "minecraft:...",
- *   "whine_sound":   "minecraft:..."
+ *   "whine_sound":   "minecraft:...",
+ *   "step_sound":    "minecraft:..."
  * }
  */
 public class WolfSoundVariant {
@@ -25,8 +26,9 @@ public class WolfSoundVariant {
             Identifier.CODEC.fieldOf("growl_sound").forGetter(x -> x.growlSound),
             Identifier.CODEC.fieldOf("hurt_sound").forGetter(x -> x.hurtSound),
             Identifier.CODEC.fieldOf("pant_sound").forGetter(x -> x.pantSound),
-            Identifier.CODEC.fieldOf("whine_sound").forGetter(x -> x.whineSound)
-    ).apply(i, (ambient, death, growl, hurt, pant, whine) -> {
+            Identifier.CODEC.fieldOf("whine_sound").forGetter(x -> x.whineSound),
+            Identifier.CODEC.fieldOf("step_sound").forGetter(x -> x.stepSound)
+    ).apply(i, (ambient, death, growl, hurt, pant, whine, step) -> {
         WolfSoundVariant out = new WolfSoundVariant();
         out.ambientSound = ambient;
         out.deathSound = death;
@@ -34,6 +36,7 @@ public class WolfSoundVariant {
         out.hurtSound = hurt;
         out.pantSound = pant;
         out.whineSound = whine;
+        out.stepSound = step;
         return out;
     }));
 
@@ -43,6 +46,7 @@ public class WolfSoundVariant {
     private Identifier hurtSound;
     private Identifier pantSound;
     private Identifier whineSound;
+    private Identifier stepSound;
 
     public WolfSoundVariant() {}
 
@@ -56,6 +60,7 @@ public class WolfSoundVariant {
     public WolfSoundVariant hurtSound(Identifier id)    { this.hurtSound    = Objects.requireNonNull(id, "hurtSound");    return this; }
     public WolfSoundVariant pantSound(Identifier id)    { this.pantSound    = Objects.requireNonNull(id, "pantSound");    return this; }
     public WolfSoundVariant whineSound(Identifier id)   { this.whineSound   = Objects.requireNonNull(id, "whineSound");   return this; }
+    public WolfSoundVariant stepSound(Identifier id)    { this.stepSound    = Objects.requireNonNull(id, "stepSound");    return this; }
 
     public Identifier getAmbientSound() { return ambientSound; }
     public Identifier getDeathSound()   { return deathSound; }
@@ -63,4 +68,5 @@ public class WolfSoundVariant {
     public Identifier getHurtSound()    { return hurtSound; }
     public Identifier getPantSound()    { return pantSound; }
     public Identifier getWhineSound()   { return whineSound; }
+    public Identifier getStepSound()    { return stepSound; }
 }

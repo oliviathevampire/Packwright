@@ -1,7 +1,6 @@
-package net.vampirestudios.packwright.data.advancement;// AdvComponentPreds.java
+package net.vampirestudios.packwright.data.advancement;
 
-import com.google.gson.JsonElement;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.JavaOps;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -15,7 +14,8 @@ public final class AdvComponentPreds {
     return id;
   }
 
-  public static <V> JsonElement encodeValue(DataComponentType<V> type, V value) {
-    return type.codec().encodeStart(JsonOps.INSTANCE, value).getOrThrow();
+  /** the component's value encoded as a plain Java value (String/Number/Boolean/Map/List) */
+  public static <V> Object encodeValue(DataComponentType<V> type, V value) {
+    return type.codec().encodeStart(JavaOps.INSTANCE, value).getOrThrow();
   }
 }

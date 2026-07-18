@@ -27,4 +27,14 @@ public class SmokingRecipe extends CookingRecipe {
 	public SmokingRecipe group(final String group) {
 		return (SmokingRecipe) super.group(group);
 	}
+
+	@Override
+	public SmokingRecipe category(final CookingBookCategory category) {
+		return (SmokingRecipe) super.category(category);
+	}
+
+	@Override
+	public SmokingRecipe showNotification(final boolean showNotification) {
+		return (SmokingRecipe) super.showNotification(showNotification);
+	}
 }

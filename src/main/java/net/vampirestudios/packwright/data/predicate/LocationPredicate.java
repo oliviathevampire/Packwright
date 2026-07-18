@@ -1,14 +1,17 @@
 package net.vampirestudios.packwright.data.predicate;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * A location predicate, as used by {@code minecraft:location_check} and entity location checks.
+ * A location predicate, as used by {@code minecraft:location_check}, entity location checks,
+ * and the {@code minecraft:location} advancement criterion.
  */
 public class LocationPredicate extends PredicateBuilder<LocationPredicate> {
+	public static final Codec<LocationPredicate> CODEC = codecOf(LocationPredicate::new, null, "Location predicate");
 
 	public static LocationPredicate of() {
 		return new LocationPredicate();

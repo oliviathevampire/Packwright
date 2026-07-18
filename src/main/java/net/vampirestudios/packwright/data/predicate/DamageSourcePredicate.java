@@ -1,12 +1,16 @@
 package net.vampirestudios.packwright.data.predicate;
 
+import com.mojang.serialization.Codec;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * A damage source predicate, as used by {@code minecraft:damage_source_properties}.
+ * A damage source predicate, as used by {@code minecraft:damage_source_properties} and
+ * nested inside {@link DamagePredicate}.
  */
 public class DamageSourcePredicate extends PredicateBuilder<DamageSourcePredicate> {
+	public static final Codec<DamageSourcePredicate> CODEC = codecOf(DamageSourcePredicate::new, null, "Damage source predicate");
 
 	public static DamageSourcePredicate of() {
 		return new DamageSourcePredicate();

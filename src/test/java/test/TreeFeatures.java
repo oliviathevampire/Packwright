@@ -268,11 +268,10 @@ public class TreeFeatures {
 				.foliageProvider(BlockStateProvider.simple(VanillaIds.MANGROVE_LEAVES))
 				.randomSpreadFoliage(IntProvider.constant(3), IntProvider.constant(0), 2, 70)
 				.rootPlacer(new MangroveRootPlacer(
-						Optional.of(rootOffset),
+						rootOffset,
 						BlockStateProvider.simple(VanillaIds.MANGROVE_ROOTS),
 						Optional.of(new AboveRootPlacement(BlockStateProvider.simple(VanillaIds.MOSS_CARPET), 0.5F)),
-						Optional.of(new MangroveRootPlacement(canGrowThrough, BlockStateProvider.simple(VanillaIds.MUD), BlockStateProvider.simple(VanillaIds.MUDDY_MANGROVE_ROOTS), 8, 15, 0.2F)),
-						Optional.empty()
+						new MangroveRootPlacement(canGrowThrough, List.of(VanillaIds.MUD), BlockStateProvider.simple(VanillaIds.MUDDY_MANGROVE_ROOTS), 8, 15, 0.2F)
 				))
 				.minimumSize(TreeFeatureSize.twoLayers(lowerSize, 0, 2))
 				.belowTrunkProvider(defaultBelowMangroveTrunkProvider())

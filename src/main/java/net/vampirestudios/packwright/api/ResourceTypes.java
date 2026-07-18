@@ -1,7 +1,8 @@
 package net.vampirestudios.packwright.api;
 
-import com.google.gson.JsonElement;
+import net.vampirestudios.packwright.assets.atlas.Atlas;
 import net.vampirestudios.packwright.assets.blockstates.BlockState;
+import net.vampirestudios.packwright.assets.font.Font;
 import net.vampirestudios.packwright.assets.equipment.EquipmentModel;
 import net.vampirestudios.packwright.assets.equipment.TrimMaterial;
 import net.vampirestudios.packwright.assets.equipment.TrimPattern;
@@ -11,14 +12,15 @@ import net.vampirestudios.packwright.assets.models.Model;
 import net.vampirestudios.packwright.assets.timeline.Timeline;
 import net.vampirestudios.packwright.data.advancement.Advancement;
 import net.vampirestudios.packwright.data.entity.CatSoundVariant;
+import net.vampirestudios.packwright.data.entity.CatVariant;
 import net.vampirestudios.packwright.data.entity.ChickenSoundVariant;
 import net.vampirestudios.packwright.data.entity.ChickenVariant;
 import net.vampirestudios.packwright.data.entity.CowSoundVariant;
 import net.vampirestudios.packwright.data.entity.CowVariant;
+import net.vampirestudios.packwright.data.entity.FrogVariant;
 import net.vampirestudios.packwright.data.entity.PaintingVariant;
 import net.vampirestudios.packwright.data.entity.PigSoundVariant;
 import net.vampirestudios.packwright.data.entity.PigVariant;
-import net.vampirestudios.packwright.data.entity.SimpleMobVariant;
 import net.vampirestudios.packwright.data.entity.WolfSoundVariant;
 import net.vampirestudios.packwright.data.entity.WolfVariant;
 import net.vampirestudios.packwright.data.entity.ZombieNautilusVariant;
@@ -27,9 +29,11 @@ import net.vampirestudios.packwright.data.loot.LootFunction;
 import net.vampirestudios.packwright.data.loot.LootTable;
 import net.vampirestudios.packwright.data.recipe.Recipe;
 import net.vampirestudios.packwright.data.registry.BannerPattern;
+import net.vampirestudios.packwright.data.registry.ChatType;
+import net.vampirestudios.packwright.data.registry.EnchantmentProvider;
 import net.vampirestudios.packwright.data.registry.DamageType;
 import net.vampirestudios.packwright.data.registry.DecoratedPotPattern;
-import net.vampirestudios.packwright.data.registry.Dialog;
+import net.vampirestudios.packwright.data.registry.dialog.Dialog;
 import net.vampirestudios.packwright.data.registry.Enchantment;
 import net.vampirestudios.packwright.data.registry.Instrument;
 import net.vampirestudios.packwright.data.registry.JukeboxSong;
@@ -47,10 +51,11 @@ import net.vampirestudios.packwright.data.worldgen.dimension.Dimension;
 import net.vampirestudios.packwright.data.worldgen.dimension.DimensionType;
 import net.vampirestudios.packwright.data.worldgen.feature.Feature;
 import net.vampirestudios.packwright.data.worldgen.feature.PlacedFeature;
+import net.vampirestudios.packwright.data.worldgen.noise.DensityFunction;
+import net.vampirestudios.packwright.data.worldgen.noise.NoiseParameters;
 import net.vampirestudios.packwright.data.worldgen.noise.NoiseSettings;
 import net.vampirestudios.packwright.data.worldgen.structure.Structure;
 import net.vampirestudios.packwright.data.worldgen.structure.StructureSet;
-import net.vampirestudios.packwright.impl.Codecs;
 
 /**
  * Catalog of the {@link ResourceType}s Packwright knows how to serialize. Each constant pairs a
@@ -67,6 +72,8 @@ public final class ResourceTypes {
 	public static final ResourceType<ItemModelDefinition> ITEM_MODEL_DEFINITION = ResourceType.asset("items", ItemModelDefinition.CODEC);
 	public static final ResourceType<EquipmentModel> EQUIPMENT_MODEL = ResourceType.asset("equipment", EquipmentModel.CODEC);
 	public static final ResourceType<BlockState> BLOCK_STATE = ResourceType.asset("blockstates", BlockState.CODEC);
+	public static final ResourceType<Atlas> ATLAS = ResourceType.asset("atlases", Atlas.CODEC);
+	public static final ResourceType<Font> FONT = ResourceType.asset("font", Font.CODEC);
 
 	// data
 	public static final ResourceType<Advancement> ADVANCEMENT = ResourceType.data("advancement", Advancement.CODEC);
@@ -91,8 +98,8 @@ public final class ResourceTypes {
 	public static final ResourceType<Condition> PREDICATE = ResourceType.data("predicate", Condition.CODEC);
 	/** reusable loot functions, applied via {@code /item modify} or {@code minecraft:reference} functions */
 	public static final ResourceType<LootFunction> ITEM_MODIFIER = ResourceType.data("item_modifier", LootFunction.CODEC);
-	public static final ResourceType<JsonElement> CHAT_TYPE = ResourceType.data("chat_type", Codecs.JSON);
-	public static final ResourceType<JsonElement> ENCHANTMENT_PROVIDER = ResourceType.data("enchantment_provider", Codecs.JSON);
+	public static final ResourceType<ChatType> CHAT_TYPE = ResourceType.data("chat_type", ChatType.CODEC);
+	public static final ResourceType<EnchantmentProvider> ENCHANTMENT_PROVIDER = ResourceType.data("enchantment_provider", EnchantmentProvider.CODEC);
 
 	// entity variants
 	public static final ResourceType<WolfVariant> WOLF_VARIANT = ResourceType.data("wolf_variant", WolfVariant.CODEC);
@@ -100,8 +107,8 @@ public final class ResourceTypes {
 	public static final ResourceType<ChickenVariant> CHICKEN_VARIANT = ResourceType.data("chicken_variant", ChickenVariant.CODEC);
 	public static final ResourceType<CowVariant> COW_VARIANT = ResourceType.data("cow_variant", CowVariant.CODEC);
 	public static final ResourceType<PigVariant> PIG_VARIANT = ResourceType.data("pig_variant", PigVariant.CODEC);
-	public static final ResourceType<SimpleMobVariant> CAT_VARIANT = ResourceType.data("cat_variant", SimpleMobVariant.CODEC);
-	public static final ResourceType<SimpleMobVariant> FROG_VARIANT = ResourceType.data("frog_variant", SimpleMobVariant.CODEC);
+	public static final ResourceType<CatVariant> CAT_VARIANT = ResourceType.data("cat_variant", CatVariant.CODEC);
+	public static final ResourceType<FrogVariant> FROG_VARIANT = ResourceType.data("frog_variant", FrogVariant.CODEC);
 	public static final ResourceType<PaintingVariant> PAINTING_VARIANT = ResourceType.data("painting_variant", PaintingVariant.CODEC);
 	public static final ResourceType<WolfSoundVariant> WOLF_SOUND_VARIANT = ResourceType.data("wolf_sound_variant", WolfSoundVariant.CODEC);
 	public static final ResourceType<CatSoundVariant> CAT_SOUND_VARIANT = ResourceType.data("cat_sound_variant", CatSoundVariant.CODEC);
@@ -117,8 +124,8 @@ public final class ResourceTypes {
 	public static final ResourceType<PlacedFeature> PLACED_FEATURE = ResourceType.data("worldgen/placed_feature", PlacedFeature.CODEC);
 	public static final ResourceType<Carver> CARVER = ResourceType.data("worldgen/configured_carver", Carver.CODEC);
 	public static final ResourceType<NoiseSettings> NOISE_SETTINGS = ResourceType.data("worldgen/noise_settings", NoiseSettings.CODEC);
-	public static final ResourceType<JsonElement> NOISE = ResourceType.data("worldgen/noise", Codecs.JSON);
-	public static final ResourceType<JsonElement> DENSITY_FUNCTION = ResourceType.data("worldgen/density_function", Codecs.JSON);
+	public static final ResourceType<NoiseParameters> NOISE = ResourceType.data("worldgen/noise", NoiseParameters.CODEC);
+	public static final ResourceType<DensityFunction> DENSITY_FUNCTION = ResourceType.data("worldgen/density_function", DensityFunction.CODEC);
 	public static final ResourceType<Structure> STRUCTURE = ResourceType.data("worldgen/structure", Structure.CODEC);
 	public static final ResourceType<StructureSet> STRUCTURE_SET = ResourceType.data("worldgen/structure_set", StructureSet.CODEC);
 	public static final ResourceType<ProcessorList> PROCESSOR_LIST = ResourceType.data("worldgen/processor_list", ProcessorList.CODEC);

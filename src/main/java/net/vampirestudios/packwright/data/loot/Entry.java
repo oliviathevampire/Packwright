@@ -1,6 +1,7 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
+import net.vampirestudios.packwright.data.loot.util.LootValue;
 import net.vampirestudios.packwright.data.predicate.PredicateBuilder;
 import net.minecraft.resources.Identifier;
 
@@ -112,7 +113,7 @@ public class Entry extends PredicateBuilder<Entry> {
 		if (this == child) {
 			throw new IllegalArgumentException("Can't add entry as its own child!");
 		}
-		subList("children").add(child.asMap());
+		subList("children").add(LootValue.encode(Entry.CODEC, child));
 		return this;
 	}
 
@@ -127,8 +128,9 @@ public class Entry extends PredicateBuilder<Entry> {
 		return parameter("expand", expand);
 	}
 
+	/** only applies this function when this entry is used */
 	public Entry function(LootFunction function) {
-		subList("functions").add(function.asMap());
+		subList("functions").add(LootValue.encode(LootFunction.CODEC, function));
 		return this;
 	}
 
@@ -136,13 +138,19 @@ public class Entry extends PredicateBuilder<Entry> {
 		return function(LootTable.function(function));
 	}
 
+	/** only uses this entry when the condition passes */
 	public Entry condition(Condition condition) {
-		subList("conditions").add(condition.asMap());
+		subList("conditions").add(LootValue.encode(Condition.CODEC, condition));
 		return this;
 	}
 
 	public Entry condition(String condition) {
 		return condition(LootTable.predicate(condition));
+	}
+
+	/** references a predicate file at {@code data/<namespace>/predicate/<path>.json} by id, instead of embedding a condition inline */
+	public Entry condition(Identifier reference) {
+		return condition(Condition.reference(reference));
 	}
 
 	public Entry weight(Integer weight) {

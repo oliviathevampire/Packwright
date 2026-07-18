@@ -29,10 +29,8 @@ import static net.vampirestudios.packwright.util.ResourceHelpers.vanillaId;
  * A complete custom dimension: the Ember Wastes, a scorched basalt flat scarred by
  * lava deltas and ash storms. Builds every piece a dimension needs — dimension type,
  * noise settings, biome, carvers, features, structures — and, unlike
- * {@link SkyIslandsWorldgen}, leans on the 26.3 additions: the surface pipeline lives
- * in the {@code worldgen/material_rule} registry and is referenced by ID from the
- * noise settings, carvers use the flattened format with the new int provider types,
- * and the central sanctum is placed with {@code minecraft:dimension_origin}.
+ * {@link SkyIslandsWorldgen}, uses the 26.2 worldgen shape: configured
+ * features/carvers, inline surface rules, and random-spread structure placement.
  * <p>
  * {@link #registerAll(RuntimeResourcePack)} adds everything to a pack;
  * {@link #main()} dumps each JSON for eyeballing.

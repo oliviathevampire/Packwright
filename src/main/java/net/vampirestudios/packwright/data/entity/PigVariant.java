@@ -9,12 +9,14 @@ public class PigVariant extends ModelVariant {
     public static final Codec<PigVariant> CODEC = RecordCodecBuilder.create(i -> i.group(
             ModelType.CODEC.optionalFieldOf("model", ModelType.NORMAL).forGetter(x -> x.model),
             assetIdCodec(),
+            babyAssetIdCodec(),
             spawnCodec()
-    ).apply(i, (model, assetId, spawns) -> {
+    ).apply(i, (model, assetId, babyAssetId, spawns) -> {
         PigVariant out = new PigVariant();
         out.model = model;
         out.assetId = assetId;
-        spawns.ifPresent(out::spawnConditions);
+        out.babyAssetId = babyAssetId;
+        out.spawnConditions = spawns;
         return out;
     }));
 
@@ -26,13 +28,14 @@ public class PigVariant extends ModelVariant {
 
     public PigVariant model(ModelType model) { this.model = model; return this; }
     public PigVariant assetId(Identifier assetId) { this.assetId = assetId; return this; }
+    public PigVariant babyAssetId(Identifier babyAssetId) { this.babyAssetId = babyAssetId; return this; }
     public PigVariant spawnConditions(SpawnPrioritySelectors spawns) { this.spawnConditions = spawns; return this; }
 
     public ModelType getModel() { return model; }
 
     public enum ModelType implements StringRepresentable {
         NORMAL("normal"),
-        WARM("warm");
+        COLD("cold");
 
         public static final Codec<ModelType> CODEC = StringRepresentable.fromEnum(ModelType::values);
         private final String name;

@@ -1,15 +1,10 @@
 package net.vampirestudios.packwright.assets.blockstates;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.vampirestudios.packwright.impl.Codecs;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,19 +60,5 @@ public class Multipart {
 	public Multipart addModel(SimpleModel model) {
 		this.apply.add(model);
 		return this;
-	}
-
-	public static class Serializer implements JsonSerializer<Multipart> {
-		@Override
-		public JsonElement serialize(Multipart src, Type typeOfSrc, JsonSerializationContext context) {
-			JsonObject obj = new JsonObject();
-			if (src.apply.size() == 1) {
-				obj.add("apply", context.serialize(src.apply.getFirst()));
-			} else {
-				obj.add("apply", context.serialize(src.apply));
-			}
-			obj.add("when", context.serialize(src.when));
-			return obj;
-		}
 	}
 }

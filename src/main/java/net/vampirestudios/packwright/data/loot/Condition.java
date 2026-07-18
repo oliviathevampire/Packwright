@@ -1,6 +1,9 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JavaOps;
 import net.vampirestudios.packwright.assets.models.Model;
 import net.vampirestudios.packwright.data.predicate.DamageSourcePredicate;
 import net.vampirestudios.packwright.data.predicate.EntityPredicate;
@@ -11,6 +14,7 @@ import net.vampirestudios.packwright.data.predicate.Range;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +27,37 @@ import java.util.Map;
  */
 public class Condition extends PredicateBuilder<Condition> {
 	public static final Codec<Condition> CODEC = codecOf(Condition::new, "condition", "Loot condition");
+	public static final Codec<Condition> TYPE_CODEC = Codec.PASSTHROUGH.comapFlatMap(dynamic -> {
+		Object value = dynamic.convert(JavaOps.INSTANCE).getValue();
+		if (!(value instanceof Map<?, ?> map)) {
+			return DataResult.error(() -> "Condition must be an object");
+		}
+		if (!(map.get("type") instanceof String)) {
+			return DataResult.error(() -> "Condition missing 'type' string");
+		}
+		Condition builder = new Condition();
+		map.forEach((k, v) -> builder.values.put("type".equals(String.valueOf(k)) ? "condition" : String.valueOf(k), v));
+		return DataResult.success(builder);
+	}, condition -> new Dynamic<>(JavaOps.INSTANCE, condition.typeKeyedValues()));
+
+	private Map<String, Object> typeKeyedValues() {
+		Map<String, Object> out = new LinkedHashMap<>();
+		this.values.forEach((key, value) -> out.put("condition".equals(key) ? "type" : key, typeKeyedValue(value)));
+		return out;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Object typeKeyedValue(Object value) {
+		if (value instanceof Map<?, ?> map) {
+			Map<String, Object> out = new LinkedHashMap<>();
+			map.forEach((key, nested) -> out.put("condition".equals(String.valueOf(key)) ? "type" : String.valueOf(key), typeKeyedValue(nested)));
+			return out;
+		}
+		if (value instanceof List<?> list) {
+			return list.stream().map(Condition::typeKeyedValue).toList();
+		}
+		return value;
+	}
 
 	/**
 	 * @see LootTable#predicate(String)
@@ -207,24 +242,6 @@ public class Condition extends PredicateBuilder<Condition> {
 	 */
 	public Condition terms(Condition... conditions) {
 		return parameter("terms", conditions);
-	}
-
-	/**
-	 * adds a block state property check, for {@link #blockStateProperty(Identifier)}
-	 */
-	public Condition property(String key, String value) {
-		subMap("properties").put(key, value);
-		return this;
-	}
-
-	public Condition property(String key, boolean value) {
-		subMap("properties").put(key, value);
-		return this;
-	}
-
-	public Condition property(String key, int value) {
-		subMap("properties").put(key, value);
-		return this;
 	}
 
 	/**

@@ -1,113 +1,58 @@
 package net.vampirestudios.packwright.data.worldgen.structure;
 
-import com.google.gson.*;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JavaOps;
 import net.minecraft.resources.Identifier;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A {@code worldgen/structure_set} file: a weighted list of structures plus a
+ * {@link StructurePlacement} rule.
+ */
 public class StructureSet {
 
-	public static final Codec<StructureSet> CODEC = new Codec<>() {
-		@Override
-		public <T> DataResult<T> encode(StructureSet set, DynamicOps<T> ops, T prefix) {
-			JsonObject json = set.toJson();
-			return DataResult.success(new Dynamic<>(JsonOps.INSTANCE, json).convert(ops).getValue());
-		}
+	public static final Codec<StructureSet> CODEC = Codec.PASSTHROUGH.comapFlatMap(StructureSet::fromDynamic, StructureSet::toDynamic);
 
-		@Override
-		public <T> DataResult<Pair<StructureSet, T>> decode(DynamicOps<T> ops, T input) {
-			JsonElement el = new Dynamic<>(ops, input).convert(JsonOps.INSTANCE).getValue();
-			if (!el.isJsonObject()) {
-				return DataResult.error(() -> "Structure set must be an object");
-			}
-			return DataResult.success(Pair.of(fromJson(el.getAsJsonObject()), input));
-		}
-	};
-
-	private JsonArray structures;   // array of { "structure": id, "weight": n }
-	private JsonObject placement;   // placement object
-	private final JsonObject extra = new JsonObject();
+	private final List<Entry> structures = new ArrayList<>();
+	private StructurePlacement placement;
 
 	public static StructureSet set() {
 		return new StructureSet();
 	}
 
-	public static StructureSet fromJson(JsonObject json) {
-		return new StructureSet().json(json);
-	}
-
-	public StructureSet json(JsonObject json) {
-		this.structures = null;
-		this.placement = null;
-		this.extra.entrySet().clear();
-
-		if (json == null) return this;
-
-		if (json.has("structures") && json.get("structures").isJsonArray()) {
-			this.structures = json.getAsJsonArray("structures").deepCopy();
-		}
-		if (json.has("placement") && json.get("placement").isJsonObject()) {
-			this.placement = json.getAsJsonObject("placement").deepCopy();
-		}
-
-		for (String key : json.keySet()) {
-			if (!isKnown(key)) {
-				JsonElement val = json.get(key);
-				if (val != null) this.extra.add(key, val.deepCopy());
-			}
-		}
-
-		return this;
-	}
-
 	// Core setters
 
-	public StructureSet structures(JsonArray structures) {
-		this.structures = structures == null ? null : structures.deepCopy();
+	public StructureSet structures(List<Entry> structures) {
+		this.structures.clear();
+		if (structures != null) this.structures.addAll(structures);
 		return this;
 	}
 
-	public StructureSet placement(JsonObject placement) {
-		this.placement = placement == null ? null : placement.deepCopy();
+	public StructureSet placement(StructurePlacement placement) {
+		this.placement = placement;
 		return this;
 	}
 
 	public StructureSet randomSpreadPlacement(int salt, int spacing, int separation) {
-		JsonObject placement = new JsonObject();
-		placement.addProperty("type", "minecraft:random_spread");
-		placement.addProperty("salt", salt);
-		placement.addProperty("spacing", spacing);
-		placement.addProperty("separation", separation);
-		return placement(placement);
+		return placement(StructurePlacement.randomSpread(salt, spacing, separation));
 	}
 
 	/** @deprecated the {@code dimension_origin} placement type only exists in Minecraft 26.3+ */
 	@Deprecated
 	public StructureSet dimensionOriginPlacement() {
-		JsonObject placement = new JsonObject();
-		placement.addProperty("type", "minecraft:dimension_origin");
-		return placement(placement);
-	}
-
-	public StructureSet extra(String key, JsonElement value) {
-		if (key != null && value != null && !isKnown(key)) {
-			this.extra.add(key, value.deepCopy());
-		}
-		return this;
+		throw new UnsupportedOperationException("dimension_origin structure placement only exists in Minecraft 26.3+");
 	}
 
 	// Convenience helpers
 
-	private JsonArray ensureStructures() {
-		if (this.structures == null) this.structures = new JsonArray();
-		return this.structures;
-	}
-
 	public StructureSet addStructure(Identifier id, int weight) {
-		JsonObject obj = new JsonObject();
-		obj.addProperty("structure", id == null ? null : id.toString());
-		obj.addProperty("weight", weight);
-		ensureStructures().add(obj);
+		this.structures.add(new Entry(id, weight));
 		return this;
 	}
 
@@ -117,18 +62,54 @@ public class StructureSet {
 				.randomSpreadPlacement(salt, spacing, separation);
 	}
 
-	public JsonObject toJson() {
-		JsonObject out = new JsonObject();
-		if (this.structures != null) out.add("structures", this.structures.deepCopy());
-		if (this.placement != null) out.add("placement", this.placement.deepCopy());
-		for (String key : this.extra.keySet()) {
-			JsonElement val = this.extra.get(key);
-			if (val != null) out.add(key, val.deepCopy());
-		}
-		return out;
+	public List<Entry> getStructures() {
+		return List.copyOf(this.structures);
 	}
 
-	private static boolean isKnown(String key) {
-		return "structures".equals(key) || "placement".equals(key);
+	public StructurePlacement getPlacement() {
+		return this.placement;
+	}
+
+	// Codec plumbing (plain Java values, no JSON)
+
+	private Dynamic<?> toDynamic() {
+		Map<String, Object> out = new LinkedHashMap<>();
+		List<Object> structureList = new ArrayList<>();
+		for (Entry entry : this.structures) {
+			Map<String, Object> item = new LinkedHashMap<>();
+			item.put("structure", entry.structure().toString());
+			item.put("weight", entry.weight());
+			structureList.add(item);
+		}
+		out.put("structures", structureList);
+		if (this.placement != null) {
+			out.put("placement", StructurePlacement.CODEC.encodeStart(JavaOps.INSTANCE, this.placement).getOrThrow());
+		}
+		return new Dynamic<>(JavaOps.INSTANCE, out);
+	}
+
+	private static DataResult<StructureSet> fromDynamic(Dynamic<?> dynamic) {
+		Object raw = dynamic.convert(JavaOps.INSTANCE).getValue();
+		if (!(raw instanceof Map<?, ?> map)) {
+			return DataResult.error(() -> "Structure set must be an object");
+		}
+		StructureSet set = new StructureSet();
+		if (map.get("structures") instanceof List<?> list) {
+			for (Object element : list) {
+				if (element instanceof Map<?, ?> item) {
+					Identifier structure = Identifier.tryParse(String.valueOf(item.get("structure")));
+					int weight = item.get("weight") instanceof Number number ? number.intValue() : 1;
+					set.structures.add(new Entry(structure, weight));
+				}
+			}
+		}
+		if (map.get("placement") != null) {
+			set.placement = StructurePlacement.CODEC.parse(new Dynamic<>(JavaOps.INSTANCE, map.get("placement"))).result().orElse(null);
+		}
+		return DataResult.success(set);
+	}
+
+	/** one weighted structure entry: {@code { "structure": id, "weight": n }} */
+	public record Entry(Identifier structure, int weight) {
 	}
 }

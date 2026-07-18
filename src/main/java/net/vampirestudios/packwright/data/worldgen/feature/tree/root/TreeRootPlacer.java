@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
+import net.vampirestudios.packwright.data.worldgen.IntProvider;
 import net.vampirestudios.packwright.data.worldgen.feature.BlockStateProvider;
 
 import java.util.Optional;
@@ -26,8 +27,8 @@ public sealed interface TreeRootPlacer permits MangroveRootPlacer {
 		}
 	};
 
-	static MangroveRootPlacer mangrove(BlockStateProvider rootProvider, BlockStateProvider muddyRootsProvider) {
-		return new MangroveRootPlacer(Optional.empty(), rootProvider, Optional.empty(), Optional.empty(), Optional.of(muddyRootsProvider));
+	static MangroveRootPlacer mangrove(IntProvider trunkOffsetY, BlockStateProvider rootProvider, MangroveRootPlacement mangroveRootPlacement) {
+		return new MangroveRootPlacer(trunkOffsetY, rootProvider, Optional.empty(), mangroveRootPlacement);
 	}
 
 	private static String normalizeType(String type) {

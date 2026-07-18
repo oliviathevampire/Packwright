@@ -99,11 +99,6 @@ public final class Features {
 		return new ReplaceSingleBlockFeatureBuilder();
 	}
 
-	/**
-	 * @deprecated the {@code replace_blobs} feature type no longer exists in the game;
-	 * use {@link #oreInBlock(Identifier, Identifier, int)} for similar block replacement
-	 */
-	@Deprecated
 	public static ReplaceBlobsFeatureBuilder replaceBlobs(Identifier target, Identifier state, int radius) {
 		return new ReplaceBlobsFeatureBuilder().target(target).state(state).radius(radius);
 	}
@@ -116,6 +111,11 @@ public final class Features {
 		return new HugeMushroomFeatureBuilder("minecraft:huge_brown_mushroom").capProvider(capBlock).stemProvider(stemBlock);
 	}
 
+	/**
+	 * @deprecated the {@code nether_forest_vegetation} feature type was removed from the game
+	 * in 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
 	public static NetherForestVegetationFeatureBuilder netherForestVegetation(Identifier block) {
 		return new NetherForestVegetationFeatureBuilder().stateProvider(block);
 	}
@@ -156,10 +156,6 @@ public final class Features {
 
 	public static FillLayerFeatureBuilder fillLayer(int height, Identifier block) {
 		return new FillLayerFeatureBuilder().height(height).state(block);
-	}
-
-	public static CountFeatureBuilder seaPickle(IntProvider count) {
-		return new CountFeatureBuilder("minecraft:sea_pickle").count(count);
 	}
 
 	public static ProbabilityFeatureBuilder bamboo(float probability) {
@@ -213,8 +209,12 @@ public final class Features {
 		return new SculkPatchFeatureBuilder();
 	}
 
-	public static DripstoneClusterFeatureBuilder dripstoneCluster() {
-		return new DripstoneClusterFeatureBuilder();
+	public static SpeleothemClusterFeatureBuilder speleothemCluster() {
+		return new SpeleothemClusterFeatureBuilder();
+	}
+
+	public static SpeleothemFeatureBuilder speleothem() {
+		return new SpeleothemFeatureBuilder();
 	}
 
 	public static LargeDripstoneFeatureBuilder largeDripstone() {
@@ -229,16 +229,53 @@ public final class Features {
 		return new EndGatewayFeatureBuilder();
 	}
 
-	public static StateFeatureBuilder forestRock(Identifier block) {
-		return new StateFeatureBuilder("minecraft:forest_rock").state(block);
+	public static BlockBlobFeatureBuilder blockBlob(Identifier block, PlacedFeature.BlockPredicate canPlaceOn) {
+		return new BlockBlobFeatureBuilder().state(block).canPlaceOn(canPlaceOn);
 	}
 
-	public static StateFeatureBuilder blockBlob(Identifier block) {
-		return new StateFeatureBuilder("minecraft:block_blob").state(block);
+	public static SpikeFeatureBuilder spike(Identifier block, PlacedFeature.BlockPredicate canPlaceOn, PlacedFeature.BlockPredicate canReplace) {
+		return new SpikeFeatureBuilder().state(block).canPlaceOn(canPlaceOn).canReplace(canReplace);
 	}
 
-	public static StateFeatureBuilder iceSpike(Identifier block) {
-		return new StateFeatureBuilder("minecraft:ice_spike").state(block);
+	public static MultifaceGrowthFeatureBuilder multifaceGrowth(Identifier block) {
+		return new MultifaceGrowthFeatureBuilder(block);
+	}
+
+	public static OreFeatureBuilder scatteredOre(Identifier replaceableTag, Identifier block, int size) {
+		return new OreFeatureBuilder("minecraft:scattered_ore").targetTag(replaceableTag, block).size(size);
+	}
+
+	public static FossilFeatureBuilder fossil() {
+		return new FossilFeatureBuilder();
+	}
+
+	/**
+	 * @deprecated the {@code twisting_vines} feature type was removed from the game in
+	 * 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
+	public static TwistingVinesFeatureBuilder twistingVines() {
+		return new TwistingVinesFeatureBuilder();
+	}
+
+	public static EndSpikeFeatureBuilder endSpike() {
+		return new EndSpikeFeatureBuilder();
+	}
+
+	public static SingleFeatureFeatureBuilder coralClaw(PlacedFeature feature) {
+		return new SingleFeatureFeatureBuilder("minecraft:coral_claw").feature(feature);
+	}
+
+	public static SingleFeatureFeatureBuilder coralTree(PlacedFeature feature) {
+		return new SingleFeatureFeatureBuilder("minecraft:coral_tree").feature(feature);
+	}
+
+	public static TemplateFeatureBuilder template() {
+		return new TemplateFeatureBuilder();
+	}
+
+	public static WeightedRandomSelectorFeatureBuilder weightedRandomSelector() {
+		return new WeightedRandomSelectorFeatureBuilder();
 	}
 
 	public static NoConfigFeatureBuilder noConfig(String type) {
@@ -248,22 +285,18 @@ public final class Features {
 	public static NoConfigFeatureBuilder noOp() { return noConfig("minecraft:no_op"); }
 	public static NoConfigFeatureBuilder monsterRoom() { return noConfig("minecraft:monster_room"); }
 	public static NoConfigFeatureBuilder desertWell() { return noConfig("minecraft:desert_well"); }
-	public static NoConfigFeatureBuilder fossil() { return noConfig("minecraft:fossil"); }
 	public static NoConfigFeatureBuilder blueIce() { return noConfig("minecraft:blue_ice"); }
-	public static NoConfigFeatureBuilder icePatch() { return noConfig("minecraft:ice_patch"); }
 	public static NoConfigFeatureBuilder freezeTopLayer() { return noConfig("minecraft:freeze_top_layer"); }
 	public static NoConfigFeatureBuilder vines() { return noConfig("minecraft:vines"); }
 	public static NoConfigFeatureBuilder voidStartPlatform() { return noConfig("minecraft:void_start_platform"); }
 	public static NoConfigFeatureBuilder endIsland() { return noConfig("minecraft:end_island"); }
-	public static NoConfigFeatureBuilder endSpike() { return noConfig("minecraft:end_spike"); }
 	public static NoConfigFeatureBuilder bonusChest() { return noConfig("minecraft:bonus_chest"); }
-	public static NoConfigFeatureBuilder kelp() { return noConfig("minecraft:kelp"); }
-	public static NoConfigFeatureBuilder seagrass() { return noConfig("minecraft:seagrass"); }
-	public static NoConfigFeatureBuilder coralTree() { return noConfig("minecraft:coral_tree"); }
-	public static NoConfigFeatureBuilder coralMushroom() { return noConfig("minecraft:coral_mushroom"); }
-	public static NoConfigFeatureBuilder coralClaw() { return noConfig("minecraft:coral_claw"); }
+	/**
+	 * @deprecated the {@code weeping_vines} feature type was removed from the game in
+	 * 26.3-snapshot-4, with no replacement
+	 */
+	@Deprecated
 	public static NoConfigFeatureBuilder weepingVines() { return noConfig("minecraft:weeping_vines"); }
-	public static NoConfigFeatureBuilder twistingVines() { return noConfig("minecraft:twisting_vines"); }
-	public static NoConfigFeatureBuilder glowLichen() { return noConfig("minecraft:glow_lichen"); }
-	public static NoConfigFeatureBuilder pointedDripstone() { return noConfig("minecraft:pointed_dripstone"); }
+	public static NoConfigFeatureBuilder chorusPlant() { return noConfig("minecraft:chorus_plant"); }
+	public static NoConfigFeatureBuilder endPlatform() { return noConfig("minecraft:end_platform"); }
 }

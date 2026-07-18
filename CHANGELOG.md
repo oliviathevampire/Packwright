@@ -91,7 +91,7 @@ modifiers, chat types and functions.
 
 This release intentionally does not target the 26.3 snapshot formats. Some
 26.3-only pieces were removed from this branch or marked as unavailable here,
-including data-driven brewing recipes, reusable number providers, slot source
+including data-driven brewing recipes, number-provider registries, slot source
 registries, material rule/condition registries, `dimension_origin` structure
 placement and the newer feature types such as `projected_random_patchy_square`.
 
