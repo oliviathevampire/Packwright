@@ -1,9 +1,6 @@
 package net.vampirestudios.packwright.data.loot;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.JavaOps;
 import net.vampirestudios.packwright.assets.models.Model;
 import net.vampirestudios.packwright.data.predicate.BlockPredicate;
 import net.vampirestudios.packwright.data.predicate.DamageSourcePredicate;
@@ -16,7 +13,6 @@ import net.vampirestudios.packwright.data.loot.providers.number.NumberProvider;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,38 +24,7 @@ import java.util.Map;
  * {@code parameter} methods.
  */
 public class Condition extends PredicateBuilder<Condition> {
-	public static final Codec<Condition> CODEC = codecOf(Condition::new, "condition", "Loot condition");
-	public static final Codec<Condition> TYPE_CODEC = Codec.PASSTHROUGH.comapFlatMap(dynamic -> {
-		Object value = dynamic.convert(JavaOps.INSTANCE).getValue();
-		if (!(value instanceof Map<?, ?> map)) {
-			return DataResult.error(() -> "Condition must be an object");
-		}
-		if (!(map.get("type") instanceof String)) {
-			return DataResult.error(() -> "Condition missing 'type' string");
-		}
-		Condition builder = new Condition();
-		map.forEach((k, v) -> builder.values.put("type".equals(String.valueOf(k)) ? "condition" : String.valueOf(k), v));
-		return DataResult.success(builder);
-	}, condition -> new Dynamic<>(JavaOps.INSTANCE, condition.typeKeyedValues()));
-
-	private Map<String, Object> typeKeyedValues() {
-		Map<String, Object> out = new LinkedHashMap<>();
-		this.values.forEach((key, value) -> out.put("condition".equals(key) ? "type" : key, typeKeyedValue(value)));
-		return out;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Object typeKeyedValue(Object value) {
-		if (value instanceof Map<?, ?> map) {
-			Map<String, Object> out = new LinkedHashMap<>();
-			map.forEach((key, nested) -> out.put("condition".equals(String.valueOf(key)) ? "type" : String.valueOf(key), typeKeyedValue(nested)));
-			return out;
-		}
-		if (value instanceof List<?> list) {
-			return list.stream().map(Condition::typeKeyedValue).toList();
-		}
-		return value;
-	}
+	public static final Codec<Condition> CODEC = codecOf(Condition::new, "type", "Loot condition");
 
 	/**
 	 * @see LootTable#predicate(String)
@@ -114,6 +79,15 @@ public class Condition extends PredicateBuilder<Condition> {
 	}
 
 	/**
+	 * passes if any of the referenced predicate files pass — each term is a bare
+	 * {@code data/<namespace>/predicate/<path>.json} id, the way vanilla references
+	 * e.g. {@code minecraft:tool/can_shear}
+	 */
+	public static Condition anyOf(String... predicateReferences) {
+		return of("minecraft:any_of").parameter("terms", List.of((Object[]) predicateReferences));
+	}
+
+	/**
 	 * passes if all the given conditions pass ({@code minecraft:all_of})
 	 */
 	public static Condition allOf(Condition... terms) {
@@ -155,10 +129,14 @@ public class Condition extends PredicateBuilder<Condition> {
 	/**
 	 * matches a {@link BlockPredicate} against the loot context's block
 	 * ({@code minecraft:match_block}, since 26.3-snapshot-4 — replaces the old flat
-	 * {@code minecraft:block_state_property} shape)
+	 * {@code minecraft:block_state_property} shape). The predicate's fields
+	 * ({@code blocks}, {@code state}, ...) sit directly on the condition object,
+	 * exactly as {@code BlockPredicate.MAP_CODEC} reads them.
 	 */
 	public static Condition matchBlock(BlockPredicate predicate) {
-		return of("minecraft:match_block").parameter("predicate", predicate);
+		Condition condition = of("minecraft:match_block");
+		predicate.asMap().forEach(condition::put);
+		return condition;
 	}
 
 	/**
@@ -294,7 +272,7 @@ public class Condition extends PredicateBuilder<Condition> {
 	// ---------- builder ----------
 
 	public Condition condition(String condition) {
-		return parameter("condition", condition);
+		return parameter("type", condition);
 	}
 
 	/**
@@ -302,11 +280,11 @@ public class Condition extends PredicateBuilder<Condition> {
 	 * unless the map specifies its own
 	 */
 	public Condition set(Map<String, ?> parameters) {
-		Object condition = this.values.get("condition");
+		Object type = this.values.get("type");
 		this.values.clear();
 		this.values.putAll(parameters);
-		if (condition != null) {
-			this.values.putIfAbsent("condition", condition);
+		if (type != null) {
+			this.values.putIfAbsent("type", type);
 		}
 		return this;
 	}

@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.Identifier;
 import net.vampirestudios.packwright.data.worldgen.WorldgenBlockState;
-import net.vampirestudios.packwright.data.worldgen.dimension.Parameters;
 import net.vampirestudios.packwright.data.worldgen.material.MaterialRule;
 
 import java.util.ArrayList;
@@ -15,7 +14,8 @@ import java.util.Optional;
 /**
  * A {@code worldgen/noise_settings} file, fully typed: blocks are
  * {@link WorldgenBlockState}s, the router is a {@link NoiseRouter} of
- * {@link DensityFunction}s, and spawn targets are climate {@link Parameters} points.
+ * {@link DensityFunction}s, and spawn targets are {@link SpawnTarget} maps keyed by
+ * density-function reference.
  */
 public class NoiseSettings {
 
@@ -26,7 +26,7 @@ public class NoiseSettings {
 			WorldgenBlockState.CODEC.optionalFieldOf("default_fluid").forGetter(x -> Optional.ofNullable(x.defaultFluid)),
 			NoiseShape.CODEC.optionalFieldOf("noise").forGetter(x -> Optional.ofNullable(x.noise)),
 			// spawn_target is required by the game; fieldOf+orElse always encodes it
-			Parameters.CODEC.listOf().fieldOf("spawn_target").orElse(List.of()).forGetter(x -> List.copyOf(x.spawnTarget)),
+			SpawnTarget.CODEC.listOf().fieldOf("spawn_target").orElse(List.of()).forGetter(x -> List.copyOf(x.spawnTarget)),
 			// a material rule is either a worldgen/material_rule registry id or an inline rule
 			Codec.either(Identifier.CODEC, MaterialRule.CODEC).optionalFieldOf("material_rule").forGetter(NoiseSettings::materialRuleEither),
 			AquiferSettings.CODEC.optionalFieldOf("aquifers").forGetter(x -> Optional.ofNullable(x.aquifers)),
@@ -57,7 +57,7 @@ public class NoiseSettings {
 	private WorldgenBlockState defaultBlock;
 	private WorldgenBlockState defaultFluid;
 	private NoiseShape noise;
-	private List<Parameters> spawnTarget = new ArrayList<>();
+	private List<SpawnTarget> spawnTarget = new ArrayList<>();
 	private Identifier materialRuleId;
 	private MaterialRule materialRule;
 	private AquiferSettings aquifers;
@@ -83,8 +83,8 @@ public class NoiseSettings {
 	public NoiseSettings defaultBlock(WorldgenBlockState v) { this.defaultBlock = v; return this; }
 	public NoiseSettings defaultFluid(WorldgenBlockState v) { this.defaultFluid = v; return this; }
 	public NoiseSettings noise(NoiseShape v) { this.noise = v; return this; }
-	public NoiseSettings spawnTarget(List<Parameters> v) { this.spawnTarget = v == null ? new ArrayList<>() : new ArrayList<>(v); return this; }
-	public NoiseSettings addSpawnTarget(Parameters v) { this.spawnTarget.add(v); return this; }
+	public NoiseSettings spawnTarget(List<SpawnTarget> v) { this.spawnTarget = v == null ? new ArrayList<>() : new ArrayList<>(v); return this; }
+	public NoiseSettings addSpawnTarget(SpawnTarget v) { this.spawnTarget.add(v); return this; }
 
 	/** reference a {@code worldgen/material_rule} registry entry by id */
 	public NoiseSettings materialRule(Identifier id) {

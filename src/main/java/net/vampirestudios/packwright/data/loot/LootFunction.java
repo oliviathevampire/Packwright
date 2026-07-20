@@ -21,7 +21,7 @@ import java.util.List;
  * {@code parameter} methods.
  */
 public class LootFunction extends PredicateBuilder<LootFunction> {
-	public static final Codec<LootFunction> CODEC = codecOf(LootFunction::new, "function", "Loot function");
+	public static final Codec<LootFunction> CODEC = codecOf(LootFunction::new, "type", "Loot function");
 
 	/**
 	 * @see LootTable#function(String)
@@ -597,7 +597,7 @@ public class LootFunction extends PredicateBuilder<LootFunction> {
 	// ---------- builder ----------
 
 	public LootFunction function(String function) {
-		return parameter("function", function);
+		return parameter("type", function);
 	}
 
 	public LootFunction parameter(String key, NumberProvider value) {
@@ -621,7 +621,7 @@ public class LootFunction extends PredicateBuilder<LootFunction> {
 	 * {@code "condition"} — combine several with {@link Condition#allOf(Condition...)} if needed
 	 */
 	public LootFunction condition(Condition condition) {
-		return put("condition", LootValue.encode(Condition.TYPE_CODEC, condition));
+		return put("condition", LootValue.encode(Condition.CODEC, condition));
 	}
 
 	public LootFunction condition(String condition) {

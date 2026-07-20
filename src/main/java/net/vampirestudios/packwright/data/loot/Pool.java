@@ -39,7 +39,7 @@ public class Pool extends PredicateBuilder<Pool> {
 	 * {@link Condition#allOf(Condition...)} if needed)
 	 */
 	public Pool condition(Condition condition) {
-		return put("condition", LootValue.encode(Condition.TYPE_CODEC, condition));
+		return put("condition", LootValue.encode(Condition.CODEC, condition));
 	}
 
 	/**

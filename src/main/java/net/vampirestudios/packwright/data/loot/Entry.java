@@ -147,7 +147,7 @@ public class Entry extends PredicateBuilder<Entry> {
 	 * {@link Condition#allOf(Condition...)} if needed)
 	 */
 	public Entry condition(Condition condition) {
-		return put("condition", LootValue.encode(Condition.TYPE_CODEC, condition));
+		return put("condition", LootValue.encode(Condition.CODEC, condition));
 	}
 
 	public Entry condition(String condition) {

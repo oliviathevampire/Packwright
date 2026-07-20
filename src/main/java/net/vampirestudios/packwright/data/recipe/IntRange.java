@@ -13,7 +13,7 @@ import java.util.Optional;
  * (an exact value), or an object with optional {@code min}/{@code max} fields.
  * <p>
  * This project doesn't model the full {@code MinMaxBounds} family (float/double variants,
- * command-argument parsing, etc.) elsewhere, so only the minimal integer shape is provided.
+ * command-input parsing, etc.) elsewhere, so only the minimal integer shape is provided.
  */
 public record IntRange(Optional<Integer> min, Optional<Integer> max) {
 	private static final Codec<IntRange> OBJECT_CODEC = RecordCodecBuilder.create(i -> i.group(

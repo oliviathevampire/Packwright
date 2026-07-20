@@ -272,7 +272,7 @@ public final class DensityFunctions {
 		static MapCodec<Constant> codec(Codec<DensityFunction> ignored) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					Codec.DOUBLE
-							.fieldOf("argument")
+							.fieldOf("value")
 							.forGetter(Constant::value)
 			).apply(instance, Constant::new));
 		}
@@ -465,15 +465,15 @@ public final class DensityFunctions {
 	}
 
 	public record BlendDensity(
-			DensityFunction argument
+			DensityFunction input
 	) implements DensityFunction.Direct {
 		static MapCodec<BlendDensity> codec(
 				Codec<DensityFunction> densityFunctionCodec
 		) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					densityFunctionCodec
-							.fieldOf("argument")
-							.forGetter(BlendDensity::argument)
+							.fieldOf("input")
+							.forGetter(BlendDensity::input)
 			).apply(instance, BlendDensity::new));
 		}
 
@@ -704,7 +704,7 @@ public final class DensityFunctions {
 		static MapCodec<ShiftA> codec(Codec<DensityFunction> ignored) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					Identifier.CODEC
-							.fieldOf("argument")
+							.fieldOf("noise")
 							.forGetter(ShiftA::noise)
 			).apply(instance, ShiftA::new));
 		}
@@ -720,7 +720,7 @@ public final class DensityFunctions {
 		static MapCodec<ShiftB> codec(Codec<DensityFunction> ignored) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					Identifier.CODEC
-							.fieldOf("argument")
+							.fieldOf("noise")
 							.forGetter(ShiftB::noise)
 			).apply(instance, ShiftB::new));
 		}
@@ -736,7 +736,7 @@ public final class DensityFunctions {
 		static MapCodec<Shift> codec(Codec<DensityFunction> ignored) {
 			return RecordCodecBuilder.mapCodec(instance -> instance.group(
 					Identifier.CODEC
-							.fieldOf("argument")
+							.fieldOf("noise")
 							.forGetter(Shift::noise)
 			).apply(instance, Shift::new));
 		}
